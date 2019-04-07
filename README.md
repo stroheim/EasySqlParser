@@ -88,7 +88,7 @@ ORDER BY
 
 * Since SQL parsing is porting the code of DOMA, SQL comments etc. are basically compatible with DOMA
 * However, there are the following differences
-  * expandÅApopulateÅAfor are not supported
+  * `expand`,`populate`,`for` are not supported
   * Built-in function name, type
   * Self-made built-in functions are not supported
 
@@ -108,12 +108,12 @@ ORDER BY
 |DateTime|@TruncateTime(DateTime dateTime)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
 |DateTime|@TruncateTime(DateTimeOffset dateTimeOffset)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
 
-* The names `StartsWith,Contains,EndsWith` come from EntityFramework ,EndsWith
+* The names `StartsWith`,`Contains`,`EndsWith` come from EntityFramework ,EndsWith
 
 
 License
 ---
-[MIT License]()
+[MIT License](https://github.com/stroheim/EasySqlParser/blob/master/LICENSE)
 
 Reference
 ---
