@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser", "src\EasySqlParser\EasySqlParser.csproj", "{DC24C4DA-6F42-4597-8FE8-57CDCC3D6DB1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.Tests", "tests\EasySqlParser.Tests\EasySqlParser.Tests.csproj", "{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BAEA153-CA5E-487C-89C2-8A0DF129592B}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+		README_ja.md = README_ja.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DC24C4DA-6F42-4597-8FE8-57CDCC3D6DB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC24C4DA-6F42-4597-8FE8-57CDCC3D6DB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC24C4DA-6F42-4597-8FE8-57CDCC3D6DB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC24C4DA-6F42-4597-8FE8-57CDCC3D6DB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E57359C9-12CF-4740-A3CB-FCBC031728BF}
+	EndGlobalSection
+EndGlobal
