@@ -115,7 +115,7 @@ ORDER BY
 
 License
 ---
-[MIT License]()
+[MIT License](https://github.com/stroheim/EasySqlParser/blob/master/LICENSE)
 
 Reference
 ---
