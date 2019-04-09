@@ -112,6 +112,13 @@ ORDER BY
 
 * StartsWith,Contains,EndsWithの名前はEntityFramework由来
 
+Install
+---
+* _Nuget Package Coming Soon..._
+
+Examples
+---
+* _Coming Soon..._
 
 License
 ---

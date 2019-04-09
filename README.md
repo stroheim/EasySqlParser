@@ -110,6 +110,13 @@ ORDER BY
 
 * The names `StartsWith`,`Contains`,`EndsWith` come from EntityFramework ,EndsWith
 
+Install
+---
+* _Nuget Package Coming Soon..._
+
+Examples
+---
+* _Coming Soon..._
 
 License
 ---
