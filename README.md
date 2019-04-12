@@ -2,7 +2,7 @@ EasySqlParser
 ===
 Library that parses SQL written as so-called `2-Way-SQL`
 
-**This is a paser, not a o/r mapper**   
+**This is a paser, not an o/r mapper**   
 It expects to pass parsed SQL, generated parameters into 
 [Dapper](https://github.com/StackExchange/Dapper) ,
 [EntityFramework](https://github.com/aspnet/EntityFramework6) ,
@@ -112,7 +112,14 @@ ORDER BY
 
 Install
 ---
-* _Nuget Package Coming Soon..._
+* It's available on [nuget](https://www.nuget.org/packages/EasySqlParser/)
+```
+dotnet add package EasySqlParser
+```
+or
+```
+Install-Package EasySqlParser
+```
 
 Examples
 ---

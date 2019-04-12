@@ -3,6 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.1</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Authors>stroheim</Authors>
+    <Description>2-way-sql parser</Description>
+    <Copyright>Copyright 2019</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/stroheim/EasySqlParser</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stroheim/EasySqlParser</RepositoryUrl>
+    <PackageTags>dotnet-standard;sql;sql-parser;parse</PackageTags>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
 </Project>

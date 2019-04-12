@@ -114,7 +114,14 @@ ORDER BY
 
 Install
 ---
-* _Nuget Package Coming Soon..._
+* [nuget](https://www.nuget.org/packages/EasySqlParser/)からインストールできます
+```
+dotnet add package EasySqlParser
+```
+or
+```
+Install-Package EasySqlParser
+```
 
 Examples
 ---
