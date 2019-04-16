@@ -123,7 +123,7 @@ Install-Package EasySqlParser
 
 Examples
 ---
-* _Coming Soon..._
+https://github.com/stroheim/EasySqlParser.Examples
 
 License
 ---
