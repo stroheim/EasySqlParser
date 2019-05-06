@@ -28,6 +28,8 @@ namespace EasySqlParser
 
         /// <summary>
         /// DbConnection is Oracle.DataAccess.Client.OracleConnection<br/>
+        /// or<br/>
+        /// Oracle.ManagedDataAccess.Client.OracleConnection<br/>
         /// version 12c or later<br/>
         /// <b>Not System.Data.OracleClient.OracleConnection
         /// </b>
@@ -36,6 +38,8 @@ namespace EasySqlParser
 
         /// <summary>
         /// DbConnection is Oracle.DataAccess.Client.OracleConnection<br/>
+        /// or<br/>
+        /// Oracle.ManagedDataAccess.Client.OracleConnection<br/>
         /// Version less than 11g<br/>
         /// <b>Not System.Data.OracleClient.OracleConnection
         /// </b>
