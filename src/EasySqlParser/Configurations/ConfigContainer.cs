@@ -26,33 +26,10 @@ namespace EasySqlParser.Configurations
         /// </summary>
         public static SqlParserConfig DefaultConfig { get; private set; }
 
-        private static bool? _enableCache;
-
         /// <summary>
         /// Gets or sets whether to cache sql nodes
         /// </summary>
-        public static bool EnableCache
-        {
-            get
-            {
-                if (_enableCache.HasValue)
-                {
-                    return _enableCache.Value;
-                }
-
-                return false;
-            }
-            set
-            {
-                if (_enableCache.HasValue)
-                {
-                    //throw new InvalidSqlParserConfigException("Already enable cache set");
-                    return;
-                }
-
-                _enableCache = value;
-            }
-        }
+        public static bool EnableCache { get; set; } = true;
 
         // for unit test
         internal static SqlParserConfig CreateConfigForTest(DbConnectionKind dbConnectionKind, string configName)
@@ -159,37 +136,6 @@ namespace EasySqlParser.Configurations
             return config;
         }
 
-
-        ///// <summary>
-        ///// Register configuration.
-        ///// If you use different connection implementation,call this method with name parameter.
-        ///// </summary>
-        ///// <param name="configCreator"></param>
-        ///// <param name="name"></param>
-        //public static void RegisterConfig(Action<SqlParserConfig> configCreator, string name = null)
-        //{
-        //    if (string.IsNullOrEmpty(name))
-        //    {
-        //        if (DefaultConfig != null)
-        //        {
-        //            //throw new InvalidSqlParserConfigException("Already default config registered");
-        //            return;
-        //        }
-        //        var config = new SqlParserConfig();
-        //        configCreator(config);
-        //        DefaultConfig = config;
-        //        return;
-        //    }
-
-        //    if (ConfigsFoo.ContainsKey(name))
-        //    {
-        //        //throw new InvalidSqlParserConfigException("Already additional config registered");
-        //        return;
-        //    }
-        //    var additionalConfig = new SqlParserConfig();
-        //    configCreator(additionalConfig);
-        //    ConfigsFoo.Add(name, additionalConfig);
-        //}
     }
 
 }
