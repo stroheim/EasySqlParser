@@ -106,7 +106,7 @@ ORDER BY
 |string|@EndsWith(string text)| Indicates to perform a backward match search. <br/> The return value is a string with the input value escaped and preceded by a wildcard. <br/> Escape is done using the default escape character ($). <br/> If you pass null as an argument, it returns null.|
 |string|@EndsWith(string text, char escapeChar)| Indicates to perform a backward match search. <br/> The return value is a string with the input value escaped and preceded by a wildcard. <br/> Escape is performed using the escape character specified in the second argument. <br/> If you pass null as the first argument, it returns null.|
 |DateTime|@TruncateTime(DateTime dateTime)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
-|DateTime|@TruncateTime(DateTimeOffset dateTimeOffset)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
+|DateTimeOffset|@TruncateTime(DateTimeOffset dateTimeOffset)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
 
 * The names `StartsWith`,`Contains`,`EndsWith` come from EntityFramework ,EndsWith
 
