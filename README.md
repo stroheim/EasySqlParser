@@ -108,7 +108,7 @@ ORDER BY
 |DateTime|@TruncateTime(DateTime dateTime)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
 |DateTimeOffset|@TruncateTime(DateTimeOffset dateTimeOffset)| Indicates to truncate the time part. <br/> The return value is a new date with the time portion truncated. <br/> If you pass null as an argument, it returns null.|
 
-* The names `StartsWith`,`Contains`,`EndsWith` come from EntityFramework ,EndsWith
+* The names `StartsWith`,`Contains`,`EndsWith` come from EntityFramework
 
 Install
 ---
