@@ -139,14 +139,13 @@ namespace EasySqlParser.Internals
             EasySqlParameterAttribute = _propertyInfo?.GetCustomAttribute<EasySqlParameterAttribute>();
             if (Value != null)
             {
-                //ExpressionParameter = new ExpressionParameter(_propertyInfo.PropertyType, PropertyName, Value);
                 IsEnumerable = DetectGenericListType(DataType);
                 if (!IsEnumerable)
                 {
-                    //var name = _config.IsQuestionOnly ? "?" : _config.ParameterPrefix + PropertyName;
-                    var name = _dialect.EnableNamedParameter
-                        ? _dialect.ParameterPrefix + PropertyName
-                        : _dialect.ParameterPrefix;
+                    //var name = _dialect.EnableNamedParameter
+                    //    ? _dialect.ParameterPrefix + PropertyName
+                    //    : _dialect.ParameterPrefix;
+                    var name = _dialect.ParameterPrefix + PropertyName;
                     DbParameters.Add(name, Value);
                     if (Value is DateTime)
                     {
@@ -388,9 +387,10 @@ namespace EasySqlParser.Internals
                     continue;
                 }
 
-                var name = _dialect.EnableNamedParameter
-                    ? $"{_dialect.ParameterPrefix}{PropertyName}{index}"
-                    : _dialect.ParameterPrefix;
+                //var name = _dialect.EnableNamedParameter
+                //    ? $"{_dialect.ParameterPrefix}{PropertyName}{index}"
+                //    : _dialect.ParameterPrefix;
+                var name = $"{_dialect.ParameterPrefix}{PropertyName}{index}";
                 DbParameters.Add(name, v);
                 index++;
             }

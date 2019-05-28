@@ -214,7 +214,13 @@ namespace EasySqlParser.Internals
             }
 
             // parameterKey is sql parameter name
-            _rawSqlBuilder.Append(parameterKey);
+            var localParameterKey = parameterKey;
+            if (!_config.Dialect.EnableNamedParameter)
+            {
+                localParameterKey = _config.Dialect.ParameterPrefix;
+            }
+
+            _rawSqlBuilder.Append(localParameterKey);
             if (isDateOnly)
             {
                 if (valueObject.IsDateTime)
