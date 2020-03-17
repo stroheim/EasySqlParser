@@ -96,6 +96,41 @@ namespace EasySqlParser.Tests.Internals
         }
 
         [Fact]
+        public void testBindVariable_EndsWith2()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "name", ParameterType = typeof(string), ParameterValue = "a$a%a_" });
+            var testSql = "select * from aaa where ename like /* @EndsWith(name)*/'aaa'";
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("select * from aaa where ename like @name");
+            result.DebugSql.Is("select * from aaa where ename like '%a$$a$%a$_'");
+            result.DbDataParameters.Count.Is(1);
+            result.DbDataParameters[0].Value.Is("%a$$a$%a$_");
+        }
+
+
+        [Fact]
+        public void testBindVariable_Escape()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "name", ParameterType = typeof(string), ParameterValue = "a$a%a_" });
+            var testSql = "select * from aaa where ename like /* @Escape(name)*/'aaa'";
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("select * from aaa where ename like @name");
+            result.DebugSql.Is("select * from aaa where ename like 'a$$a$%a$_'");
+            result.DbDataParameters.Count.Is(1);
+            result.DbDataParameters[0].Value.Is("a$$a$%a$_");
+        }
+
+        [Fact]
         public void testBindVariable_TruncateTime()
         {
             var parameters = new List<ParameterEmulator>();
@@ -811,6 +846,79 @@ namespace EasySqlParser.Tests.Internals
             var ex = Assert.Throws<UnsupportedSqlCommentException>(() => parser.Parse());
             ex.IsNotNull();
         }
+
+        [Fact]
+        public void testUpdateNullString()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "name", ParameterType = typeof(string), ParameterValue = null });
+            var testSql = "update employee set name = /* name */'dummy'";
+
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("update employee set name = @name");
+            result.DebugSql.Is("update employee set name = null");
+            result.DbDataParameters.Count.Is(1);
+            result.DbDataParameters[0].Value.Is(DBNull.Value);
+
+        }
+
+        [Fact]
+        public void testUpdateNullDateTime()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "birthdate", ParameterType = typeof(DateTime?), ParameterValue = null });
+            var testSql = "update employee set birthdate = /* @TruncateTime(birthdate) */'2001-01-01'";
+
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("update employee set birthdate = @birthdate");
+            result.DebugSql.Is("update employee set birthdate = null");
+            result.DbDataParameters.Count.Is(1);
+            result.DbDataParameters[0].Value.Is(DBNull.Value);
+        }
+
+        [Fact]
+        public void testSelectNullString()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "name", ParameterType = typeof(string), ParameterValue = null });
+            var testSql = "select /* name */'dummy' AS UserName";
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("select @name AS UserName");
+            result.DebugSql.Is("select null AS UserName");
+            result.DbDataParameters.Count.Is(1);
+            result.DbDataParameters[0].Value.Is(DBNull.Value);
+        }
+
+        [Fact]
+        public void testSelectNullLiteral()
+        {
+            var parameters = new List<ParameterEmulator>();
+            parameters.Add(new ParameterEmulator
+                           { Name = "name", ParameterType = typeof(string), ParameterValue = null });
+            var testSql = "select /*^ name */'dummy' AS UserName";
+            var parser = new DomaSqlParser(testSql);
+            var node = parser.Parse();
+            var builder = new DomaSqlBuilder(node, parameters);
+            var result = builder.Build();
+            result.ParsedSql.Is("select null AS UserName");
+            result.DebugSql.Is("select null AS UserName");
+            result.DbDataParameters.Count.Is(0);
+
+        }
+
+        
     }
 
     public enum MyEnum

@@ -137,6 +137,7 @@ namespace EasySqlParser.Internals
             if (_initialized) return;
             DbParameters = new Dictionary<string, object>();
             EasySqlParameterAttribute = _propertyInfo?.GetCustomAttribute<EasySqlParameterAttribute>();
+            var name = _dialect.ParameterPrefix + PropertyName;
             if (Value != null)
             {
                 IsEnumerable = DetectGenericListType(DataType);
@@ -145,7 +146,6 @@ namespace EasySqlParser.Internals
                     //var name = _dialect.EnableNamedParameter
                     //    ? _dialect.ParameterPrefix + PropertyName
                     //    : _dialect.ParameterPrefix;
-                    var name = _dialect.ParameterPrefix + PropertyName;
                     DbParameters.Add(name, Value);
                     if (Value is DateTime)
                     {
@@ -164,7 +164,10 @@ namespace EasySqlParser.Internals
                         IsTimeSpan = true;
                     }
                 }
-
+            }
+            else
+            {
+                DbParameters.Add(name, null);
             }
 
             _initialized = true;

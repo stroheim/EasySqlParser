@@ -161,14 +161,9 @@ namespace EasySqlParser.Internals
         internal void AppendParameter(ValueObject valueObject, string parameterKey, object parameterValue,
             Type parameterType, ValueNode node)
         {
-            if (valueObject.Value == null)
-            {
-                _rawSqlBuilder.Append("null");
-                _formattedSqlBuilder.Append("null");
-                return;
-            }
 
             var convertedValue = parameterValue;
+            // if convertedValue is null, valueObject.IsDateTime / valueObject.IsDateTimeOffset / valueObject.IsString is false
             var isDateOnly = false;
             if (valueObject.IsDateTime && node.UseBuiltinFunction)
             {
@@ -202,7 +197,7 @@ namespace EasySqlParser.Internals
 
             var param = _config.DataParameterCreator()
                 .AddName(parameterKey)
-                .AddValue(convertedValue);
+                .AddValue(convertedValue ?? DBNull.Value);
             if (valueObject.EasySqlParameterAttribute != null)
             {
                 param.AddDbType(valueObject.EasySqlParameterAttribute.DbType);
@@ -221,6 +216,7 @@ namespace EasySqlParser.Internals
             }
 
             _rawSqlBuilder.Append(localParameterKey);
+            // if convertedValue is null, always isDateOnly is false
             if (isDateOnly)
             {
                 if (valueObject.IsDateTime)
