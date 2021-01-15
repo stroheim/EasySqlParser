@@ -23,6 +23,15 @@ namespace EasySqlParser.Configurations
         /// </summary>
         internal Func<IDbDataParameter> DataParameterCreator { get; set; }
 
+        /// <summary>
+        /// SQLファイルを検出するかどうか
+        /// </summary>
+        public bool AutoDetectSqlFile { get; internal set; }
+
+        /// <summary>
+        /// SQLファイルを自動検出する際のルートディレクトリ
+        /// </summary>
+        public string SqlFileRootDirectory { get; internal set; }
 
     }
 

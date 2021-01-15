@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using EasySqlParser.Exceptions;
 using EasySqlParser.Internals.Dialect;
 
@@ -42,13 +43,17 @@ namespace EasySqlParser.Configurations
         /// </summary>
         /// <param name="dbConnectionKind">A kind of DB connection</param>
         /// <param name="dbParameterCreator">Delegate for create <see cref="IDbDataParameter"/> instance.</param>
-        public static void AddDefault(DbConnectionKind dbConnectionKind, Func<IDbDataParameter> dbParameterCreator)
+        /// <param name="sqlFileRootDirectory">Root directory for automatic detection of SQL files</param>
+        public static void AddDefault(
+            DbConnectionKind dbConnectionKind,
+            Func<IDbDataParameter> dbParameterCreator,
+            string sqlFileRootDirectory = null)
         {
             ValidateParameter(dbConnectionKind, dbParameterCreator);
 
             if (DefaultConfig == null)
             {
-                DefaultConfig = CreateConfig(dbConnectionKind, dbParameterCreator);
+                DefaultConfig = CreateConfig(dbConnectionKind, dbParameterCreator, sqlFileRootDirectory);
             }
 
         }
@@ -59,8 +64,12 @@ namespace EasySqlParser.Configurations
         /// <param name="dbConnectionKind">A kind of DB connection</param>
         /// <param name="dbParameterCreator">Delegate for create <see cref="IDbDataParameter"/> instance.</param>
         /// <param name="configName">A name of configuration</param>
-        public static void AddAdditional(DbConnectionKind dbConnectionKind, Func<IDbDataParameter> dbParameterCreator,
-            string configName)
+        /// <param name="sqlFileRootDirectory">Root directory for automatic detection of SQL files</param>
+        public static void AddAdditional(
+            DbConnectionKind dbConnectionKind,
+            Func<IDbDataParameter> dbParameterCreator,
+            string configName,
+            string sqlFileRootDirectory = null)
         {
             ValidateParameter(dbConnectionKind, dbParameterCreator);
             if (string.IsNullOrEmpty(configName))
@@ -70,11 +79,13 @@ namespace EasySqlParser.Configurations
 
             if (!AdditionalConfigs.ContainsKey(configName))
             {
-                AdditionalConfigs.Add(configName, CreateConfig(dbConnectionKind, dbParameterCreator));
+                AdditionalConfigs.Add(configName,
+                    CreateConfig(dbConnectionKind, dbParameterCreator, sqlFileRootDirectory));
             }
         }
 
-        private static void ValidateParameter(DbConnectionKind dbConnectionKind,
+        private static void ValidateParameter(
+            DbConnectionKind dbConnectionKind,
             Func<IDbDataParameter> dbParameterCreator)
         {
             if (dbConnectionKind == DbConnectionKind.Unknown)
@@ -88,14 +99,26 @@ namespace EasySqlParser.Configurations
             }
         }
 
-        private static SqlParserConfig CreateConfig(DbConnectionKind dbConnectionKind,
-            Func<IDbDataParameter> dbParameterCreator)
+        private static SqlParserConfig CreateConfig(
+            DbConnectionKind dbConnectionKind,
+            Func<IDbDataParameter> dbParameterCreator,
+            string sqlFileRootDirectory = null)
         {
             var config = new SqlParserConfig
                          {
                              DbConnectionKind = dbConnectionKind,
                              DataParameterCreator = dbParameterCreator
                          };
+            if (!string.IsNullOrEmpty(sqlFileRootDirectory))
+            {
+                if (!Directory.Exists(sqlFileRootDirectory))
+                {
+                    // TODO:
+                    throw new InvalidOperationException("directory not exists");
+                }
+                config.AutoDetectSqlFile = true;
+                config.SqlFileRootDirectory = sqlFileRootDirectory;
+            }
             switch (dbConnectionKind)
             {
                 case DbConnectionKind.AS400:

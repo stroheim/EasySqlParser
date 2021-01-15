@@ -14,6 +14,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README_ja.md = README_ja.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.Dapper", "src\EasySqlParser.Dapper\EasySqlParser.Dapper.csproj", "{508C1114-B08D-4510-84D2-F425A12043F9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.EntityFrameworkCore", "src\EasySqlParser.EntityFrameworkCore\EasySqlParser.EntityFrameworkCore.csproj", "{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGenerator", "src\EasySqlParser.SourceGenerator\EasySqlParser.SourceGenerator.csproj", "{6FE52627-5552-4E9B-9212-E99675229445}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGenerator.Engine", "src\EasySqlParser.SourceGenerator.Engine\EasySqlParser.SourceGenerator.Engine.csproj", "{81CB907D-201E-46AB-B114-74B79AAEB1BA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGeneratorSandbox", "sandbox\EasySqlParser.SourceGeneratorSandbox\EasySqlParser.SourceGeneratorSandbox.csproj", "{30734952-5CC2-4A92-89F2-11D48E4A7119}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +38,26 @@ Global
 		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DEF378E-A2C9-4281-B061-9E5FDB76DC21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{508C1114-B08D-4510-84D2-F425A12043F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{508C1114-B08D-4510-84D2-F425A12043F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{508C1114-B08D-4510-84D2-F425A12043F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{508C1114-B08D-4510-84D2-F425A12043F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FE52627-5552-4E9B-9212-E99675229445}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FE52627-5552-4E9B-9212-E99675229445}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FE52627-5552-4E9B-9212-E99675229445}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FE52627-5552-4E9B-9212-E99675229445}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

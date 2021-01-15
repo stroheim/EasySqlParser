@@ -121,6 +121,7 @@ namespace EasySqlParser.Internals
             return Execute(compiled);
         }
 
+        private static readonly Regex DoubleQuoteRegex = new Regex(@"\"".*\""", RegexOptions.Compiled);
         private bool Execute(Delegate target)
         {
 
@@ -128,7 +129,7 @@ namespace EasySqlParser.Internals
             foreach (var usedParameter in _usedParameters)
             {
                 var s = usedParameter.Key;
-                if (Regex.IsMatch(s, @"\"".*\"""))
+                if (DoubleQuoteRegex.IsMatch(s))
                 {
                     string param = s.Substring(1, s.Length - 2);
                     values.Add(param);
@@ -699,9 +700,9 @@ namespace EasySqlParser.Internals
             return wrapper;
         }
 
-        private readonly Regex _maybeNumericPattern = new Regex("^[0-9]+.?$");
-        private readonly Regex _maybeNumericWithScalePattern = new Regex("^[0-9]+\\.[0-9]+.$");
-        private readonly Regex _ulongPattern = new Regex("^[0-9]+UL$");
+        private static readonly Regex _maybeNumericPattern = new Regex("^[0-9]+.?$", RegexOptions.Compiled);
+        private static readonly Regex _maybeNumericWithScalePattern = new Regex("^[0-9]+\\.[0-9]+.$", RegexOptions.Compiled);
+        private static readonly Regex _ulongPattern = new Regex("^[0-9]+UL$", RegexOptions.Compiled);
 
         private ExpressionWrapper ReadParameter()
         {
@@ -778,7 +779,7 @@ namespace EasySqlParser.Internals
                 return CreateParameterExpression(parameter);
             }
 
-            if (Regex.IsMatch(parameter, @"\"".*\"""))
+            if (DoubleQuoteRegex.IsMatch(parameter))
             {
                 return CreateLiteralStringExpression(parameter);
             }

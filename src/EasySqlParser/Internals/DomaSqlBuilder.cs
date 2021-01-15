@@ -249,6 +249,7 @@ namespace EasySqlParser.Internals
 
     }
 
+
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.sql
     //   class      NodePreparedSqlBuilder
@@ -287,6 +288,17 @@ namespace EasySqlParser.Internals
             _node = node;
             _config = config;
             var valueObjectWrapper = ValueObjectCache.GetValueObjects(model, _config);
+            _propertyValues = valueObjectWrapper.PropertyValues;
+            _valueObjects = valueObjectWrapper.ValueObjects;
+            ExpressionEvaluator = evaluator;
+        }
+
+        internal DomaSqlBuilder(ISqlNode node, string name, object value,
+            SqlParserConfig config, EasyExpressionEvaluator evaluator)
+        {
+            _node = node;
+            _config = config;
+            var valueObjectWrapper = ValueObjectCache.GetValueObjects(name, value, _config);
             _propertyValues = valueObjectWrapper.PropertyValues;
             _valueObjects = valueObjectWrapper.ValueObjects;
             ExpressionEvaluator = evaluator;
@@ -486,10 +498,12 @@ namespace EasySqlParser.Internals
 
         private const string ClauseKeywordPattern = "(select|from|where|group by|having|order by|for update)";
 
+        private static readonly Regex ClauseKeywordRegex =
+            new Regex(ClauseKeywordPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         private bool StartWithClauseKeyword(string fragment)
         {
-            var reg = new Regex(ClauseKeywordPattern, RegexOptions.IgnoreCase);
-            return reg.IsMatch(SqlTokenHelper.TrimWhitespace(fragment));
+            return ClauseKeywordRegex.IsMatch(SqlTokenHelper.TrimWhitespace(fragment));
         }
 
         public object VisitEndNode(EndNode node, Context parameter)

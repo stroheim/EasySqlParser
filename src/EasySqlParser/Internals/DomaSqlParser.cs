@@ -16,6 +16,9 @@ namespace EasySqlParser.Internals
     {
         private const string LiteralPattern = "[-+'.0-9]|.*'|true|false|null";
 
+        private static readonly Regex LiteralRegex =
+            new Regex(LiteralPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         private Stack<IAddableSqlNode> _nodeStack = new Stack<IAddableSqlNode>();
         private readonly string _sql;
         private readonly SqlTokenizer _tokenizer;
@@ -751,8 +754,7 @@ namespace EasySqlParser.Internals
                 if (node is WordNode wordNode)
                 {
                     var word = wordNode.Word;
-                    var reg = new Regex(LiteralPattern, RegexOptions.IgnoreCase);
-                    var matchResult = reg.Match(word);
+                    var matchResult = LiteralRegex.Match(word);
                     if (matchResult.Success)
                     {
                         valueNode.WordNode = wordNode;

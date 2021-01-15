@@ -16,12 +16,16 @@ namespace EasySqlParser
         private static readonly ConcurrentDictionary<string, SqlFileInfo> SqlCache =
             new ConcurrentDictionary<string, SqlFileInfo>();
         private readonly string _sqlFilePath;
+        private readonly bool _isUserDefinedParameter;
         private readonly object _model;
+        private readonly string _name;
+        private readonly object _value;
         private readonly SqlParserConfig _config;
         private EasyExpressionEvaluator _evaluator;
 
         /// <summary>
-        /// Create a new SqlParser instance 
+        /// Create a new SqlParser instance <br/>
+        /// Use this if you want to use a user-defined type
         /// </summary>
         /// <param name="sqlFilePath">file path for 2way sql</param>
         /// <param name="model">parameter object for 2way sql</param>
@@ -35,6 +39,29 @@ namespace EasySqlParser
             _sqlFilePath = sqlFilePath;
             _model = model;
             _config = config ?? ConfigContainer.DefaultConfig;
+            _isUserDefinedParameter = true;
+        }
+
+
+        /// <summary>
+        /// Create a new SqlParser instance <br/>
+        /// Use this if you don't want to use a user-defined type
+        /// </summary>
+        /// <param name="sqlFilePath">file path for 2way sql</param>
+        /// <param name="name">parameter name</param>
+        /// <param name="value">parameter value</param>
+        /// <param name="config">
+        /// configuration of SqlParser.<br/>
+        /// The default value for this parameter is null.<br/>
+        /// if this parameter is null, use default config.<br/>
+        /// </param>
+        public SqlParser(string sqlFilePath, string name, object value, SqlParserConfig config = null)
+        {
+            _sqlFilePath = sqlFilePath;
+            _name = name;
+            _value = value;
+            _config = config ?? ConfigContainer.DefaultConfig;
+            _isUserDefinedParameter = false;
         }
 
         internal ISqlNode PrepareParse()
@@ -116,7 +143,9 @@ namespace EasySqlParser
         public SqlParserResult Parse()
         {
             var sqlNode = PrepareParse();
-            var builder = new DomaSqlBuilder(sqlNode, _model, _config, _evaluator);
+            var builder = _isUserDefinedParameter
+                ? new DomaSqlBuilder(sqlNode, _model, _config, _evaluator)
+                : new DomaSqlBuilder(sqlNode, _name, _value, _config, _evaluator);
             return builder.Build();
         }
 
@@ -141,10 +170,14 @@ namespace EasySqlParser
             var result = new SqlParserResultPaginated();
             var sqlNode = PrepareParse();
             var nodeForCount = _config.Dialect.ToCountGettingSqlNode(sqlNode);
-            var builderForCount = new DomaSqlBuilder(nodeForCount, _model, _config, _evaluator);
+            var builderForCount = _isUserDefinedParameter
+                ? new DomaSqlBuilder(nodeForCount, _model, _config, _evaluator)
+                : new DomaSqlBuilder(nodeForCount, _name, _value, _config, _evaluator);
             result.CountResult = builderForCount.Build();
             var nodeForPaging = _config.Dialect.ToPagingSqlNode(sqlNode, skip, take, rowNumberColumn);
-            var builderForPaging = new DomaSqlBuilder(nodeForPaging, _model, _config, _evaluator);
+            var builderForPaging = _isUserDefinedParameter
+                ? new DomaSqlBuilder(nodeForPaging, _model, _config, _evaluator)
+                : new DomaSqlBuilder(nodeForPaging, _name, _value, _config, _evaluator);
             result.Result = builderForPaging.Build();
             return result;
         }

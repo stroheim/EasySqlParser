@@ -87,6 +87,72 @@ namespace EasySqlParser.Internals
             return result;
         }
 
+        internal static ValueObjectWrapper GetValueObjects<T>(string name, T value, SqlParserConfig config)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+            // type check
+            var type = typeof(T);
+            
+            // TODO:要検討
+            bool IsValidType()
+            {
+                if (type == typeof(string) ||
+                    type == typeof(DateTime) ||
+                    type == typeof(int) ||
+                    type == typeof(long) ||
+                    type == typeof(bool) ||
+                    type == typeof(decimal) ||
+                    type == typeof(byte) ||
+                    type == typeof(byte[]) ||
+                    type == typeof(double) ||
+                    type == typeof(float) ||
+                    type == typeof(sbyte) ||
+                    type == typeof(short) ||
+                    type == typeof(uint) ||
+                    type == typeof(ulong) ||
+                    type == typeof(ushort) ||
+                    type == typeof(DateTimeOffset) ||
+                    type == typeof(TimeSpan))
+                {
+                    return true;
+                }
+
+                if (type == typeof(IEnumerable))
+                {
+
+                }
+
+                return false;
+            }
+
+            if (!IsValidType())
+            {
+                //TODO:
+                throw new InvalidOperationException("");
+            }
+
+
+            var valueObjects = new Dictionary<string, ValueObject>();
+            var vo = new ValueObject(config, name, value, type);
+            vo.Initialize();
+            valueObjects.Add(name, vo);
+            var propertyValues = new Dictionary<string, ValueWrapper>();
+            var wrapper = new ValueWrapper
+                               {
+                                   Name = name,
+                                   Value = value,
+                                   Type = type
+                               };
+            propertyValues.Add(name, wrapper);
+
+            var result = new ValueObjectWrapper(propertyValues, valueObjects);
+
+            return result;
+        }
+
     }
 
 
