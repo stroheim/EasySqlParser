@@ -26,6 +26,11 @@ namespace EasySqlParser.Internals.Dialect
 
         internal bool UseOdbcDateFormat { get; set; }
 
+        internal virtual char OpenQuote { get; } = '"';
+
+        internal virtual char CloseQuote { get; } = '"';
+
+
         private readonly Regex _defaultWildcardReplacementPattern;
         private readonly string _defaultReplacement;
 
@@ -402,6 +407,11 @@ namespace EasySqlParser.Internals.Dialect
         public virtual string ToLogFormat(ushort value)
         {
             return value.ToString();
+        }
+
+        public string ApplyQuote(string name)
+        {
+            return $"{OpenQuote}{name}{CloseQuote}";
         }
 
     }

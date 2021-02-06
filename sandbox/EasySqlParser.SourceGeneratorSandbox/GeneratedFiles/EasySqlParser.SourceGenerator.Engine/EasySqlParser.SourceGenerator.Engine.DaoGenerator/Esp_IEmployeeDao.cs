@@ -1,21 +1,36 @@
-﻿using System;
+﻿// Creation time : 2021/01/16 21:09:42.877
+using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using EasySqlParser;
+using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGenerator;
+using EasySqlParser.SqlGenerator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SqlKind = EasySqlParser.SqlGenerator.SqlKind;
 
 #nullable disable
 
 // ReSharper disable once CheckNamespace
 namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 {
-    public class EmployeeDao : IEmployeeDao
+    public interface IEmployeeDaoFuga
     {
-        private readonly ILogger<EmployeeDao> _logger;
+        List<Employee> GetEmployees(SqlCondition condition);
+
+        Employee GetEmployee(int id);
+
+        void Foo(Employee employee, DbTransaction transaction);
+    }
+
+    public class EmployeeDaoFuga:IEmployeeDaoFuga
+    {
+        private readonly ILogger<EmployeeDaoFuga> _logger;
         private readonly DbContext _context;
-        public EmployeeDao(DbContext context, ILogger<EmployeeDao> logger)
+        public EmployeeDaoFuga(DbContext context, ILogger<EmployeeDaoFuga> logger)
         {
             _context = context;
             _logger = logger;
@@ -42,6 +57,19 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
                 parserResult.DbDataParameters.Cast<object>().ToArray()
             )
             .SingleOrDefault();
+        }
+
+        public void Foo(Employee employee, DbTransaction transaction)
+        {
+
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert);
+            var count = _context.Database.ExecuteNonQueryByQueryBuilder(parameter, transaction);
+            Console.WriteLine(count);
+            //var result = _context.Database.GetQueryBuilderResult(parameter);
+            //_logger.LogDebug(result.DebugSql);
+            //_context.Database.ExecuteNonQuerySqlRaw(parameter, result.ParsedSql, result.DbDataParameters, transaction);
+
+            //_context.Database.GetInsertSql(employee, true);
         }
     }
 }

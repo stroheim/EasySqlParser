@@ -15,5 +15,8 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 
         [Query(FilePath = "aaaa.sql")]
         Employee GetEmployee(int id);
+
+        [Update(AutoGenerate = true)]
+        int UpdateEmployee(Employee entity);
     }
 }

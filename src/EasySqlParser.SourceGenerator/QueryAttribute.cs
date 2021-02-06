@@ -4,6 +4,7 @@ using System.Text;
 
 namespace EasySqlParser.SourceGenerator
 {
+    // TODO: DOC
     /// <summary>
     /// Attribute for SELECT sql
     /// </summary>

@@ -43,17 +43,15 @@ namespace EasySqlParser.Configurations
         /// </summary>
         /// <param name="dbConnectionKind">A kind of DB connection</param>
         /// <param name="dbParameterCreator">Delegate for create <see cref="IDbDataParameter"/> instance.</param>
-        /// <param name="sqlFileRootDirectory">Root directory for automatic detection of SQL files</param>
         public static void AddDefault(
             DbConnectionKind dbConnectionKind,
-            Func<IDbDataParameter> dbParameterCreator,
-            string sqlFileRootDirectory = null)
+            Func<IDbDataParameter> dbParameterCreator)
         {
             ValidateParameter(dbConnectionKind, dbParameterCreator);
 
             if (DefaultConfig == null)
             {
-                DefaultConfig = CreateConfig(dbConnectionKind, dbParameterCreator, sqlFileRootDirectory);
+                DefaultConfig = CreateConfig(dbConnectionKind, dbParameterCreator);
             }
 
         }
@@ -64,12 +62,10 @@ namespace EasySqlParser.Configurations
         /// <param name="dbConnectionKind">A kind of DB connection</param>
         /// <param name="dbParameterCreator">Delegate for create <see cref="IDbDataParameter"/> instance.</param>
         /// <param name="configName">A name of configuration</param>
-        /// <param name="sqlFileRootDirectory">Root directory for automatic detection of SQL files</param>
         public static void AddAdditional(
             DbConnectionKind dbConnectionKind,
             Func<IDbDataParameter> dbParameterCreator,
-            string configName,
-            string sqlFileRootDirectory = null)
+            string configName)
         {
             ValidateParameter(dbConnectionKind, dbParameterCreator);
             if (string.IsNullOrEmpty(configName))
@@ -80,7 +76,7 @@ namespace EasySqlParser.Configurations
             if (!AdditionalConfigs.ContainsKey(configName))
             {
                 AdditionalConfigs.Add(configName,
-                    CreateConfig(dbConnectionKind, dbParameterCreator, sqlFileRootDirectory));
+                    CreateConfig(dbConnectionKind, dbParameterCreator));
             }
         }
 
@@ -101,24 +97,13 @@ namespace EasySqlParser.Configurations
 
         private static SqlParserConfig CreateConfig(
             DbConnectionKind dbConnectionKind,
-            Func<IDbDataParameter> dbParameterCreator,
-            string sqlFileRootDirectory = null)
+            Func<IDbDataParameter> dbParameterCreator)
         {
             var config = new SqlParserConfig
                          {
                              DbConnectionKind = dbConnectionKind,
                              DataParameterCreator = dbParameterCreator
                          };
-            if (!string.IsNullOrEmpty(sqlFileRootDirectory))
-            {
-                if (!Directory.Exists(sqlFileRootDirectory))
-                {
-                    // TODO:
-                    throw new InvalidOperationException("directory not exists");
-                }
-                config.AutoDetectSqlFile = true;
-                config.SqlFileRootDirectory = sqlFileRootDirectory;
-            }
             switch (dbConnectionKind)
             {
                 case DbConnectionKind.AS400:

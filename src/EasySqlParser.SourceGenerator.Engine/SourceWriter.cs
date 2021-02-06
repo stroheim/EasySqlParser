@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
@@ -14,6 +16,8 @@ namespace EasySqlParser.SourceGenerator.Engine
         internal string Write(
             InterfaceContext context)
         {
+            _builder.AppendLine($"// Creation time : {DateTime.Now:yyyy/MM/dd HH:mm:ss.fff}");
+
             WriteUsings(context);
 
             _builder.AppendLine();
@@ -187,6 +191,14 @@ namespace EasySqlParser.SourceGenerator.Engine
 
             using (_builder.Indent())
             {
+                // TODO: error
+                if (string.IsNullOrEmpty(methodContext.SqlFilePath))
+                {
+                    _builder.AppendLine("throw new NotImplementedException(\"\");");
+                    //_builder.AppendLine("}");
+                    //return;
+                    goto LBL;
+                }
                 // create sqlparser instance.
                 _builder.Append("var parser = new SqlParser(");
                 _builder.Append($"@\"{methodContext.SqlFilePath}\"");
@@ -213,6 +225,7 @@ namespace EasySqlParser.SourceGenerator.Engine
 
             }
 
+            LBL:
             _builder.AppendLine("}");
         }
 
@@ -270,9 +283,14 @@ namespace EasySqlParser.SourceGenerator.Engine
         {
             if (context.GenerationType != GenerationType.Dapper) return;
             if (methodContext.IsSelectQuery) return;
-            if (methodContext.IsAsync) return;
-            _builder.Append("return _connection.");
-            _builder.Append("Execute(");
+            if (methodContext.IsAsync)
+            {
+                _builder.Append("return await _connection.ExecuteAsync(");
+            }
+            else
+            {
+                _builder.Append("return _connection.Execute(");
+            }
             using (_builder.Indent())
             {
                 _builder.AppendLine("parserResult.ParsedSql,");
@@ -303,6 +321,13 @@ namespace EasySqlParser.SourceGenerator.Engine
             }
             _builder.AppendLine(")");
             _builder.AppendLine($"{terminateMethod};");
+
+        }
+
+        private void WriteEfCoreNonQuery(InterfaceContext context, MethodContext methodContext)
+        {
+            if (context.GenerationType != GenerationType.EntityFrameworkCore) return;
+            if (methodContext.IsSelectQuery) return;
 
         }
     }

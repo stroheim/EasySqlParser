@@ -305,8 +305,7 @@ namespace EasySqlParser.Internals
             return _dialect.ToLogFormatDateOnly(value);
         }
 
-
-        internal string ToLogFormat(object value)
+        internal static string ToLogFormat(StandardDialect dialect, object value)
         {
             if (value == null)
             {
@@ -315,94 +314,196 @@ namespace EasySqlParser.Internals
 
             if (value is string stringValue)
             {
-                return _dialect.ToLogFormat(stringValue);
+                return dialect.ToLogFormat(stringValue);
             }
 
             if (value is DateTime dateTimeValue)
             {
-                return _dialect.ToLogFormat(dateTimeValue);
+                return dialect.ToLogFormat(dateTimeValue);
             }
 
             if (value is int intValue)
             {
-                return _dialect.ToLogFormat(intValue);
+                return dialect.ToLogFormat(intValue);
             }
 
             if (value is long longValue)
             {
-                return _dialect.ToLogFormat(longValue);
+                return dialect.ToLogFormat(longValue);
             }
 
             if (value is bool boolValue)
             {
-                return _dialect.ToLogFormat(boolValue);
+                return dialect.ToLogFormat(boolValue);
             }
 
             if (value is decimal decimalValue)
             {
-                return _dialect.ToLogFormat(decimalValue);
+                return dialect.ToLogFormat(decimalValue);
             }
 
             if (value is byte byteValue)
             {
-                return _dialect.ToLogFormat(byteValue);
+                return dialect.ToLogFormat(byteValue);
             }
 
             if (value is byte[] bytesValue)
             {
-                return _dialect.ToLogFormat(bytesValue);
+                return dialect.ToLogFormat(bytesValue);
             }
 
             if (value is Enum enumValue)
             {
-                return _dialect.ToLogFormat(enumValue);
+                return dialect.ToLogFormat(enumValue);
             }
 
             if (value is double doubleValue)
             {
-                return _dialect.ToLogFormat(doubleValue);
+                return dialect.ToLogFormat(doubleValue);
             }
 
             if (value is float floatValue)
             {
-                return _dialect.ToLogFormat(floatValue);
+                return dialect.ToLogFormat(floatValue);
             }
 
             if (value is sbyte sbyteValue)
             {
-                return _dialect.ToLogFormat(sbyteValue);
+                return dialect.ToLogFormat(sbyteValue);
             }
 
             if (value is short shortValue)
             {
-                return _dialect.ToLogFormat(shortValue);
+                return dialect.ToLogFormat(shortValue);
             }
 
             if (value is uint uintValue)
             {
-                return _dialect.ToLogFormat(uintValue);
+                return dialect.ToLogFormat(uintValue);
             }
 
             if (value is ulong ulongValue)
             {
-                return _dialect.ToLogFormat(ulongValue);
+                return dialect.ToLogFormat(ulongValue);
             }
 
             if (value is ushort ushortValue)
             {
-                return _dialect.ToLogFormat(ushortValue);
+                return dialect.ToLogFormat(ushortValue);
             }
 
             if (value is DateTimeOffset dateTimeOffsetValue)
             {
-                return _dialect.ToLogFormat(dateTimeOffsetValue);
+                return dialect.ToLogFormat(dateTimeOffsetValue);
             }
 
             if (value is TimeSpan timeSpanValue)
             {
-                return _dialect.ToLogFormat(timeSpanValue);
+                return dialect.ToLogFormat(timeSpanValue);
             }
             return value.ToString();
+
+        }
+
+
+        internal string ToLogFormat(object value)
+        {
+            return ToLogFormat(_dialect, value);
+            //if (value == null)
+            //{
+            //    return "null";
+            //}
+
+            //if (value is string stringValue)
+            //{
+            //    return _dialect.ToLogFormat(stringValue);
+            //}
+
+            //if (value is DateTime dateTimeValue)
+            //{
+            //    return _dialect.ToLogFormat(dateTimeValue);
+            //}
+
+            //if (value is int intValue)
+            //{
+            //    return _dialect.ToLogFormat(intValue);
+            //}
+
+            //if (value is long longValue)
+            //{
+            //    return _dialect.ToLogFormat(longValue);
+            //}
+
+            //if (value is bool boolValue)
+            //{
+            //    return _dialect.ToLogFormat(boolValue);
+            //}
+
+            //if (value is decimal decimalValue)
+            //{
+            //    return _dialect.ToLogFormat(decimalValue);
+            //}
+
+            //if (value is byte byteValue)
+            //{
+            //    return _dialect.ToLogFormat(byteValue);
+            //}
+
+            //if (value is byte[] bytesValue)
+            //{
+            //    return _dialect.ToLogFormat(bytesValue);
+            //}
+
+            //if (value is Enum enumValue)
+            //{
+            //    return _dialect.ToLogFormat(enumValue);
+            //}
+
+            //if (value is double doubleValue)
+            //{
+            //    return _dialect.ToLogFormat(doubleValue);
+            //}
+
+            //if (value is float floatValue)
+            //{
+            //    return _dialect.ToLogFormat(floatValue);
+            //}
+
+            //if (value is sbyte sbyteValue)
+            //{
+            //    return _dialect.ToLogFormat(sbyteValue);
+            //}
+
+            //if (value is short shortValue)
+            //{
+            //    return _dialect.ToLogFormat(shortValue);
+            //}
+
+            //if (value is uint uintValue)
+            //{
+            //    return _dialect.ToLogFormat(uintValue);
+            //}
+
+            //if (value is ulong ulongValue)
+            //{
+            //    return _dialect.ToLogFormat(ulongValue);
+            //}
+
+            //if (value is ushort ushortValue)
+            //{
+            //    return _dialect.ToLogFormat(ushortValue);
+            //}
+
+            //if (value is DateTimeOffset dateTimeOffsetValue)
+            //{
+            //    return _dialect.ToLogFormat(dateTimeOffsetValue);
+            //}
+
+            //if (value is TimeSpan timeSpanValue)
+            //{
+            //    return _dialect.ToLogFormat(timeSpanValue);
+            //}
+            //return value.ToString();
         }
 
         internal Dictionary<string, object> DbParameters { get; private set; }

@@ -12,6 +12,10 @@ namespace EasySqlParser.Internals.Dialect
         internal override string ParameterPrefix { get; } = "@";
         internal override bool EnableNamedParameter { get; } = true;
 
+        internal override char OpenQuote { get; } = '`';
+
+        internal override char CloseQuote { get; } = '`';
+
         internal MysqlDialect() :
             base()
         {
