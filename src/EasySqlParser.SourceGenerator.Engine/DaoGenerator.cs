@@ -607,7 +607,7 @@ namespace EasySqlParser.SourceGenerator.Engine
             // ExcludeNull      :false
             // IgnoreVersion    :false
             // UseVersion       :false
-            // SuppressDbUpdateConcurrencyException :false
+            // SuppressOptimisticLockException :false
 
             context.AutoGenerate = true;
             context.UseDbSet = true;
@@ -615,7 +615,7 @@ namespace EasySqlParser.SourceGenerator.Engine
             context.ExcludeNull = false;
             context.IgnoreVersion = false;
             context.UseVersion = false;
-            context.SuppressDbUpdateConcurrencyException = false;
+            context.SuppressOptimisticLockException = false;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
             {
@@ -649,8 +649,8 @@ namespace EasySqlParser.SourceGenerator.Engine
                     case "UseVersion":
                         context.UseVersion = (bool) value;
                         break;
-                    case "SuppressDbUpdateConcurrencyException":
-                        context.SuppressDbUpdateConcurrencyException = (bool) value;
+                    case "SuppressOptimisticLockException":
+                        context.SuppressOptimisticLockException = (bool) value;
                         break;
                 }
             }
@@ -673,13 +673,13 @@ namespace EasySqlParser.SourceGenerator.Engine
 
             // IgnoreVersion    :false
             // UseVersion       :true
-            // SuppressDbUpdateConcurrencyException :false
+            // SuppressOptimisticLockException :false
             context.AutoGenerate = true;
             context.UseDbSet = true;
             context.CommandTimeout = 30;
             context.IgnoreVersion = false;
             context.UseVersion = false;
-            context.SuppressDbUpdateConcurrencyException = false;
+            context.SuppressOptimisticLockException = false;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
             {
@@ -709,8 +709,8 @@ namespace EasySqlParser.SourceGenerator.Engine
                     case "UseVersion":
                         context.UseVersion = (bool)value;
                         break;
-                    case "SuppressDbUpdateConcurrencyException":
-                        context.SuppressDbUpdateConcurrencyException = (bool)value;
+                    case "SuppressOptimisticLockException":
+                        context.SuppressOptimisticLockException = (bool)value;
                         break;
                 }
 

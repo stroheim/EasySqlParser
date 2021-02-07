@@ -14,10 +14,11 @@ namespace EasySqlParser.SqlGenerator
             bool excludeNull = false,
             bool ignoreVersion = false,
             bool useVersion = true,
-            bool suppressDbUpdateConcurrencyException = false,
+            bool suppressOptimisticLockException = false,
             int commandTimeout = 30,
             //bool useDbSet = true,
             bool writeIndented = false,
+            string sqlFile = null,
             string configName = null)
         {
             Entity = entity;
@@ -25,10 +26,11 @@ namespace EasySqlParser.SqlGenerator
             ExcludeNull = excludeNull;
             IgnoreVersion = ignoreVersion;
             UseVersion = useVersion;
-            SuppressDbUpdateConcurrencyException = suppressDbUpdateConcurrencyException;
+            SuppressOptimisticLockException = suppressOptimisticLockException;
             CommandTimeout = commandTimeout;
             //UseDbSet = useDbSet;
             WriteIndented = writeIndented;
+            SqlFile = sqlFile;
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
@@ -46,15 +48,15 @@ namespace EasySqlParser.SqlGenerator
 
         /// <summary>
         /// EfCoreが想定しているRowVersion型など特殊なものではなく、longなど一般的な型を使って楽観排他を行う
-        /// 更新件数が0件の場合は `DbUpdateConcurrencyException` をスローする
+        /// 更新件数が0件の場合は `OptimisticLockException` をスローする
         /// </summary>
         public bool UseVersion { get; }
 
         /// <summary>
         /// VersionNoを更新条件に含める
-        /// 更新件数0件でも `DbUpdateConcurrencyException` をスローしない
+        /// 更新件数0件でも `OptimisticLockException` をスローしない
         /// </summary>
-        public bool SuppressDbUpdateConcurrencyException { get; }
+        public bool SuppressOptimisticLockException { get; }
 
         public SqlKind SqlKind { get; }
 
@@ -68,6 +70,8 @@ namespace EasySqlParser.SqlGenerator
         /// 改行およびインデントを行うかどうか
         /// </summary>
         public bool WriteIndented { get; }
+
+        public string SqlFile { get; }
 
         internal PropertyInfo VersionPropertyInfo { get; set; }
 

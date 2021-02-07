@@ -74,6 +74,9 @@ namespace EasySqlParser.Internals.Helpers
                 case ExceptionMessageId.Esp2201:
                     return string.Format(MessageFormat.Esp2201);
 
+                case ExceptionMessageId.Esp2003:
+                    return string.Format(MessageFormat.Esp2003, args);
+
                 #region ExpressionEvaluateException
                 case ExceptionMessageId.EspA001:
                     return string.Format(MessageFormat.EspA001, args);
@@ -311,7 +314,10 @@ namespace EasySqlParser.Internals.Helpers
 
             #endregion
 
-            internal const string Esp2201= "The original SQL statement must have an \"ORDER BY\" clause to translate the statement for pagination.";
+            internal const string Esp2201 =
+                "The original SQL statement must have an \"ORDER BY\" clause to translate the statement for pagination.";
+
+            internal const string Esp2003 = "The SQL execution is failed because of optimistic locking. PATH=[{0}] SQL=[{1}]";
 
             #region ExpressionEvaluateException
 

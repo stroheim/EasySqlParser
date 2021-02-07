@@ -19,11 +19,6 @@ namespace EasySqlParser.SqlGenerator
         private readonly Dictionary<string, IDbDataParameter> _sqlParameters =
             new Dictionary<string, IDbDataParameter>();
 
-        public QueryStringBuilder(SqlParserConfig config)
-        {
-            _config = config;
-            _writeIndented = true;
-        }
 
         public QueryStringBuilder(SqlParserConfig config, bool writeIndented)
         {
@@ -141,36 +136,32 @@ namespace EasySqlParser.SqlGenerator
         public void AppendVersion<T>(QueryBuilderParameter<T> parameter, PropertyInfo property)
         {
             var versionAttr = property.GetCustomAttribute<VersionAttribute>();
-            if (versionAttr != null)
+            if (versionAttr == null) return;
+            if (!parameter.IgnoreVersion)
             {
-                if (!parameter.IgnoreVersion)
-                {
-                    AppendSql(" + 1 ");
-                }
-                else
-                {
-                    AppendSql(" ");
-                }
-
-                parameter.VersionPropertyInfo = property;
+                AppendSql(" + 1 ");
             }
+            else
+            {
+                AppendSql(" ");
+            }
+
+            parameter.VersionPropertyInfo = property;
         }
 
         public void AppendVersion<T>(QueryBuilderParameter<T> parameter, EntityColumnInfo columnInfo)
         {
-            if (columnInfo.IsVersion)
+            if (!columnInfo.IsVersion) return;
+            if (!parameter.IgnoreVersion)
             {
-                if (!parameter.IgnoreVersion)
-                {
-                    AppendSql(" + 1 ");
-                }
-                else
-                {
-                    AppendSql(" ");
-
-                }
-                parameter.VersionPropertyInfo = columnInfo.PropertyInfo;
+                AppendSql(" + 1 ");
             }
+            else
+            {
+                AppendSql(" ");
+
+            }
+            parameter.VersionPropertyInfo = columnInfo.PropertyInfo;
 
         }
 

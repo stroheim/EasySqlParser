@@ -143,6 +143,11 @@
         /// </summary>
         Esp2201,
 
+        /// <summary>
+        /// The SQL execution is failed because of optimistic locking. PATH=[{0}] SQL=[{1}]
+        /// </summary>
+        Esp2003,
+
         #region SqlBuildException
         /// <summary>
         /// Failed to build the SQL on line {1} at column {2}.

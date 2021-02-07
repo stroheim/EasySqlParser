@@ -109,7 +109,7 @@ namespace EasySqlParser.SourceGenerator.Engine
 
         internal bool UseVersion { get; set; }
 
-        internal bool SuppressDbUpdateConcurrencyException { get; set; }
+        internal bool SuppressOptimisticLockException { get; set; }
     }
 
     internal class ParameterContext

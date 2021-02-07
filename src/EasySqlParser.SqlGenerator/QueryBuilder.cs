@@ -9,8 +9,24 @@ namespace EasySqlParser.SqlGenerator
 {
     public class QueryBuilder<T>
     {
+        public static QueryBuilderResult GetQueryBuilderResultFromSqlFile(QueryBuilderParameter<T> parameter)
+        {
+            var parser = new SqlParser(parameter.SqlFile, parameter.Entity, parameter.Config);
+            var parserResult = parser.Parse();
+            return new QueryBuilderResult
+                   {
+                       ParsedSql = parserResult.ParsedSql,
+                       DebugSql = parserResult.DebugSql,
+                       DbDataParameters = parserResult.DbDataParameters
+                   };
+        }
+
         public static QueryBuilderResult GetQueryBuilderResult(QueryBuilderParameter<T> parameter)
         {
+            if (!string.IsNullOrEmpty(parameter.SqlFile))
+            {
+                return GetQueryBuilderResultFromSqlFile(parameter);
+            }
             switch (parameter.SqlKind)
             {
                 case SqlKind.Insert:
@@ -100,13 +116,12 @@ namespace EasySqlParser.SqlGenerator
             foreach (var columnInfo in entityInfo.Columns)
             {
                 if (columnInfo.IsPrimaryKey) continue;
-                builder.AppendComma(counter);
-
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
                 if (parameter.ExcludeNull && propValue == null)
                 {
                     continue;
                 }
+                builder.AppendComma(counter);
 
                 var columnName = config.GetQuotedName(columnInfo.ColumnName);
                 builder.AppendSql(columnName);

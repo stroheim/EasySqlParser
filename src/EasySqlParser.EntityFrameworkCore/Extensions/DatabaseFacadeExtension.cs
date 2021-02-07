@@ -35,27 +35,31 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this DatabaseFacade database,
             string sql,
             IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
             return InternalExecuteScalar<TResult, TResult>(
                 database, 
                 null, 
                 sql, 
                 parameters, 
-                transaction);
+                transaction,
+                loggerAction);
         }
 
         public static TResult ExecuteScalarByQueryBuilder<TResult, T>(
             this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
             return InternalExecuteScalar<TResult, T>(
                 database, 
                 builderParameter, 
                 null, 
                 null, 
-                transaction);
+                transaction,
+                loggerAction);
         }
 
         private static TResult InternalExecuteScalar<TResult, T>(
@@ -63,7 +67,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             QueryBuilderParameter<T> builderParameter = null,
             string sql = null,
             IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
@@ -79,6 +84,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            IDbContextTransaction dbContextTransaction = null;
+            if (transaction == null)
+            {
+                dbContextTransaction = database.BeginTransaction();
+            }
+
             if (transaction != null)
             {
                 database.UseTransaction(transaction);
@@ -86,14 +98,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject(
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
                     database, facadeDependencies, facade,
-                    builderParameter, sql, parameters);
-
+                    builderParameter, sql, parameters, loggerAction);
                 var rawScalar = command
                     .ExecuteScalar(parameterObject);
                 if (rawScalar is TResult scalar)
                 {
+                    dbContextTransaction?.Commit();
                     return scalar;
                 }
 
@@ -110,19 +122,23 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string sql,
             IEnumerable<object> parameters = null,
             DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             return await InternalExecuteScalarAsync<TResult, TResult>(database, null, sql, parameters, transaction,
+                loggerAction,
                 cancellationToken);
         }
 
         public static async Task<TResult> ExecuteScalarByQueryBuilderAsync<TResult, T>(
-            this DatabaseFacade database, 
+            this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
-            DbTransaction transaction=null,
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             return await InternalExecuteScalarAsync<TResult, T>(database, builderParameter, null, null, transaction,
+                loggerAction,
                 cancellationToken);
         }
 
@@ -132,6 +148,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string sql = null,
             IEnumerable<object> parameters = null,
             DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
@@ -146,6 +163,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 database.SetCommandTimeout(builderParameter.CommandTimeout);
             }
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            IDbContextTransaction dbContextTransaction = null;
+            if (transaction == null)
+            {
+                dbContextTransaction = await database.BeginTransactionAsync(cancellationToken);
+            }
+
             if (transaction != null)
             {
                 await database.UseTransactionAsync(transaction, cancellationToken);
@@ -153,13 +177,17 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject(database, facadeDependencies, facade,
-                    builderParameter, sql, parameters);
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade,
+                    builderParameter, sql, parameters, loggerAction);
                 var rawScalar = await command
                     .ExecuteScalarAsync(parameterObject,
                         cancellationToken);
                 if (rawScalar is TResult scalar)
                 {
+                    if (dbContextTransaction != null)
+                    {
+                        await dbContextTransaction.CommitAsync(cancellationToken);
+                    }
                     return scalar;
                 }
                 // TODO: type error
@@ -173,6 +201,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static QueryBuilderResult GetQueryBuilderResult<T>(this DatabaseFacade database,
             QueryBuilderParameter<T> parameter)
         {
+            if (!string.IsNullOrEmpty(parameter.SqlFile))
+            {
+                return QueryBuilder<T>.GetQueryBuilderResultFromSqlFile(parameter);
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             switch (parameter.SqlKind)
             {
@@ -188,17 +220,19 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
-        private static (IRelationalCommand command, RelationalCommandParameterObject parameterObject)
+        private static (IRelationalCommand command, RelationalCommandParameterObject parameterObject, string debugSql)
             CreateRelationalParameterObject<T>(
                 DatabaseFacade database,
                 IRelationalDatabaseFacadeDependencies facadeDependencies,
                 IDatabaseFacadeDependenciesAccessor facade,
                 QueryBuilderParameter<T> builderParameter = null,
                 string sql = null,
-                IEnumerable<object> parameters = null)
+                IEnumerable<object> parameters = null,
+                Action<string> loggerAction = null)
         {
             IRelationalCommand command = null;
             IReadOnlyDictionary<string, object> parameterValues = null;
+            string debugSql = null;
             // null check
             if (builderParameter == null && sql == null)
             {
@@ -221,11 +255,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     parameterValues = rawSqlCommand.ParameterValues;
                 }
 
+                loggerAction?.Invoke(sql);
                 facadeDependencies.CommandLogger.Logger.LogDebug(sql);
                 if (parameterValues != null)
                 {
                     foreach (var parameterValue in parameterValues)
                     {
+                        loggerAction?.Invoke($"{parameterValue.Key}:{parameterValue.Value}");
                         facadeDependencies.CommandLogger.Logger.LogDebug(
                             $"{parameterValue.Key}:{parameterValue.Value}");
                     }
@@ -248,6 +284,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     parameterValues = rawSqlCommand.ParameterValues;
                 }
 
+                debugSql = builderResult.DebugSql;
+                loggerAction?.Invoke(builderResult.DebugSql);
                 facadeDependencies.CommandLogger.Logger.LogDebug(builderResult.DebugSql);
             }
 
@@ -256,23 +294,26 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 parameterValues,
                 null,
                 facade.Context,
-                facadeDependencies.CommandLogger));
+                facadeDependencies.CommandLogger), debugSql);
 
         }
 
-        private static void ThrowIfDbUpdateConcurrencyException<T>(
+        private static void ThrowIfOptimisticLockException<T>(
             QueryBuilderParameter<T> parameter,
             int affectedCount,
+            string parsedSql,
+            string debugSql,
             DbTransaction transaction = null,
             IDbContextTransaction dbContextTransaction = null)
         {
             if ((parameter.SqlKind == SqlKind.Update || parameter.SqlKind == SqlKind.Delete) &&
-                parameter.UseVersion && !parameter.SuppressDbUpdateConcurrencyException
+                parameter.UseVersion && !parameter.SuppressOptimisticLockException
                 && affectedCount == 0)
             {
                 transaction?.Rollback();
                 dbContextTransaction?.Rollback();
-                throw new DbUpdateConcurrencyException(RelationalStrings.UpdateConcurrencyException(1, 0));
+                //throw new DbUpdateConcurrencyException(RelationalStrings.UpdateConcurrencyException(1, 0));
+                throw new OptimisticLockException(parsedSql, debugSql, parameter.SqlFile);
             }
         }
 
@@ -280,20 +321,23 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #region ExecuteNonQuerySqlRaw
 
+
         public static int ExecuteNonQueryBySqlRaw(
             this DatabaseFacade database,
             string sql,
             IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
-            return InternalExecuteNonQuery<object>(database, null, sql, parameters, transaction);
+            return InternalExecuteNonQuery<object>(database, null, sql, parameters, transaction, loggerAction);
         }
 
         public static int ExecuteNonQueryByQueryBuilder<T>(this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
-            return InternalExecuteNonQuery(database, builderParameter, null, null, transaction);
+            return InternalExecuteNonQuery(database, builderParameter, null, null, transaction, loggerAction);
         }
 
         private static int InternalExecuteNonQuery<T>(
@@ -301,7 +345,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             QueryBuilderParameter<T> builderParameter = null,
             string sql = null,
             IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
@@ -330,13 +375,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
-                    parameters);
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
+                    parameters, loggerAction);
                 var affectedCount = command
                     .ExecuteNonQuery(parameterObject);
                 if (builderParameter != null)
                 {
-                    ThrowIfDbUpdateConcurrencyException(builderParameter, affectedCount, transaction, dbContextTransaction);
+                    ThrowIfOptimisticLockException(builderParameter, affectedCount, command.CommandText, debugSql,
+                        transaction, dbContextTransaction);
                 }
 
                 dbContextTransaction?.Commit();
@@ -355,9 +401,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string sql = null,
             IEnumerable<object> parameters = null,
             DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             return await InternalExecuteNonQueryAsync<object>(database, null, sql, parameters, transaction,
+                loggerAction,
                 cancellationToken);
         }
 
@@ -365,9 +413,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
             DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
-            return await InternalExecuteNonQueryAsync(database, builderParameter, null, null, transaction, cancellationToken);
+            return await InternalExecuteNonQueryAsync(database, builderParameter, null, null, transaction, loggerAction,
+                cancellationToken);
 
         }
 
@@ -377,6 +427,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string sql = null,
             IEnumerable<object> parameters = null,
             DbTransaction transaction = null,
+            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
@@ -406,13 +457,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
-                    parameters);
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
+                    parameters, loggerAction);
                 var affectedCount = await command
                     .ExecuteNonQueryAsync(parameterObject, cancellationToken);
                 if (builderParameter != null)
                 {
-                    ThrowIfDbUpdateConcurrencyException(builderParameter, affectedCount, transaction, dbContextTransaction);
+                    ThrowIfOptimisticLockException(builderParameter, affectedCount, command.CommandText, debugSql,
+                        transaction, dbContextTransaction);
                 }
 
                 if (dbContextTransaction != null)
@@ -464,7 +516,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject<object>(database, facadeDependencies,
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies,
                     facade, null, sql,
                     parameters);
                 using var relationalDataReader = command
@@ -510,7 +562,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
                     parameters);
                 using (var relationalDataReader =
                     await command.ExecuteReaderAsync(parameterObject, cancellationToken))
@@ -594,7 +646,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             var maps = Cache<T>.ColumnMaps;
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
                     parameters);
                 using (var relationalDataReader = await command
                     .ExecuteReaderAsync(parameterObject, cancellationToken))
