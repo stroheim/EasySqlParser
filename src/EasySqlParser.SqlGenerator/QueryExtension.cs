@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -88,6 +90,59 @@ namespace EasySqlParser.SqlGenerator
                 transaction.Rollback();
                 throw new OptimisticLockException(builderResult.ParsedSql, builderResult.DebugSql, parameter.SqlFile);
             }
+        }
+
+        internal static T ExecuteReaderByQueryBuilder<T>(this DbConnection connection,
+            QueryBuilderParameter<T> builderParameter,
+            Expression<Func<T, bool>> predicate,
+            Action<string> loggerAction = null)
+        {
+            var visitor = new PredicateVisitor();
+            var keyValues = visitor.GetKeyValues(predicate);
+            return ExecuteReaderByQueryBuilder(connection, builderParameter, keyValues, loggerAction: loggerAction);
+        }
+
+        internal static T ExecuteReaderByQueryBuilder<T>(this DbConnection connection,
+            QueryBuilderParameter<T> builderParameter,
+            Dictionary<string, object> keyValues,
+            DbTransaction transaction = null,
+            Action<string> loggerAction = null)
+        {
+            //DbTransaction localTransaction = null;
+            //if (transaction == null)
+            //{
+            //    localTransaction = connection.BeginTransaction();
+            //}
+
+            var (builderResult, entityInfo) = QueryBuilder<T>.GetSelectSql(builderParameter, keyValues);
+            loggerAction?.Invoke(builderResult.DebugSql);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = builderResult.ParsedSql;
+                command.Parameters.Clear();
+                command.Parameters.AddRange(builderResult.DbDataParameters.ToArray());
+                if (transaction != null)
+                {
+                    command.Transaction = transaction;
+                }
+
+                command.CommandTimeout = builderParameter.CommandTimeout;
+                var reader = command.ExecuteReader();
+                reader.Read();
+                var instance = Activator.CreateInstance<T>();
+                foreach (var columnInfo in entityInfo.Columns)
+                {
+                    var col = reader.GetOrdinal(columnInfo.ColumnName);
+                    if (!reader.IsDBNull(col))
+                    {
+                        columnInfo.PropertyInfo.SetValue(instance, reader.GetValue(col));
+                    }
+                }
+                //localTransaction?.Commit();
+                return instance;
+
+            }
+
         }
     }
 }

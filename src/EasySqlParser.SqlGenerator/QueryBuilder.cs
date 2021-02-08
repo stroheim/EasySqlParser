@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq.Expressions;
 using System.Reflection;
 using EasySqlParser.Extensions;
 
@@ -197,6 +198,71 @@ namespace EasySqlParser.SqlGenerator
             }
 
             return builder.GetResult();
+        }
+
+
+        internal static (QueryBuilderResult builderResult, EntityTypeInfo entityInfo) GetSelectSql(
+            QueryBuilderParameter<T> parameter,
+            Dictionary<string, object> keyValues)
+        {
+            var entityInfo = Cache<T>.EntityTypeInfo;
+            var config = parameter.Config;
+            if (entityInfo.KeyColumns.Count == 0)
+            {
+                // pkがなければupdateできない
+                throw new InvalidOperationException("");
+            }
+
+            var builder = new QueryStringBuilder(config, parameter.WriteIndented);
+            builder.AppendSql("SELECT ");
+            var counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                builder.AppendComma(counter);
+                builder.AppendLine(config.GetQuotedName(columnInfo.ColumnName));
+
+                counter++;
+
+            }
+
+            builder.AppendLine(" FROM ");
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+
+            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendLine(" WHERE ");
+            counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                if (!columnInfo.IsPrimaryKey) continue;
+                builder.AppendComma(counter);
+                object propValue = null;
+                if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
+                {
+                    propValue = keyValues[columnInfo.PropertyInfo.Name];
+                }
+
+                var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                builder.AppendSql(columnName);
+                if (propValue == null)
+                {
+                    builder.AppendSql(" IS NULL ");
+                }
+                else
+                {
+                    builder.AppendSql(" = ");
+                    builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                }
+
+                builder.AppendLine();
+
+                counter++;
+            }
+
+            return (builder.GetResult(), entityInfo);
         }
 
         // generic type cache
