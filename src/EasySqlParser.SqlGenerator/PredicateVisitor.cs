@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace EasySqlParser.SqlGenerator
 {
@@ -18,6 +20,7 @@ namespace EasySqlParser.SqlGenerator
             _names = new Stack<string>();
             _values = new Stack<object>();
         }
+
 
         public Dictionary<string, object> GetKeyValues(LambdaExpression predicate)
         {
@@ -40,19 +43,65 @@ namespace EasySqlParser.SqlGenerator
 
         protected override Expression VisitMember(MemberExpression node)
         {
-            _names.Push(node.Member.Name);
             if (node.Expression.NodeType == ExpressionType.Constant ||
                 node.Expression.NodeType == ExpressionType.MemberAccess)
             {
+                _names.Push(node.Member.Name);
                 Visit(node.Expression);
             }
+            else
+            {
+                _names.Push(node.Member.Name);
+            }
+
             return node;
         }
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            _values.Push(node.Value);
+            _values.Push(GetValue(node.Value));
             return node;
+        }
+
+
+        private object GetValue(object input)
+        {
+            var type = input.GetType();
+            if (type.IsClass && type != typeof(string)
+                             && type != typeof(int)
+                             && type != typeof(long)
+                             && type != typeof(decimal)
+                             && type != typeof(byte)
+                             && type != typeof(byte[])
+                             && type != typeof(float)
+                             && type != typeof(double)
+                             && type != typeof(sbyte)
+                             && type != typeof(short)
+                             && type != typeof(uint)
+                             && type != typeof(ulong)
+                             && type != typeof(ushort)
+                             && type != typeof(DateTime)
+                             && type != typeof(DateTimeOffset)
+                             && type != typeof(TimeSpan))
+            {
+                var name = _names.Pop();
+                var fieldInfo = type.GetField(name);
+                object value;
+                if (fieldInfo != null)
+                {
+                    value = fieldInfo.GetValue(input);
+                }
+                else
+                {
+                    value = type.GetProperty(name)?.GetValue(input);
+                }
+
+                return GetValue(value);
+            }
+            else
+            {
+                return input;
+            }
         }
 
     }

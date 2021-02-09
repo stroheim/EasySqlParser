@@ -53,8 +53,14 @@ namespace EasySqlParser.SqlGenerator.Tests
             using var connection = Fixture.Connection;
             var affected = connection.ExecuteNonQueryByQueryBuilder(parameter, loggerAction: _output.WriteLine);
             affected.Is(1);
-            //var keyValues = new Dictionary<string, object> {{nameof(Employee.Id), employee.Id}};
-            //var instance = connection.ExecuteReaderByQueryBuilder(parameter, keyValues, loggerAction: _output.WriteLine);
+            //Expression<Func<Employee, bool>> predicate = (x) => x.Id == employee.Id && x.VersionNo == 1L;
+            //var visitor = new PredicateVisitor();
+            //var keyValues = visitor.GetKeyValues(predicate);
+            //keyValues.Count.IsNot(0);
+            //foreach (var keyValue in keyValues)
+            //{
+            //    _output.WriteLine($"{keyValue.Key}\t{keyValue.Value}");
+            //}
             var instance = connection.ExecuteReaderByQueryBuilder(parameter, (x) => x.Id == employee.Id, _output.WriteLine);
             instance.Name.IsNull();
         }
