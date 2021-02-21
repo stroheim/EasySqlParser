@@ -4,13 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -31,44 +29,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         #region ExecuteScalarSqlRaw
 
 
-        public static TResult ExecuteScalarBySqlRaw<TResult>(
-            this DatabaseFacade database,
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
-        {
-            return InternalExecuteScalar<TResult, TResult>(
-                database, 
-                null, 
-                sql, 
-                parameters, 
-                transaction,
-                loggerAction);
-        }
-
-        public static TResult ExecuteScalarByQueryBuilder<TResult, T>(
+        public static TResult ExecuteScalarByQueryBuilder<T, TResult>(
             this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
-        {
-            return InternalExecuteScalar<TResult, T>(
-                database, 
-                builderParameter, 
-                null, 
-                null, 
-                transaction,
-                loggerAction);
-        }
-
-        private static TResult InternalExecuteScalar<TResult, T>(
-            DatabaseFacade database,
-            QueryBuilderParameter<T> builderParameter = null,
-            string sql = null,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
+            DbTransaction transaction = null)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
@@ -100,7 +64,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             {
                 var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
                     database, facadeDependencies, facade,
-                    builderParameter, sql, parameters, loggerAction);
+                    builderParameter);
                 var rawScalar = command
                     .ExecuteScalar(parameterObject);
                 if (rawScalar is TResult scalar)
@@ -117,38 +81,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         }
 
 
-        public static async Task<TResult> ExecuteScalarBySqlRawAsync<TResult>(
-            this DatabaseFacade database,
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InternalExecuteScalarAsync<TResult, TResult>(database, null, sql, parameters, transaction,
-                loggerAction,
-                cancellationToken);
-        }
 
-        public static async Task<TResult> ExecuteScalarByQueryBuilderAsync<TResult, T>(
+        public static async Task<TResult> ExecuteScalarByQueryBuilderAsync<T, TResult>(
             this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
             DbTransaction transaction = null,
-            Action<string> loggerAction = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InternalExecuteScalarAsync<TResult, T>(database, builderParameter, null, null, transaction,
-                loggerAction,
-                cancellationToken);
-        }
-
-        private static async Task<TResult> InternalExecuteScalarAsync<TResult, T>(
-            DatabaseFacade database,
-            QueryBuilderParameter<T> builderParameter = null,
-            string sql = null,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
@@ -178,7 +115,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             using (concurrentDetector.EnterCriticalSection())
             {
                 var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade,
-                    builderParameter, sql, parameters, loggerAction);
+                    builderParameter);
                 var rawScalar = await command
                     .ExecuteScalarAsync(parameterObject,
                         cancellationToken);
@@ -198,7 +135,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         }
         #endregion
 
-        public static QueryBuilderResult GetQueryBuilderResult<T>(this DatabaseFacade database,
+        public static QueryBuilderResult GetQueryBuilderResult<T>(
+            this DatabaseFacade database,
             QueryBuilderParameter<T> parameter)
         {
             if (!string.IsNullOrEmpty(parameter.SqlFile))
@@ -225,69 +163,34 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 DatabaseFacade database,
                 IRelationalDatabaseFacadeDependencies facadeDependencies,
                 IDatabaseFacadeDependenciesAccessor facade,
-                QueryBuilderParameter<T> builderParameter = null,
-                string sql = null,
-                IEnumerable<object> parameters = null,
-                Action<string> loggerAction = null)
+                QueryBuilderParameter<T> builderParameter)
         {
-            IRelationalCommand command = null;
+            IRelationalCommand command;
             IReadOnlyDictionary<string, object> parameterValues = null;
-            string debugSql = null;
             // null check
-            if (builderParameter == null && sql == null)
+            if (builderParameter == null)
             {
                 //TODO:
                 throw new InvalidOperationException("");
             }
 
-            if (sql != null)
+            var builderResult = GetQueryBuilderResult(database, builderParameter);
+            if (builderResult.DbDataParameters.Count == 0)
             {
-                if (parameters == null)
-                {
-                    command = facadeDependencies.RawSqlCommandBuilder.Build(sql);
-                }
-                else
-                {
-                    var rawSqlCommand = facadeDependencies
-                        .RawSqlCommandBuilder
-                        .Build(sql, parameters);
-                    command = rawSqlCommand.RelationalCommand;
-                    parameterValues = rawSqlCommand.ParameterValues;
-                }
-
-                loggerAction?.Invoke(sql);
-                facadeDependencies.CommandLogger.Logger.LogDebug(sql);
-                if (parameterValues != null)
-                {
-                    foreach (var parameterValue in parameterValues)
-                    {
-                        loggerAction?.Invoke($"{parameterValue.Key}:{parameterValue.Value}");
-                        facadeDependencies.CommandLogger.Logger.LogDebug(
-                            $"{parameterValue.Key}:{parameterValue.Value}");
-                    }
-                }
+                command = facadeDependencies.RawSqlCommandBuilder.Build(builderResult.ParsedSql);
+            }
+            else
+            {
+                var rawSqlCommand = facadeDependencies
+                    .RawSqlCommandBuilder
+                    .Build(builderResult.ParsedSql, builderResult.DbDataParameters.Cast<object>().ToArray());
+                command = rawSqlCommand.RelationalCommand;
+                parameterValues = rawSqlCommand.ParameterValues;
             }
 
-            if (builderParameter != null)
-            {
-                var builderResult = GetQueryBuilderResult(database, builderParameter);
-                if (builderResult.DbDataParameters.Count == 0)
-                {
-                    command = facadeDependencies.RawSqlCommandBuilder.Build(builderResult.ParsedSql);
-                }
-                else
-                {
-                    var rawSqlCommand = facadeDependencies
-                        .RawSqlCommandBuilder
-                        .Build(builderResult.ParsedSql, builderResult.DbDataParameters.Cast<object>().ToArray());
-                    command = rawSqlCommand.RelationalCommand;
-                    parameterValues = rawSqlCommand.ParameterValues;
-                }
-
-                debugSql = builderResult.DebugSql;
-                loggerAction?.Invoke(builderResult.DebugSql);
-                facadeDependencies.CommandLogger.Logger.LogDebug(builderResult.DebugSql);
-            }
+            var debugSql = builderResult.DebugSql;
+            builderParameter.WriteLog(debugSql);
+            facadeDependencies.CommandLogger.Logger.LogDebug(debugSql);
 
             return (command, new RelationalCommandParameterObject(
                 facadeDependencies.RelationalConnection,
@@ -300,6 +203,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         private static void ThrowIfOptimisticLockException<T>(
             QueryBuilderParameter<T> parameter,
+            // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
             int affectedCount,
             string parsedSql,
             string debugSql,
@@ -322,31 +226,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         #region ExecuteNonQuerySqlRaw
 
 
-        public static int ExecuteNonQueryBySqlRaw(
+        public static int ExecuteNonQueryByQueryBuilder<T>(
             this DatabaseFacade database,
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
-        {
-            return InternalExecuteNonQuery<object>(database, null, sql, parameters, transaction, loggerAction);
-        }
-
-        public static int ExecuteNonQueryByQueryBuilder<T>(this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
-        {
-            return InternalExecuteNonQuery(database, builderParameter, null, null, transaction, loggerAction);
-        }
-
-        private static int InternalExecuteNonQuery<T>(
-            DatabaseFacade database,
-            QueryBuilderParameter<T> builderParameter = null,
-            string sql = null,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null)
+            DbTransaction transaction = null)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
@@ -375,8 +258,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
-                    parameters, loggerAction);
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
+                    database, facadeDependencies, facade, builderParameter);
                 var affectedCount = command
                     .ExecuteNonQuery(parameterObject);
                 if (builderParameter != null)
@@ -396,38 +279,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
-        public static async Task<int> ExecuteNonQuerySqlRawAsync(
-            this DatabaseFacade database,
-            string sql = null,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InternalExecuteNonQueryAsync<object>(database, null, sql, parameters, transaction,
-                loggerAction,
-                cancellationToken);
-        }
-
+ 
         public static async Task<int> ExecuteNonQueryByQueryBuilderAsync<T>(
             this DatabaseFacade database,
             QueryBuilderParameter<T> builderParameter,
             DbTransaction transaction = null,
-            Action<string> loggerAction = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InternalExecuteNonQueryAsync(database, builderParameter, null, null, transaction, loggerAction,
-                cancellationToken);
-
-        }
-
-        private static async Task<int> InternalExecuteNonQueryAsync<T>(
-            DatabaseFacade database,
-            QueryBuilderParameter<T> builderParameter = null,
-            string sql = null,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            Action<string> loggerAction = null,
             CancellationToken cancellationToken = default)
         {
             var facade = database as IDatabaseFacadeDependenciesAccessor;
@@ -457,8 +313,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             using (concurrentDetector.EnterCriticalSection())
             {
-                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(database, facadeDependencies, facade, builderParameter, sql,
-                    parameters, loggerAction);
+                var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
+                    database, facadeDependencies, facade, builderParameter);
                 var affectedCount = await command
                     .ExecuteNonQueryAsync(parameterObject, cancellationToken);
                 if (builderParameter != null)
@@ -485,190 +341,276 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #region ExecuteReaderSqlRaw
 
-        /// <summary>
-        /// データ取得
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="database"></param>
-        /// <param name="sql"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public static IEnumerable<T> ExecuteReaderSqlRaw<T>(
-            this DatabaseFacade database,
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
-        {
-            var facade = database as IDatabaseFacadeDependenciesAccessor;
-            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
-            if (facadeDependencies == null)
-            {
-                yield break;
-            }
+        //public static IEnumerable<T> ExecuteReaderSqlRaw<T>(
+        //    this DatabaseFacade database,
+        //    QueryBuilderParameter<T> builderParameter,
+        //    DbTransaction transaction = null,
+        //    Action<string> loggerAction = null)
+        //{
+        //    var facade = database as IDatabaseFacadeDependenciesAccessor;
+        //    var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+        //    if (facadeDependencies == null)
+        //    {
+        //        yield return default;
+        //        yield break;
+        //    }
 
-            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
-            if (transaction != null)
-            {
-                database.UseTransaction(transaction);
-            }
+        //    if (builderParameter != null)
+        //    {
+        //        database.SetCommandTimeout(builderParameter.CommandTimeout);
+        //    }
 
-            var maps = Cache<T>.ColumnMaps;
+        //    var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
-            using (concurrentDetector.EnterCriticalSection())
-            {
-                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies,
-                    facade, null, sql,
-                    parameters);
-                using var relationalDataReader = command
-                    .ExecuteReader(parameterObject);
-                var reader = relationalDataReader.DbDataReader;
-                if (!reader.HasRows) yield break;
-                while (reader.Read())
-                {
-                    var instance = Activator.CreateInstance<T>();
-                    foreach (var map in maps)
-                    {
-                        var col = reader.GetOrdinal(map.Value.columnName);
-                        if (!reader.IsDBNull(col))
-                        {
-                            map.Value.property.SetValue(instance, reader.GetValue(col));
-                        }
-                    }
+        //    IDbContextTransaction dbContextTransaction = null;
+        //    if (transaction == null)
+        //    {
+        //        dbContextTransaction = database.BeginTransaction();
+        //    }
 
-                    yield return instance;
-                }
-            }
-        }
+        //    if (transaction != null)
+        //    {
+        //        database.UseTransaction(transaction);
+        //    }
+        //    var maps = Cache<T>.ColumnMaps;
+        //    using (concurrentDetector.EnterCriticalSection())
+        //    {
+        //        var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
+        //            database, facadeDependencies, facade, builderParameter, loggerAction);
+        //        using var relationalDataReader = command.ExecuteReader(parameterObject);
+        //        var reader = relationalDataReader.DbDataReader;
+        //        if (!reader.HasRows)
+        //        {
+        //            reader.Close();
+        //            reader.Dispose();
+        //            yield break;
+        //        }
 
-        public static async IAsyncEnumerable<T> ExecuteReaderSqlRawAsync<T>(
-            this DatabaseFacade database, 
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null,
-            [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var facade = database as IDatabaseFacadeDependenciesAccessor;
-            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
-            if (facadeDependencies == null)
-            {
-                yield break;
-            }
-            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
-            if (transaction != null)
-            {
-                await database.UseTransactionAsync(transaction, cancellationToken);
-            }
-            var maps = Cache<T>.ColumnMaps;
+        //        while (reader.Read())
+        //        {
+        //            var instance = Activator.CreateInstance<T>();
+        //            foreach (var map in maps)
+        //            {
+        //                var col = reader.GetOrdinal(map.Value.columnName);
+        //                if (!reader.IsDBNull(col))
+        //                {
+        //                    map.Value.property.SetValue(instance, reader.GetValue(col));
+        //                }
+        //            }
 
-            using (concurrentDetector.EnterCriticalSection())
-            {
-                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
-                    parameters);
-                using (var relationalDataReader =
-                    await command.ExecuteReaderAsync(parameterObject, cancellationToken))
-                {
-                    var reader = relationalDataReader.DbDataReader;
-                    if (!reader.HasRows) yield break;
-                    while (await reader.ReadAsync(cancellationToken))
-                    {
-                        var instance = Activator.CreateInstance<T>();
-                        foreach (var map in maps)
-                        {
-                            var col = reader.GetOrdinal(map.Value.columnName);
-                            if (!await reader.IsDBNullAsync(col, cancellationToken))
-                            {
-                                map.Value.property.SetValue(instance, reader.GetValue(col));
-                            }
-                        }
+        //            yield return instance;
+        //        }
+        //        dbContextTransaction?.Commit();
+        //        reader.Close();
+        //        reader.Dispose();
 
-                        yield return instance;
+        //    }
+        //}
 
-                    }
+        ///// <summary>
+        ///// データ取得
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="database"></param>
+        ///// <param name="sql"></param>
+        ///// <param name="parameters"></param>
+        ///// <returns></returns>
+        //public static IEnumerable<T> ExecuteReaderSqlRaw<T>(
+        //    this DatabaseFacade database,
+        //    string sql,
+        //    IEnumerable<object> parameters = null,
+        //    DbTransaction transaction = null)
+        //{
+        //    var facade = database as IDatabaseFacadeDependenciesAccessor;
+        //    var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+        //    if (facadeDependencies == null)
+        //    {
+        //        yield break;
+        //    }
 
-                }
-            }
-        }
+        //    var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+        //    if (transaction != null)
+        //    {
+        //        database.UseTransaction(transaction);
+        //    }
+
+        //    var maps = Cache<T>.ColumnMaps;
+
+        //    using (concurrentDetector.EnterCriticalSection())
+        //    {
+        //        var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies,
+        //            facade, null);
+        //        using var relationalDataReader = command
+        //            .ExecuteReader(parameterObject);
+        //        var reader = relationalDataReader.DbDataReader;
+        //        if (!reader.HasRows)
+        //        {
+        //            reader.Close();
+        //            reader.Dispose();
+        //            yield break;
+        //        }
+        //        while (reader.Read())
+        //        {
+        //            var instance = Activator.CreateInstance<T>();
+        //            foreach (var map in maps)
+        //            {
+        //                var col = reader.GetOrdinal(map.Value.columnName);
+        //                if (!reader.IsDBNull(col))
+        //                {
+        //                    map.Value.property.SetValue(instance, reader.GetValue(col));
+        //                }
+        //            }
+
+        //            yield return instance;
+        //        }
+        //        reader.Close();
+        //        reader.Dispose();
+        //    }
+        //}
+
+        //public static async IAsyncEnumerable<T> ExecuteReaderSqlRawAsync<T>(
+        //    this DatabaseFacade database, 
+        //    string sql,
+        //    IEnumerable<object> parameters = null,
+        //    DbTransaction transaction = null,
+        //    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        //{
+        //    var facade = database as IDatabaseFacadeDependenciesAccessor;
+        //    var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+        //    if (facadeDependencies == null)
+        //    {
+        //        yield break;
+        //    }
+        //    var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+        //    if (transaction != null)
+        //    {
+        //        await database.UseTransactionAsync(transaction, cancellationToken);
+        //    }
+        //    var maps = Cache<T>.ColumnMaps;
+
+        //    using (concurrentDetector.EnterCriticalSection())
+        //    {
+        //        var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
+        //            parameters);
+        //        using (var relationalDataReader =
+        //            await command.ExecuteReaderAsync(parameterObject, cancellationToken))
+        //        {
+        //            var reader = relationalDataReader.DbDataReader;
+        //            if (!reader.HasRows)
+        //            {
+        //                await reader.CloseAsync();
+        //                await reader.DisposeAsync();
+        //                yield break;
+        //            }
+        //            while (await reader.ReadAsync(cancellationToken))
+        //            {
+        //                var instance = Activator.CreateInstance<T>();
+        //                foreach (var map in maps)
+        //                {
+        //                    var col = reader.GetOrdinal(map.Value.columnName);
+        //                    if (!await reader.IsDBNullAsync(col, cancellationToken))
+        //                    {
+        //                        map.Value.property.SetValue(instance, reader.GetValue(col));
+        //                    }
+        //                }
+
+        //                yield return instance;
+
+        //            }
+        //            await reader.CloseAsync();
+        //            await reader.DisposeAsync();
+
+
+        //        }
+        //    }
+        //}
         #endregion
 
         #region ExecuteReaderSingleSqlRaw
 
-        /// <summary>
-        /// 1件データを取得
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="database"></param>
-        /// <param name="sql"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public static T ExecuteReaderSingleSqlRaw<T>(
-            this DatabaseFacade database,
-            string sql,
-            IEnumerable<object> parameters = null,
-            DbTransaction transaction = null)
-        {
-            return ExecuteReaderSqlRaw<T>(database, sql, parameters, transaction).FirstOrDefault();
-        }
+        ///// <summary>
+        ///// 1件データを取得
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="database"></param>
+        ///// <param name="sql"></param>
+        ///// <param name="parameters"></param>
+        ///// <returns></returns>
+        //public static T ExecuteReaderSingleSqlRaw<T>(
+        //    this DatabaseFacade database,
+        //    string sql,
+        //    IEnumerable<object> parameters = null,
+        //    DbTransaction transaction = null)
+        //{
+        //    return ExecuteReaderSqlRaw<T>(database, sql, parameters, transaction).FirstOrDefault();
+        //}
 
-        /// <summary>
-        /// 1件データを取得
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="database"></param>
-        /// <param name="sql"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        public static async Task<T> ExecuteReaderSingleSqlRawAsync<T>(
-            this DatabaseFacade database, 
-            string sql,
-            IEnumerable<object> parameters=null,
-            DbTransaction transaction = null,
-            CancellationToken cancellationToken = default)
-        {
-            //var results = ExecuteReaderSqlRawAsync<T>(database, sql, parameters, transaction, cancellationToken);
-            //await foreach (var result in results.WithCancellation(cancellationToken))
-            //{
-            //    return result;
-            //}
+        ///// <summary>
+        ///// 1件データを取得
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="database"></param>
+        ///// <param name="sql"></param>
+        ///// <param name="parameters"></param>
+        ///// <returns></returns>
+        //public static async Task<T> ExecuteReaderSingleSqlRawAsync<T>(
+        //    this DatabaseFacade database, 
+        //    string sql,
+        //    IEnumerable<object> parameters=null,
+        //    DbTransaction transaction = null,
+        //    CancellationToken cancellationToken = default)
+        //{
+        //    //var results = ExecuteReaderSqlRawAsync<T>(database, sql, parameters, transaction, cancellationToken);
+        //    //await foreach (var result in results.WithCancellation(cancellationToken))
+        //    //{
+        //    //    return result;
+        //    //}
 
-            //return default;
+        //    //return default;
 
-            var facade = database as IDatabaseFacadeDependenciesAccessor;
-            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
-            if (facadeDependencies == null)
-            {
-                return default;
-            }
-            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
-            if (transaction != null)
-            {
-                await database.UseTransactionAsync(transaction, cancellationToken);
-            }
-            var maps = Cache<T>.ColumnMaps;
-            using (concurrentDetector.EnterCriticalSection())
-            {
-                var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
-                    parameters);
-                using (var relationalDataReader = await command
-                    .ExecuteReaderAsync(parameterObject, cancellationToken))
-                {
-                    var reader = relationalDataReader.DbDataReader;
-                    if (!reader.HasRows) return default;
-                    await reader.ReadAsync(cancellationToken);
-                    var instance = Activator.CreateInstance<T>();
-                    foreach (var map in maps)
-                    {
-                        var col = reader.GetOrdinal(map.Value.columnName);
-                        if (!await reader.IsDBNullAsync(col, cancellationToken))
-                        {
-                            map.Value.property.SetValue(instance, reader.GetValue(col));
-                        }
-                    }
+        //    var facade = database as IDatabaseFacadeDependenciesAccessor;
+        //    var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+        //    if (facadeDependencies == null)
+        //    {
+        //        return default;
+        //    }
+        //    var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+        //    if (transaction != null)
+        //    {
+        //        await database.UseTransactionAsync(transaction, cancellationToken);
+        //    }
+        //    var maps = Cache<T>.ColumnMaps;
+        //    using (concurrentDetector.EnterCriticalSection())
+        //    {
+        //        var (command, parameterObject, debugSql) = CreateRelationalParameterObject<object>(database, facadeDependencies, facade, null, sql,
+        //            parameters);
+        //        using (var relationalDataReader = await command
+        //            .ExecuteReaderAsync(parameterObject, cancellationToken))
+        //        {
+        //            var reader = relationalDataReader.DbDataReader;
+        //            if (!reader.HasRows)
+        //            {
+        //                await reader.CloseAsync();
+        //                await reader.DisposeAsync();
+        //                return default;
+        //            }
+        //            await reader.ReadAsync(cancellationToken);
+        //            var instance = Activator.CreateInstance<T>();
+        //            foreach (var map in maps)
+        //            {
+        //                var col = reader.GetOrdinal(map.Value.columnName);
+        //                if (!await reader.IsDBNullAsync(col, cancellationToken))
+        //                {
+        //                    map.Value.property.SetValue(instance, reader.GetValue(col));
+        //                }
+        //            }
+        //            await reader.CloseAsync();
+        //            await reader.DisposeAsync();
+        //            return instance;
 
-                    return instance;
-
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
         #endregion
 
         #region GetInsertSql
@@ -693,6 +635,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             builder.AppendSql(config.GetQuotedName(tableName));
             builder.AppendLine(" (");
             var counter = 0;
+            object identityValue = null;
             foreach (var property in properties)
             {
                 if (parameter.ExcludeNull)
@@ -701,11 +644,22 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     if (propValue == null) continue;
                 }
 
-                if (property.ValueGenerated == ValueGenerated.OnAdd) continue;
+                var columnName = property.GetColumnName(tableId);
+                var quotedColumnName = config.GetQuotedName(columnName);
+
+                // identity
+                if (property.ValueGenerated == ValueGenerated.OnAdd)
+                {
+                    if(builder.TryAppendIdentity(parameter, property.PropertyInfo, quotedColumnName, counter, out identityValue))
+                    {
+                        counter++;
+                    }
+                    continue;
+                }
 
                 builder.AppendComma(counter);
 
-                builder.AppendLine(config.GetQuotedName(property.GetColumnName(tableId)));
+                builder.AppendLine(quotedColumnName);
 
                 counter++;
             }
@@ -713,9 +667,16 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             counter = 0;
             foreach (var property in properties)
             {
+                if (property.ValueGenerated == ValueGenerated.OnAdd)
+                {
+                    if (builder.TryAppendIdentityValue(parameter, property.PropertyInfo, counter, identityValue))
+                    {
+                        counter++;
+                    }
+                    continue;
+                }
                 var propValue = property.PropertyInfo.GetValue(parameter.Entity);
                 if (parameter.ExcludeNull && propValue == null) continue;
-                if (property.ValueGenerated == ValueGenerated.OnAdd) continue;
                 builder.AppendComma(counter);
                 if (property.PropertyInfo.GetCustomAttribute<VersionAttribute>() != null)
                 {
@@ -910,44 +871,44 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         //}
 
-        private static class Cache<T>
-        {
-            static Cache()
-            {
-                var type = typeof(T);
-                TableName = type.Name;
-                var table = type.GetCustomAttribute<TableAttribute>();
-                if (table != null)
-                {
-                    TableName = table.Name;
-                }
-                var props = type.GetProperties();
-                ColumnMaps = new Dictionary<string, (string columnName, PropertyInfo property)>();
-                foreach (var propertyInfo in props)
-                {
-                    var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
-                    if (notMapped != null)
-                    {
-                        continue;
-                    }
+        //private static class Cache<T>
+        //{
+        //    static Cache()
+        //    {
+        //        var type = typeof(T);
+        //        TableName = type.Name;
+        //        var table = type.GetCustomAttribute<TableAttribute>();
+        //        if (table != null)
+        //        {
+        //            TableName = table.Name;
+        //        }
+        //        var props = type.GetProperties();
+        //        ColumnMaps = new Dictionary<string, (string columnName, PropertyInfo property)>();
+        //        foreach (var propertyInfo in props)
+        //        {
+        //            var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
+        //            if (notMapped != null)
+        //            {
+        //                continue;
+        //            }
 
-                    var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
-                    var columnName = propertyInfo.Name;
-                    if (column != null)
-                    {
-                        columnName = column.Name;
-                    }
+        //            var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
+        //            var columnName = propertyInfo.Name;
+        //            if (column != null)
+        //            {
+        //                columnName = column.Name;
+        //            }
 
-                    ColumnMaps.Add(propertyInfo.Name, (columnName, propertyInfo));
-                }
+        //            ColumnMaps.Add(propertyInfo.Name, (columnName, propertyInfo));
+        //        }
 
-            }
+        //    }
 
-            internal static string TableName { get; }
+        //    internal static string TableName { get; }
 
-            internal static Dictionary<string, (string columnName,PropertyInfo property)> ColumnMaps { get; }
+        //    internal static Dictionary<string, (string columnName,PropertyInfo property)> ColumnMaps { get; }
 
 
-        }
+        //}
     }
 }

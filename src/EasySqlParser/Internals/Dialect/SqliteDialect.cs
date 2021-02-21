@@ -12,6 +12,9 @@ namespace EasySqlParser.Internals.Dialect
         internal override string ParameterPrefix { get; } = "@";
         internal override bool EnableNamedParameter { get; } = true;
 
+        internal override bool UseSqlite { get; } = true;
+
+
         internal SqliteDialect() :
             base()
         {
@@ -34,6 +37,11 @@ namespace EasySqlParser.Internals.Dialect
         {
             var transformer = new SqlitePagingTransformer(offset, limit, rowNumberColumn);
             return transformer.Transform(node);
+        }
+
+        internal override string GetIdentityWhereClause(string columnName)
+        {
+            return "rowid = last_insert_rowid()";
         }
     }
 }

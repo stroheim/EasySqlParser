@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Odbc;
-using System.Text;
+﻿using System.Threading.Tasks;
 using EasySqlParser.Configurations;
 using Microsoft.Data.SqlClient;
 using Xunit;
@@ -12,6 +9,7 @@ namespace EasySqlParser.SqlGenerator.Tests
     public class QueryBuilderTest
     {
         private readonly ITestOutputHelper _output;
+        private readonly MockConfig _mockConfig;
 
         public QueryBuilderTest(ITestOutputHelper output)
         {
@@ -20,6 +18,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                 DbConnectionKind.SqlServer,
                 () => new SqlParameter()
             );
+            _mockConfig = new MockConfig(QueryBehavior.None, _output.WriteLine);
         }
 
         [Fact]
@@ -31,7 +30,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Name = "John Doe",
                                Salary = 100M
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("INSERT INTO [dbo].[EMP] ([ID], [NAME], [SALARY], [VERSION]) VALUES (@Id, @Name, @Salary, @VersionNo)");
@@ -50,7 +49,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Id = 1,
                                Salary = 100M
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, excludeNull:true);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig, excludeNull:true);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("INSERT INTO [dbo].[EMP] ([ID], [SALARY], [VERSION]) VALUES (@Id, @Salary, @VersionNo)");
@@ -69,7 +68,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Name = "John Doe",
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("UPDATE [dbo].[EMP] SET [NAME] = @Name, [SALARY] = @Salary, [VERSION] = @VersionNo + 1 WHERE [ID] = @Id AND [VERSION] = @VersionNo");
@@ -88,7 +87,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Id = 1,
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, excludeNull:true);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig, excludeNull:true);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("UPDATE [dbo].[EMP] SET [SALARY] = @Salary, [VERSION] = @VersionNo + 1 WHERE [ID] = @Id AND [VERSION] = @VersionNo");
@@ -107,7 +106,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Name = "John Doe",
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, ignoreVersion:true);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig, ignoreVersion:true);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("UPDATE [dbo].[EMP] SET [NAME] = @Name, [SALARY] = @Salary, [VERSION] = @VersionNo WHERE [ID] = @Id");
@@ -127,7 +126,7 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Name = "John Doe",
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete, _mockConfig);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("DELETE FROM [dbo].[EMP] WHERE [ID] = @Id AND [VERSION] = @VersionNo");
@@ -145,12 +144,31 @@ namespace EasySqlParser.SqlGenerator.Tests
                                Name = "John Doe",
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete, ignoreVersion:true);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete, _mockConfig, ignoreVersion:true);
             var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("DELETE FROM [dbo].[EMP] WHERE [ID] = @Id");
             builder.DbDataParameters.Count.Is(1);
             builder.DbDataParameters[0].Value.Is(1);
+        }
+
+        [Fact]
+        public void Test_Select()
+        {
+            var (builderResult, entityInfo) = QueryBuilder<Employee>.GetSelectSql(x => x.Id == 1);
+            builderResult.IsNotNull();
+            builderResult.ParsedSql.Is("SELECT [ID], [NAME], [SALARY], [VERSION] FROM [dbo].[EMP] WHERE [ID] = @Id");
+            builderResult.DbDataParameters.Count.Is(1);
+            builderResult.DbDataParameters[0].Value.Is(1);
+        }
+
+        [Fact]
+        public void Test_Count()
+        {
+            var builderResult = QueryBuilder<Employee>.GetCountSql();
+            builderResult.IsNotNull();
+            builderResult.ParsedSql.Is("SELECT COUNT(*) CNT FROM [dbo].[EMP]");
+            builderResult.DbDataParameters.Count.Is(0);
         }
     }
 }

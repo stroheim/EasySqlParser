@@ -6,18 +6,46 @@ using EasySqlParser.Configurations;
 
 namespace EasySqlParser.SqlGenerator
 {
+    public interface IQueryBuilderConfiguration
+    {
+        int CommandTimeout { get; }
+        bool WriteIndented { get; }
+        QueryBehavior QueryBehavior { get; }
+        Action<string> LoggerAction { get; }
+    }
+
+    public class GlobalQueryBuilderConfiguration : IQueryBuilderConfiguration
+    {
+        public GlobalQueryBuilderConfiguration(
+            int commandTimeout = 30,
+            bool writeIndented = true,
+            QueryBehavior queryBehavior = QueryBehavior.None,
+            Action<string> loggerAction = null
+        )
+        {
+            CommandTimeout = commandTimeout;
+            WriteIndented = writeIndented;
+            QueryBehavior = queryBehavior;
+            LoggerAction = loggerAction;
+        }
+
+        public int CommandTimeout { get; }
+        public bool WriteIndented { get; }
+        public QueryBehavior QueryBehavior { get; }
+        public Action<string> LoggerAction { get; }
+    }
+
     public class QueryBuilderParameter<T>
     {
         public QueryBuilderParameter(
             T entity,
             SqlKind sqlKind,
+            IQueryBuilderConfiguration builderConfiguration,
             bool excludeNull = false,
             bool ignoreVersion = false,
             bool useVersion = true,
             bool suppressOptimisticLockException = false,
-            int commandTimeout = 30,
             //bool useDbSet = true,
-            bool writeIndented = false,
             string sqlFile = null,
             string configName = null)
         {
@@ -27,10 +55,12 @@ namespace EasySqlParser.SqlGenerator
             IgnoreVersion = ignoreVersion;
             UseVersion = useVersion;
             SuppressOptimisticLockException = suppressOptimisticLockException;
-            CommandTimeout = commandTimeout;
+            CommandTimeout = builderConfiguration.CommandTimeout;
             //UseDbSet = useDbSet;
-            WriteIndented = writeIndented;
+            WriteIndented = builderConfiguration.WriteIndented;
             SqlFile = sqlFile;
+            QueryBehavior = builderConfiguration.QueryBehavior;
+            _loggerAction = builderConfiguration.LoggerAction;
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
@@ -73,7 +103,11 @@ namespace EasySqlParser.SqlGenerator
 
         public string SqlFile { get; }
 
+        public QueryBehavior QueryBehavior { get; }
+
         internal PropertyInfo VersionPropertyInfo { get; set; }
+
+        private readonly Action<string> _loggerAction;
 
         public void IncrementVersion()
         {
@@ -97,15 +131,43 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
+
+        public void WriteLog(string message)
+        {
+            _loggerAction?.Invoke(message);
+        }
+
     }
 
     public enum SqlKind
     {
         Insert,
         Update,
-        Delete,
-        SelectSingleRow,
-        Select
+        Delete
+    }
 
+    /// <summary>
+    /// INSERT または UPDATE 時の動作
+    /// </summary>
+    public enum QueryBehavior
+    {
+        /// <summary>
+        /// 無し
+        /// エンティティに変更結果は戻されない
+        /// </summary>
+        None,
+        /// <summary>
+        /// 自動採番列の値のみエンティティに戻される
+        /// </summary>
+        IdentityOnly,
+        /// <summary>
+        /// 全ての値がエンティティに戻される
+        /// </summary>
+        AllColumns,
+        /// <summary>
+        /// 自動採番列があればその値のみを
+        /// そうでない場合はすべての列がエンティティに戻される
+        /// </summary>
+        IdentityOrAllColumns
     }
 }

@@ -17,6 +17,8 @@ namespace EasySqlParser.SqlGenerator
 
         public bool IsIdentity { get; set; }
 
+        public bool IsSequence { get; set; }
+
         public EntityColumnInfo Clone()
         {
             return (EntityColumnInfo) MemberwiseClone();

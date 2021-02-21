@@ -49,19 +49,34 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
                     {
                         context.Database.EnsureDeleted();
                         context.Database.EnsureCreated();
-                        var employee = new Employee
-                                       {
-                                           Id = 1,
-                                           Name = "John Doe",
-                                           VersionNo = 1L
-                                       };
-                        context.Add(employee);
+                        context.Add(CreateEmployee(1, "John Doe", 0, 1L));
+                        context.Add(CreateEmployee(2, "Rob Walters", 1, 1L));
+                        context.Add(CreateEmployee(3, "Gail Erickson", 2, 1L));
+                        context.Add(CreateEmployee(4, "Jossef Goldberg", 3, 1L));
+                        context.Add(CreateEmployee(5, "Dylan Miller", 4, 1L));
+                        context.Add(CreateEmployee(6, "Diane Margheim", 5, 1L));
+                        context.Add(CreateEmployee(7, "Gigi Matthew", 6, 1L));
+                        context.Add(CreateEmployee(8, "Michael Raheem", 7, 1L));
+                        context.Add(CreateEmployee(9, "Ovidiu Cracium", 8, 1L));
+                        context.Add(CreateEmployee(10, "Janice Galvin", 9, 1L));
+
                         context.SaveChanges();
                     }
 
                     _initialized = true;
                 }
             }
+        }
+
+        private static Employee CreateEmployee(int id, string name,decimal salary, long versionNo)
+        {
+            return new Employee
+                   {
+                       Id = id,
+                       Name = name,
+                       Salary = salary,
+                       VersionNo = versionNo
+                   };
         }
 
         public void Dispose() => Connection.Dispose();

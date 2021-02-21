@@ -30,6 +30,23 @@ namespace EasySqlParser.Internals.Dialect
 
         internal virtual char CloseQuote { get; } = '"';
 
+        internal virtual bool SupportsSequence { get; } = false;
+
+        internal virtual bool SupportsIdentity { get; } = false;
+
+        internal virtual bool SupportsFinalTable { get; } = false;
+
+        internal virtual bool SupportsReturning { get; } = false;
+
+        internal virtual string StatementTerminator { get; } = ";";
+
+        internal virtual bool UseSqlite { get; } = false;
+
+        internal virtual string GetIdentityWhereClause(string columnName)
+        {
+            throw new NotImplementedException();
+        }
+
 
         private readonly Regex _defaultWildcardReplacementPattern;
         private readonly string _defaultReplacement;

@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace EasySqlParser.SqlGenerator
 {
-    public class EntityTypeInfo
+    internal class EntityTypeInfo
     {
-        public string SchemaName { get; set; }
+        internal string SchemaName { get; set; }
 
-        public string TableName { get; set; }
+        internal string TableName { get; set; }
 
-        // いる？
-        internal string EntityName { get; set; }
 
-        public List<EntityColumnInfo> Columns { get; set; }
+        internal List<EntityColumnInfo> Columns { get; set; }
 
-        public List<EntityColumnInfo> KeyColumns { get; set; }
+        internal List<EntityColumnInfo> KeyColumns { get; set; }
+
+        internal EntityColumnInfo IdentityColumn { get; set; }
+
+        internal List<EntityColumnInfo> SequenceColumns { get; set; }
     }
 }

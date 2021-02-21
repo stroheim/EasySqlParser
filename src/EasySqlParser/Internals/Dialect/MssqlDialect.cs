@@ -15,6 +15,9 @@ namespace EasySqlParser.Internals.Dialect
 
         //private static readonly char[] DefaultWildcards = { '%', '_', '[' };
 
+        internal override bool SupportsSequence { get; } = true;
+
+
         internal MssqlDialect() :
             base(DefaultWildcards)
         {

@@ -22,6 +22,8 @@ namespace EasySqlParser.Internals.Dialect
 
         internal override char CloseQuote { get; } = ']';
 
+        internal override bool SupportsIdentity { get; } = true;
+
         protected static readonly char[] DefaultWildcards = { '%', '_', '[' };
 
         internal Mssql2008Dialect() :
@@ -46,6 +48,12 @@ namespace EasySqlParser.Internals.Dialect
         {
             var transformer = new Mssql2008PagingTransformer(offset, limit, rowNumberColumn);
             return transformer.Transform(node);
+        }
+
+        internal override string GetIdentityWhereClause(string columnName)
+        {
+            
+            return $"{ApplyQuote(columnName)} = scope_identity()";
         }
     }
 }

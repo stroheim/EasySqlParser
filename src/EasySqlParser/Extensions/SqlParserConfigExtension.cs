@@ -50,5 +50,40 @@ namespace EasySqlParser.Extensions
         {
             return config.Dialect.ApplyQuote(name);
         }
+
+        public static bool SupportsIdentity(this SqlParserConfig config)
+        {
+            return config.Dialect.SupportsIdentity;
+        }
+
+        public static bool SupportsSequence(this SqlParserConfig config)
+        {
+            return config.Dialect.SupportsSequence;
+        }
+
+        public static bool SupportsFinalTable(this SqlParserConfig config)
+        {
+            return config.Dialect.SupportsFinalTable;
+        }
+
+        public static bool SupportsReturning(this SqlParserConfig config)
+        {
+            return config.Dialect.SupportsReturning;
+        }
+
+        public static string GetIdentityWhereClause(this SqlParserConfig config, string columnName)
+        {
+            return config.Dialect.GetIdentityWhereClause(columnName);
+        }
+
+        public static string GetStatementTerminator(this SqlParserConfig config)
+        {
+            return config.Dialect.StatementTerminator;
+        }
+
+        public static bool UseSqlite(this SqlParserConfig config)
+        {
+            return config.Dialect.UseSqlite;
+        }
     }
 }

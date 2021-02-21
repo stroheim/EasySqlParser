@@ -13,6 +13,12 @@ namespace EasySqlParser.Internals.Dialect
         internal override string ParameterPrefix { get; } = "@";
         internal override bool EnableNamedParameter { get; } = true;
 
+        internal override bool SupportsIdentity { get; } = true;
+
+        internal override bool SupportsSequence { get; } = true;
+
+        internal override bool SupportsFinalTable { get; } = true;
+
         private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 
         internal Db2Dialect() :

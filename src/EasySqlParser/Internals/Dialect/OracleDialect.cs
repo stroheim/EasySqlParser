@@ -14,6 +14,9 @@
     {
         private static readonly char[] DefaultWildcards = { '%', '_' };
 
+        internal override bool SupportsIdentity { get; } = true;
+
+
         internal OracleDialect() :
             base(DefaultWildcards)
         {

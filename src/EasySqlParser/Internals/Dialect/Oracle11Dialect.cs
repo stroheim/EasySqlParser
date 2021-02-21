@@ -19,6 +19,10 @@ namespace EasySqlParser.Internals.Dialect
         internal override string ParameterPrefix { get; } = ":";
         internal override bool EnableNamedParameter { get; } = true;
 
+        internal override bool SupportsSequence { get; } = true;
+
+        internal override bool SupportsReturning { get; } = true;
+
         private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 
         internal Oracle11Dialect() :

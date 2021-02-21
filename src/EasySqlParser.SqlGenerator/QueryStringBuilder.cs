@@ -19,15 +19,38 @@ namespace EasySqlParser.SqlGenerator
         private readonly Dictionary<string, IDbDataParameter> _sqlParameters =
             new Dictionary<string, IDbDataParameter>();
 
+        private string _indent = "";
+        private bool _firstWord;
 
         public QueryStringBuilder(SqlParserConfig config, bool writeIndented)
         {
             _config = config;
             _writeIndented = writeIndented;
+            _firstWord = true;
+        }
+
+
+        public void ApplyIndent(int length)
+        {
+            if (_config.SupportsFinalTable())
+            {
+                _indent = "".PadLeft(length, ' ');
+            }
+        }
+
+        public void RemoveIndent()
+        {
+            _indent = "";
         }
 
         public void AppendSql(string sql)
         {
+            if (_writeIndented && _firstWord)
+            {
+                _rawSqlBuilder.Append(_indent);
+                _formattedSqlBuilder.Append(_indent);
+                _firstWord = false;
+            }
             _rawSqlBuilder.Append(sql);
             _formattedSqlBuilder.Append(sql);
         }
@@ -35,6 +58,7 @@ namespace EasySqlParser.SqlGenerator
         public void AppendLine()
         {
             if (!_writeIndented) return;
+            _firstWord = true;
             _rawSqlBuilder.AppendLine();
             _formattedSqlBuilder.AppendLine();
         }
@@ -46,6 +70,11 @@ namespace EasySqlParser.SqlGenerator
                 _rawSqlBuilder.Append(sql);
                 _formattedSqlBuilder.Append(sql);
                 return;
+            }
+            if (_firstWord)
+            {
+                _rawSqlBuilder.Append(_indent);
+                _formattedSqlBuilder.Append(_indent);
             }
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
@@ -64,6 +93,12 @@ namespace EasySqlParser.SqlGenerator
 
         public void AppendComma(int counter)
         {
+            if (_writeIndented && _firstWord)
+            {
+                _rawSqlBuilder.Append(_indent);
+                _formattedSqlBuilder.Append(_indent);
+                _firstWord = false;
+            }
             if (counter == 0)
             {
                 if (_writeIndented)
@@ -79,6 +114,12 @@ namespace EasySqlParser.SqlGenerator
 
         public void AppendAnd(int counter)
         {
+            if (_writeIndented && _firstWord)
+            {
+                _rawSqlBuilder.Append(_indent);
+                _formattedSqlBuilder.Append(_indent);
+                _firstWord = false;
+            }
             if (counter == 0)
             {
                 if (_writeIndented)
@@ -162,6 +203,115 @@ namespace EasySqlParser.SqlGenerator
 
             }
             parameter.VersionPropertyInfo = columnInfo.PropertyInfo;
+
+        }
+
+        public bool TryAppendIdentity<T>(QueryBuilderParameter<T> parameter, 
+            PropertyInfo property,
+            string quotedColumnName,
+            int counter,
+            out object identityValue)
+        {
+            if (!parameter.Config.UseSqlite())
+            {
+                identityValue = null;
+                return false;
+            }
+            identityValue = property.GetValue(parameter.Entity);
+            parameter.WriteLog($"indentityValue\t{identityValue}");
+            if (identityValue == null) return false;
+            if (identityValue is int intValue)
+            {
+                if (intValue <= 0) return false;
+            }else if (identityValue is long longValue)
+            {
+                if (longValue <= 0L) return false;
+            }else if (identityValue is decimal decimalValue)
+            {
+                if (decimalValue <= 0M) return false;
+            }
+
+            AppendComma(counter);
+            AppendLine(quotedColumnName);
+            return true;
+        }
+
+        public bool TryAppendIdentityValue<T>(QueryBuilderParameter<T> parameter,
+            PropertyInfo property,
+            int counter,
+            object identityValue)
+        {
+            if (!parameter.Config.UseSqlite())
+            {
+                return false;
+            }
+
+            if (identityValue == null)
+            {
+                return false;
+            }
+            AppendComma(counter);
+            AppendParameter(parameter.Config.GetParameterName(property.Name), identityValue);
+            AppendLine();
+            return true;
+        }
+
+        internal bool TryAppendIdentity<T>(QueryBuilderParameter<T> parameter, 
+            EntityTypeInfo entityInfo,
+            int counter,
+            out object identityValue)
+        {
+            if (!parameter.Config.UseSqlite() || entityInfo.IdentityColumn == null)
+            {
+                identityValue = null;
+                return false;
+            }
+
+            var property = entityInfo.IdentityColumn.PropertyInfo;
+            identityValue = property.GetValue(parameter.Entity);
+            if (identityValue == null) return false;
+            if (identityValue is int intValue)
+            {
+                if (intValue <= 0) return false;
+            }
+            else if (identityValue is long longValue)
+            {
+                if (longValue <= 0L) return false;
+            }
+            else if (identityValue is decimal decimalValue)
+            {
+                if (decimalValue <= 0M) return false;
+            }
+
+            AppendComma(counter);
+            AppendLine(parameter.Config.GetQuotedName(entityInfo.IdentityColumn.ColumnName));
+            return true;
+        }
+
+        internal bool TryAppendIdentityValue<T>(QueryBuilderParameter<T> parameter,
+            EntityTypeInfo entityInfo,
+            int counter,
+            object identityValue)
+        {
+            if (!parameter.Config.UseSqlite())
+            {
+                return false;
+            }
+
+            if (identityValue == null)
+            {
+                return false;
+            }
+
+            if (entityInfo.IdentityColumn == null)
+            {
+                return false;
+            }
+
+            AppendComma(counter);
+            AppendParameter(parameter.Config.GetParameterName(entityInfo.IdentityColumn.PropertyInfo.Name), identityValue);
+            AppendLine();
+            return true;
 
         }
 
