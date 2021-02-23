@@ -4,7 +4,6 @@ using System.Data.Odbc;
 using System.Text;
 using EasySqlParser.Configurations;
 using EasySqlParser.Internals;
-using Example.Test.Xunit;
 using Xunit;
 
 namespace EasySqlParser.Tests.Internals

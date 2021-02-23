@@ -1,7 +1,6 @@
 ﻿using EasySqlParser.Exceptions;
 using EasySqlParser.Internals;
 using Xunit;
-using Example.Test.Xunit;
 
 namespace EasySqlParser.Tests.Internals
 {

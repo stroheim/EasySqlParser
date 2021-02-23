@@ -1,6 +1,5 @@
 ﻿using System;
 using EasySqlParser.Internals.Dialect;
-using Example.Test.Xunit;
 using Xunit;
 
 namespace EasySqlParser.Tests.Internals.Dialect

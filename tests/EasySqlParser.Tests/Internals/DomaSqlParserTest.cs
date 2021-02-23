@@ -5,7 +5,6 @@ using System.IO;
 using EasySqlParser.Configurations;
 using EasySqlParser.Exceptions;
 using EasySqlParser.Internals;
-using Example.Test.Xunit;
 using Xunit;
 
 namespace EasySqlParser.Tests.Internals

@@ -3,7 +3,6 @@ using EasySqlParser.Configurations;
 using EasySqlParser.Exceptions;
 using EasySqlParser.Internals;
 using EasySqlParser.Internals.Dialect.Transformer;
-using Example.Test.Xunit;
 using Xunit;
 
 namespace EasySqlParser.Tests.Internals.Dialect.Transformer
