@@ -7,19 +7,23 @@ namespace EasySqlParser.SqlGenerator
 {
     public class EntityColumnInfo
     {
-        public string ColumnName { get; set; }
+        public string ColumnName { get; internal set; }
 
-        public PropertyInfo PropertyInfo { get; set; }
+        public PropertyInfo PropertyInfo { get; internal set; }
 
-        public bool IsPrimaryKey { get; set; }
+        public bool IsPrimaryKey { get; internal set; }
 
-        public bool IsVersion { get; set; }
+        public bool IsVersion { get; internal set; }
 
-        public bool IsIdentity { get; set; }
+        public bool IsIdentity { get; internal set; }
 
-        public bool IsSequence { get; set; }
+        public bool IsSequence { get; internal set; }
 
-        public EntityColumnInfo Clone()
+        public SequenceGeneratorAttribute SequenceGeneratorAttribute { get; internal set; }
+
+        public CurrentTimestampAttribute CurrentTimestampAttribute { get; internal set; }
+
+        internal EntityColumnInfo Clone()
         {
             return (EntityColumnInfo) MemberwiseClone();
         }

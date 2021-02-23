@@ -14,7 +14,10 @@ namespace EasySqlParser.Configurations
 
         }
 
-        internal DbConnectionKind DbConnectionKind { get; set; } = DbConnectionKind.Unknown;
+        /// <summary>
+        /// kind of database connection
+        /// </summary>
+        public DbConnectionKind DbConnectionKind { get; set; } = DbConnectionKind.Unknown;
 
         internal StandardDialect Dialect { get; set; }
 

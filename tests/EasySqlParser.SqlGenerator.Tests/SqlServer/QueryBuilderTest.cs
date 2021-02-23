@@ -1,24 +1,21 @@
-﻿using System.Threading.Tasks;
-using EasySqlParser.Configurations;
+﻿using EasySqlParser.Configurations;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests
+namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
     public class QueryBuilderTest
     {
-        private readonly ITestOutputHelper _output;
         private readonly MockConfig _mockConfig;
 
         public QueryBuilderTest(ITestOutputHelper output)
         {
-            _output = output;
             ConfigContainer.AddDefault(
                 DbConnectionKind.SqlServer,
                 () => new SqlParameter()
             );
-            _mockConfig = new MockConfig(QueryBehavior.None, _output.WriteLine);
+            _mockConfig = new MockConfig(QueryBehavior.None, output.WriteLine);
         }
 
         [Fact]

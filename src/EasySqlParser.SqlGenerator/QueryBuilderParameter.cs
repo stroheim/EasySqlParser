@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Reflection;
 using System.Text;
 using EasySqlParser.Configurations;
@@ -64,7 +67,108 @@ namespace EasySqlParser.SqlGenerator
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
+            EntityTypeInfo = Cache<T>.EntityTypeInfo;
         }
+
+        internal QueryBuilderParameter()
+        {
+            EntityTypeInfo = Cache<T>.EntityTypeInfo;
+        }
+
+        // generic type cache
+        private static class Cache<TK>
+        {
+            static Cache()
+            {
+                var type = typeof(TK);
+                var entityInfo = new EntityTypeInfo
+                {
+                    TableName = type.Name
+                };
+                var table = type.GetCustomAttribute<TableAttribute>();
+                if (table != null)
+                {
+                    entityInfo.TableName = table.Name;
+                    entityInfo.SchemaName = table.Schema;
+                }
+                var props = type.GetProperties();
+                var columns = new List<EntityColumnInfo>();
+                var keyColumns = new List<EntityColumnInfo>();
+                var sequenceColumns = new List<EntityColumnInfo>();
+                foreach (var propertyInfo in props)
+                {
+                    var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
+                    if (notMapped != null)
+                    {
+                        continue;
+                    }
+
+                    var columnInfo = new EntityColumnInfo
+                    {
+                        PropertyInfo = propertyInfo
+                    };
+
+
+                    var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
+                    columnInfo.ColumnName = propertyInfo.Name;
+                    if (column != null)
+                    {
+                        columnInfo.ColumnName = column.Name;
+                    }
+
+                    var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
+                    if (identityAttr != null && identityAttr.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity)
+                    {
+                        columnInfo.IsIdentity = true;
+                    }
+
+                    var versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
+                    if (versionAttr != null)
+                    {
+                        columnInfo.IsVersion = true;
+                    }
+
+                    var currentTimestampAttr = propertyInfo.GetCustomAttribute<CurrentTimestampAttribute>();
+                    if (currentTimestampAttr != null)
+                    {
+                        columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
+                    }
+
+                    var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
+                    if (seqAttr != null)
+                    {
+                        columnInfo.IsSequence = true;
+                        columnInfo.SequenceGeneratorAttribute = seqAttr;
+                        sequenceColumns.Add(columnInfo.Clone());
+                    }
+
+                    var keyAttr = propertyInfo.GetCustomAttribute<KeyAttribute>();
+                    if (keyAttr != null)
+                    {
+                        columnInfo.IsPrimaryKey = true;
+                        keyColumns.Add(columnInfo.Clone());
+                    }
+
+                    if (columnInfo.IsPrimaryKey && columnInfo.IsIdentity)
+                    {
+                        entityInfo.IdentityColumn = columnInfo.Clone();
+                    }
+
+                    columns.Add(columnInfo);
+                }
+
+                entityInfo.Columns = columns.AsReadOnly();
+                entityInfo.KeyColumns = keyColumns.AsReadOnly();
+                entityInfo.SequenceColumns = sequenceColumns.AsReadOnly();
+                EntityTypeInfo = entityInfo;
+            }
+
+            // ReSharper disable once StaticMemberInGenericType
+            internal static EntityTypeInfo EntityTypeInfo { get; }
+
+        }
+
+        public EntityTypeInfo EntityTypeInfo { get; }
 
         public T Entity { get; }
 
@@ -105,6 +209,10 @@ namespace EasySqlParser.SqlGenerator
 
         public QueryBehavior QueryBehavior { get; }
 
+        internal Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>
+            ReturningColumns { get; set; } =
+            new Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>();
+
         internal PropertyInfo VersionPropertyInfo { get; set; }
 
         private readonly Action<string> _loggerAction;
@@ -131,10 +239,55 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
+        public void ApplyReturningColumns()
+        {
+            if (ReturningColumns.Count == 0) return;
+            foreach (var kvp in ReturningColumns)
+            {
+                var returningValue = kvp.Value.dataParameter.Value;
+                kvp.Value.columnInfo.PropertyInfo.SetValue(Entity, returningValue);
+            }
+        }
+
 
         public void WriteLog(string message)
         {
             _loggerAction?.Invoke(message);
+        }
+
+        public CommandExecutionType CommandExecutionType
+        {
+            get
+            {
+                if (SqlKind == SqlKind.Delete) return CommandExecutionType.ExecuteNonQuery;
+                if (QueryBehavior == QueryBehavior.None) return CommandExecutionType.ExecuteNonQuery;
+                if (QueryBehavior == QueryBehavior.IdentityOnly) return CommandExecutionType.ExecuteScalar;
+                switch (Config.DbConnectionKind)
+                {
+                    case DbConnectionKind.AS400:
+                    case DbConnectionKind.DB2:
+                        return CommandExecutionType.ExecuteReader;
+                    case DbConnectionKind.MySql:
+                        return CommandExecutionType.ExecuteReader;
+                    case DbConnectionKind.OracleLegacy:
+                        return CommandExecutionType.ExecuteNonQuery;
+                    case DbConnectionKind.Oracle:
+                        return CommandExecutionType.ExecuteNonQuery;
+                    case DbConnectionKind.PostgreSql:
+                        return CommandExecutionType.ExecuteNonQuery;
+                    case DbConnectionKind.SQLite:
+                        return CommandExecutionType.ExecuteReader;
+                    case DbConnectionKind.SqlServerLegacy:
+                        return CommandExecutionType.ExecuteReader;
+                    case DbConnectionKind.SqlServer:
+                        return CommandExecutionType.ExecuteReader;
+                    case DbConnectionKind.Odbc:
+                    case DbConnectionKind.OleDb:
+                        return CommandExecutionType.ExecuteNonQuery;
+                    default:
+                        return CommandExecutionType.ExecuteNonQuery;
+                }
+            }
         }
 
     }
@@ -143,7 +296,8 @@ namespace EasySqlParser.SqlGenerator
     {
         Insert,
         Update,
-        Delete
+        Delete,
+        SoftDelete
     }
 
     /// <summary>
@@ -169,5 +323,12 @@ namespace EasySqlParser.SqlGenerator
         /// そうでない場合はすべての列がエンティティに戻される
         /// </summary>
         IdentityOrAllColumns
+    }
+
+    public enum CommandExecutionType
+    {
+        ExecuteReader,
+        ExecuteNonQuery,
+        ExecuteScalar
     }
 }

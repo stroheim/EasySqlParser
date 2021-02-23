@@ -2,19 +2,19 @@
 
 namespace EasySqlParser.SqlGenerator
 {
-    internal class EntityTypeInfo
+    public class EntityTypeInfo
     {
-        internal string SchemaName { get; set; }
+        public string SchemaName { get; internal set; }
 
-        internal string TableName { get; set; }
+        public string TableName { get; internal set; }
 
 
-        internal List<EntityColumnInfo> Columns { get; set; }
+        public IReadOnlyList<EntityColumnInfo> Columns { get; internal set; }
 
-        internal List<EntityColumnInfo> KeyColumns { get; set; }
+        public IReadOnlyList<EntityColumnInfo> KeyColumns { get; internal set; }
 
-        internal EntityColumnInfo IdentityColumn { get; set; }
+        public EntityColumnInfo IdentityColumn { get; internal set; }
 
-        internal List<EntityColumnInfo> SequenceColumns { get; set; }
+        public IReadOnlyList<EntityColumnInfo> SequenceColumns { get; internal set; }
     }
 }

@@ -12,5 +12,11 @@ namespace EasySqlParser.SqlGenerator
             SequenceName = sequenceName;
         }
         public string SequenceName { get; }
+
+        public string SchemaName { get; set; }
+
+        public string Prefix { get; set; }
+
+        public int PaddingLength { get; set; }
     }
 }

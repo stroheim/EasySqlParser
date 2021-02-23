@@ -5,7 +5,7 @@ using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests
+namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
     public class QueryExtensionTest : IClassFixture<DatabaseFixture>
     {
@@ -18,12 +18,10 @@ namespace EasySqlParser.SqlGenerator.Tests
             );
 
             Fixture = fixture;
-            _output = output;
-            _mockConfig = new MockConfig(QueryBehavior.None, _output.WriteLine);
+            _mockConfig = new MockConfig(QueryBehavior.None, output.WriteLine);
         }
 
         public DatabaseFixture Fixture { get; }
-        private readonly ITestOutputHelper _output;
 
         [Fact]
         public void Test_insert_default()

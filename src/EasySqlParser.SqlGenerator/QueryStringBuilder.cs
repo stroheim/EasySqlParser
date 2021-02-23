@@ -43,6 +43,13 @@ namespace EasySqlParser.SqlGenerator
             _indent = "";
         }
 
+        public void AppendIndent(int length)
+        {
+            var indent = "".PadLeft(length, ' ');
+            _rawSqlBuilder.Append(indent);
+            _formattedSqlBuilder.Append(indent);
+        }
+
         public void AppendSql(string sql)
         {
             if (_writeIndented && _firstWord)
@@ -75,20 +82,34 @@ namespace EasySqlParser.SqlGenerator
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
+                _firstWord = false;
             }
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
         }
 
-        public void AppendParameter(string parameterKey, object parameterValue)
+        public void AppendReturnParameter<T>(QueryBuilderParameter<T> builderParameter, EntityColumnInfo columnInfo)
         {
-            var (parameterName, parameter) = _config.CreateDbParameter(parameterKey, parameterValue);
-            if (!_sqlParameters.ContainsKey(parameterKey))
+            var propertyName = _config.GetParameterName($"p_{columnInfo.PropertyInfo.Name}");
+            var (parameterName, parameter) = _config.CreateDbReturnParameter(propertyName);
+            if (!_sqlParameters.ContainsKey(propertyName))
             {
-                _sqlParameters.Add(parameterKey, parameter);
+                _sqlParameters.Add(propertyName, parameter);
+                builderParameter.ReturningColumns.Add(propertyName, (columnInfo, parameter));
             }
             _rawSqlBuilder.Append(parameterName);
-            _formattedSqlBuilder.Append(_config.ConvertToLogFormat(parameterValue));
+            _formattedSqlBuilder.Append(parameterName);
+        }
+
+        public void AppendParameter(string propertyName, object propertyValue)
+        {
+            var (parameterName, parameter) = _config.CreateDbParameter(propertyName, propertyValue);
+            if (!_sqlParameters.ContainsKey(propertyName))
+            {
+                _sqlParameters.Add(propertyName, parameter);
+            }
+            _rawSqlBuilder.Append(parameterName);
+            _formattedSqlBuilder.Append(_config.ConvertToLogFormat(propertyValue));
         }
 
         public void AppendComma(int counter)

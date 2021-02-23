@@ -5,15 +5,80 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using EasySqlParser.Extensions;
 
 namespace EasySqlParser.SqlGenerator
 {
     public static class QueryExtension
     {
+        public static bool TryGenerateSequence<T, TResult>(this DbConnection connection,
+            QueryBuilderParameter<T> builderParameter,
+            SequenceGeneratorAttribute attribute,
+            out TResult sequenceValue)
+        {
+            var config = builderParameter.Config;
+            if (!config.SupportsSequence())
+            {
+                sequenceValue = default;
+                return false;
+            }
+
+            var sql = attribute.PaddingLength == 0
+                ? config.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
+                : config.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
+                    attribute.PaddingLength, attribute.Prefix);
+            builderParameter.WriteLog(sql);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = sql;
+                var rawResult = command.ExecuteScalar();
+                if (rawResult is TResult result)
+                {
+                    sequenceValue = result;
+                    return true;
+                }
+            }
+
+            sequenceValue = default;
+            return false;
+        }
+
+        public static async Task<(bool isSuccess, TResult sequenceValue)> TryGenerateSequenceAsync<T, TResult>(
+            this DbConnection connection,
+            QueryBuilderParameter<T> builderParameter,
+            SequenceGeneratorAttribute attribute,
+            CancellationToken cancellationToken = default)
+        {
+            var config = builderParameter.Config;
+            if (!config.SupportsSequence())
+            {
+                return (false, default);
+            }
+
+            var sql = attribute.PaddingLength == 0
+                ? config.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
+                : config.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
+                    attribute.PaddingLength, attribute.Prefix);
+            builderParameter.WriteLog(sql);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = sql;
+                var rawResult = await command.ExecuteScalarAsync(cancellationToken);
+                if (rawResult is TResult result)
+                {
+                    return (true, result);
+                }
+            }
+
+            return (false, default);
+        }
+
+
         public static int ExecuteNonQueryByQueryBuilder<T>(this DbConnection connection,
             QueryBuilderParameter<T> builderParameter,
             DbTransaction transaction = null)
         {
+            QueryBuilder<T>.PreInsert(builderParameter, connection);
             DbTransaction localTransaction = null;
             if (transaction == null)
             {
@@ -32,14 +97,21 @@ namespace EasySqlParser.SqlGenerator
 
                 command.CommandTimeout = builderParameter.CommandTimeout;
                 int affectedCount;
-                if (builderParameter.QueryBehavior == QueryBehavior.None ||
-                    builderParameter.SqlKind == SqlKind.Delete)
+
+                switch (builderParameter.CommandExecutionType)
                 {
-                    affectedCount = command.ExecuteNonQuery();
-                }
-                else
-                {
-                    affectedCount = Consume(builderParameter, command);
+                    case CommandExecutionType.ExecuteNonQuery:
+                        affectedCount = QueryBuilder<T>.ConsumeNonQuery(builderParameter, command);
+                        break;
+                    case CommandExecutionType.ExecuteReader:
+                        affectedCount = QueryBuilder<T>.ConsumeReader(builderParameter, command);
+                        break;
+                    case CommandExecutionType.ExecuteScalar:
+                        affectedCount = QueryBuilder<T>.ConsumeScalar(builderParameter, command);
+                        break;
+                    default:
+                        // TODO: error
+                        throw new InvalidOperationException("");
                 }
 
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
@@ -53,39 +125,14 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        private static int Consume<T>(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command)
-        {
-            var reader = command.ExecuteReader();
-            if (!reader.HasRows)
-            {
-                reader.Close();
-                reader.Dispose();
-                return 0;
-            }
-
-            var entityInfo = QueryBuilder<T>.GetEntityTypeInfo();
-            reader.Read();
-            var instance = builderParameter.Entity;
-            foreach (var columnInfo in entityInfo.Columns)
-            {
-                var col = reader.GetOrdinal(columnInfo.ColumnName);
-                if (!reader.IsDBNull(col))
-                {
-                    columnInfo.PropertyInfo.SetValue(instance, reader.GetValue(col));
-                }
-            }
-            reader.Close();
-            reader.Dispose();
-            return 1;
-        }
 
         public static async Task<int> ExecuteNonQueryByQueryBuilderAsync<T>(this DbConnection connection,
             QueryBuilderParameter<T> builderParameter,
             DbTransaction transaction = null,
             CancellationToken cancellationToken = default)
         {
+            await QueryBuilder<T>.PreInsertAsync(builderParameter, connection);
+
             DbTransaction localTransaction = null;
             if (transaction == null)
             {
@@ -103,14 +150,23 @@ namespace EasySqlParser.SqlGenerator
 
                 command.CommandTimeout = builderParameter.CommandTimeout;
                 int affectedCount;
-                if (builderParameter.QueryBehavior == QueryBehavior.None ||
-                    builderParameter.SqlKind == SqlKind.Delete)
+                switch (builderParameter.CommandExecutionType)
                 {
-                    affectedCount = await command.ExecuteNonQueryAsync(cancellationToken);
-                }
-                else
-                {
-                    affectedCount = await ConsumeAsync(builderParameter, command, cancellationToken);
+                    case CommandExecutionType.ExecuteNonQuery:
+                        affectedCount =
+                            await QueryBuilder<T>.ConsumeNonQueryAsync(builderParameter, command, cancellationToken);
+                        break;
+                    case CommandExecutionType.ExecuteReader:
+                        affectedCount =
+                            await QueryBuilder<T>.ConsumeReaderAsync(builderParameter, command, cancellationToken);
+                        break;
+                    case CommandExecutionType.ExecuteScalar:
+                        affectedCount =
+                            await QueryBuilder<T>.ConsumeScalarAsync(builderParameter, command, cancellationToken);
+                        break;
+                    default:
+                        // TODO: error
+                        throw new InvalidOperationException("");
                 }
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
                 localTransaction?.Commit();
@@ -123,34 +179,6 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        private static async Task<int> ConsumeAsync<T>(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command,
-            CancellationToken cancellationToken = default)
-        {
-            var reader = await command.ExecuteReaderAsync(cancellationToken);
-            if (!reader.HasRows)
-            {
-                reader.Close();
-                reader.Dispose();
-                return 0;
-            }
-
-            var entityInfo = QueryBuilder<T>.GetEntityTypeInfo();
-            await reader.ReadAsync(cancellationToken);
-            var instance = builderParameter.Entity;
-            foreach (var columnInfo in entityInfo.Columns)
-            {
-                var col = reader.GetOrdinal(columnInfo.ColumnName);
-                if (!await reader.IsDBNullAsync(col, cancellationToken))
-                {
-                    columnInfo.PropertyInfo.SetValue(instance, reader.GetValue(col));
-                }
-            }
-            reader.Close();
-            reader.Dispose();
-            return 1;
-        }
 
         private static void ThrowIfOptimisticLockException<T>(
             QueryBuilderParameter<T> parameter,

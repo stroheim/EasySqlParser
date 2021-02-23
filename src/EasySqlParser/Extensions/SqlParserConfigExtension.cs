@@ -45,6 +45,22 @@ namespace EasySqlParser.Extensions
 
         }
 
+        public static (string parameterName, IDbDataParameter parameter) CreateDbReturnParameter(this SqlParserConfig config,
+            string parameterKey)
+        {
+            var param = config.DataParameterCreator()
+                .AddName(parameterKey);
+            param.Direction = ParameterDirection.ReturnValue;
+
+            var localParameterKey = parameterKey;
+            if (!config.Dialect.EnableNamedParameter)
+            {
+                localParameterKey = config.Dialect.ParameterPrefix;
+            }
+
+            return (localParameterKey, param);
+        }
+
 
         public static string GetQuotedName(this SqlParserConfig config, string name)
         {
@@ -84,6 +100,18 @@ namespace EasySqlParser.Extensions
         public static bool UseSqlite(this SqlParserConfig config)
         {
             return config.Dialect.UseSqlite;
+        }
+
+
+        public static string GetNextSequenceSql(this SqlParserConfig config, string sequenceName, string schema)
+        {
+            return config.Dialect.GetNextSequenceSql(sequenceName, schema);
+        }
+
+        public static string GetNextSequenceSqlZeroPadding(this SqlParserConfig config, string sequenceName,
+            string schema, int length, string prefix = null)
+        {
+            return config.Dialect.GetNextSequenceSqlZeroPadding(sequenceName, schema, length, prefix);
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
-namespace EasySqlParser.SqlGenerator.Tests
+namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
     [Table("EMP", Schema = "dbo")]
     public class Employee
