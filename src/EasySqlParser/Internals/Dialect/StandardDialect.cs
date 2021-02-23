@@ -431,5 +431,24 @@ namespace EasySqlParser.Internals.Dialect
             return $"{OpenQuote}{name}{CloseQuote}";
         }
 
+        internal string GetSequenceName(string name, string schema)
+        {
+            return (!string.IsNullOrEmpty(schema) ? ApplyQuote(schema) + "." : "") + ApplyQuote(name);
+        }
+
+        internal string GetSequencePrefix(string prefix, string concatExpression)
+        {
+            return !string.IsNullOrEmpty(prefix) ? $"'{prefix}' {concatExpression} " : "";
+        }
+
+        public virtual string GetNextSequenceSql(string name, string schema)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

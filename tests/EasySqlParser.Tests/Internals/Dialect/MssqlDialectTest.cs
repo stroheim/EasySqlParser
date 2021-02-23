@@ -23,5 +23,21 @@ namespace EasySqlParser.Tests.Internals.Dialect
             var dialect = new MssqlDialect();
             dialect.StartsWith("a!a%a_a[", '!').Is("a!!a!%a!_a![%");
         }
+
+        [Fact]
+        public void testGetNextSequenceSql()
+        {
+            var dialect = new MssqlDialect();
+            dialect.GetNextSequenceSql("seq", null).Is("SELECT NEXT VALUE FOR [seq]");
+            dialect.GetNextSequenceSql("seq", "aaa").Is("SELECT NEXT VALUE FOR [aaa].[seq]");
+        }
+
+        [Fact]
+        public void testGetNextSequenceSqlZeroPadding()
+        {
+            var dialect = new MssqlDialect();
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5).Is("SELECT FORMAT(NEXT VALUE FOR [seq], 'D5')");
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5, "P").Is("SELECT 'P' + FORMAT(NEXT VALUE FOR [seq], 'D5')");
+        }
     }
 }

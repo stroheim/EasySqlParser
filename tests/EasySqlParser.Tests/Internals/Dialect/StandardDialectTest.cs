@@ -115,5 +115,25 @@ namespace EasySqlParser.Tests.Internals.Dialect
             var date = new DateTime(2009, 1, 23, 12, 34, 56);
             dialect.TruncateTime(date).Is(new DateTime(2009, 1, 23));
         }
+
+        // original tests
+
+        [Fact]
+        public void testSequenceName()
+        {
+            var dialect = new StandardDialect();
+            dialect.GetSequenceName("seq", null).Is("\"seq\"");
+            dialect.GetSequenceName("seq", "dbo").Is("\"dbo\".\"seq\"");
+        }
+
+        [Fact]
+        public void testGetSequencePrefix()
+        {
+            var dialect = new StandardDialect();
+            dialect.GetSequencePrefix(null, null).Is("");
+            dialect.GetSequencePrefix("P", "+").Is("'P' + ");
+            dialect.GetSequencePrefix("P", "||").Is("'P' || ");
+
+        }
     }
 }

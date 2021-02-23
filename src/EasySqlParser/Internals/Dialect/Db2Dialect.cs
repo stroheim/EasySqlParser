@@ -44,5 +44,20 @@ namespace EasySqlParser.Internals.Dialect
             var transformer = new Db2PagingTransformer(offset, limit, rowNumberColumn);
             return transformer.Transform(node);
         }
+
+        private string GetSequencePrefix(string prefix)
+        {
+            return base.GetSequencePrefix(prefix, "||");
+        }
+
+        public override string GetNextSequenceSql(string name, string schema)
+        {
+            return $"SELECT NEXT VALUE FOR {GetSequenceName(name, schema)}";
+        }
+
+        public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
+        {
+            return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR({length})), {length}, '0')";
+        }
     }
 }

@@ -68,5 +68,20 @@ namespace EasySqlParser.Internals.Dialect
         {
             return $"timestamp'{value:yyyy-MM-dd HH:mm:ss.fff}'";
         }
+
+        private string GetSequencePrefix(string prefix)
+        {
+            return base.GetSequencePrefix(prefix, "||");
+        }
+
+        public override string GetNextSequenceSql(string name, string schema)
+        {
+            return $"SELECT {GetSequenceName(name, schema)}.NEXTVAL FROM DUAL";
+        }
+
+        public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
+        {
+            return $"SELECT {GetSequencePrefix(prefix)}LPAD({GetSequenceName(name, schema)}.NEXTVAL, {length}, '0') FROM DUAL";
+        }
     }
 }

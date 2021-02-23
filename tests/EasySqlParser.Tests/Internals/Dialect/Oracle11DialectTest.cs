@@ -58,5 +58,23 @@ namespace EasySqlParser.Tests.Internals.Dialect
             var datetimeoffset = new DateTimeOffset(2009, 1, 23, 1, 23, 45, 123, TimeSpan.Zero);
             dialect.ToLogFormat(datetimeoffset).Is("timestamp'2009-01-23 01:23:45.123'");
         }
+
+        // original tests
+
+        [Fact]
+        public void testGetNextSequenceSql()
+        {
+            var dialect = new Oracle11Dialect();
+            dialect.GetNextSequenceSql("seq", null).Is("SELECT \"seq\".NEXTVAL FROM DUAL");
+            dialect.GetNextSequenceSql("seq", "aaa").Is("SELECT \"aaa\".\"seq\".NEXTVAL FROM DUAL");
+        }
+
+        [Fact]
+        public void testGetNextSequenceSqlZeroPadding()
+        {
+            var dialect = new Oracle11Dialect();
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5).Is("SELECT LPAD(\"seq\".NEXTVAL, 5, '0') FROM DUAL");
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5, "P").Is("SELECT 'P' || LPAD(\"seq\".NEXTVAL, 5, '0') FROM DUAL");
+        }
     }
 }
