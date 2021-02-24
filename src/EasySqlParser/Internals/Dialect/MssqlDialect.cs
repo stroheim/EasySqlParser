@@ -7,7 +7,10 @@ namespace EasySqlParser.Internals.Dialect
     //   package    org.seasar.doma.jdbc.dialect
     //   class      MssqlDialect
     // https://github.com/domaframework/doma
-    internal class MssqlDialect : Mssql2008Dialect
+    /// <summary>
+    /// A dialect for Microsoft SQL Server 2012 and above.
+    /// </summary>
+    public class MssqlDialect : Mssql2008Dialect
     {
         private readonly bool _pagingForceOffsetFetch;
         //internal override string ParameterPrefix { get; } = "@";
@@ -15,28 +18,45 @@ namespace EasySqlParser.Internals.Dialect
 
         //private static readonly char[] DefaultWildcards = { '%', '_', '[' };
 
-        internal override bool SupportsSequence { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsSequence { get; } = true;
 
 
-        internal MssqlDialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MssqlDialect"/> class.
+        /// </summary>
+        public MssqlDialect() :
             base(DefaultWildcards)
         {
             _pagingForceOffsetFetch = false;
         }
 
-        internal MssqlDialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MssqlDialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public MssqlDialect(char[] wildcards) :
             base(wildcards)
         {
             _pagingForceOffsetFetch = false;
         }
 
-        protected MssqlDialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MssqlDialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public MssqlDialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
             _pagingForceOffsetFetch = false;
         }
 
-        internal MssqlDialect(bool pagingForceOffsetFetch) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MssqlDialect"/> class.
+        /// </summary>
+        /// <param name="pagingForceOffsetFetch">whether to use offset fetch for paging</param>
+        public MssqlDialect(bool pagingForceOffsetFetch) :
             base(DefaultWildcards)
         {
             _pagingForceOffsetFetch = pagingForceOffsetFetch;
@@ -53,12 +73,14 @@ namespace EasySqlParser.Internals.Dialect
             return base.GetSequencePrefix(prefix, "+");
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSql(string name, string schema)
         {
             return
                 $"SELECT NEXT VALUE FOR {GetSequenceName(name, schema)}";
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
             return

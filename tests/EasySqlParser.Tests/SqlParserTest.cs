@@ -1,7 +1,6 @@
 ﻿using System.Data.SqlClient;
 using System.IO;
 using EasySqlParser.Configurations;
-using Example.Test.Xunit;
 using Xunit;
 
 namespace EasySqlParser.Tests

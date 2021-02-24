@@ -17,15 +17,15 @@ namespace EasySqlParser.SqlGenerator
             out TResult sequenceValue)
         {
             var config = builderParameter.Config;
-            if (!config.SupportsSequence())
+            if (!config.Dialect.SupportsSequence)
             {
                 sequenceValue = default;
                 return false;
             }
 
             var sql = attribute.PaddingLength == 0
-                ? config.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
-                : config.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
+                ? config.Dialect.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
+                : config.Dialect.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
                     attribute.PaddingLength, attribute.Prefix);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())
@@ -50,14 +50,14 @@ namespace EasySqlParser.SqlGenerator
             CancellationToken cancellationToken = default)
         {
             var config = builderParameter.Config;
-            if (!config.SupportsSequence())
+            if (!config.Dialect.SupportsSequence)
             {
                 return (false, default);
             }
 
             var sql = attribute.PaddingLength == 0
-                ? config.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
-                : config.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
+                ? config.Dialect.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
+                : config.Dialect.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
                     attribute.PaddingLength, attribute.Prefix);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())

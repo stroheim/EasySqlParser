@@ -32,7 +32,7 @@ namespace EasySqlParser.SqlGenerator
 
         public void ApplyIndent(int length)
         {
-            if (_config.SupportsFinalTable())
+            if (_config.Dialect.SupportsFinalTable)
             {
                 _indent = "".PadLeft(length, ' ');
             }
@@ -90,8 +90,8 @@ namespace EasySqlParser.SqlGenerator
 
         public void AppendReturnParameter<T>(QueryBuilderParameter<T> builderParameter, EntityColumnInfo columnInfo)
         {
-            var propertyName = _config.GetParameterName($"p_{columnInfo.PropertyInfo.Name}");
-            var (parameterName, parameter) = _config.CreateDbReturnParameter(propertyName);
+            var propertyName = $"{_config.Dialect.ParameterPrefix}p_{columnInfo.PropertyInfo.Name}";
+            var (parameterName, parameter) = CreateDbParameter(propertyName, direction: ParameterDirection.ReturnValue);
             if (!_sqlParameters.ContainsKey(propertyName))
             {
                 _sqlParameters.Add(propertyName, parameter);
@@ -101,15 +101,40 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.Append(parameterName);
         }
 
-        public void AppendParameter(string propertyName, object propertyValue)
+
+        public void AppendParameter(PropertyInfo propertyInfo, object propertyValue)
         {
-            var (parameterName, parameter) = _config.CreateDbParameter(propertyName, propertyValue);
+            var propertyName = _config.Dialect.ParameterPrefix + propertyInfo.Name;
+            var (parameterName, parameter) = CreateDbParameter(propertyName, propertyValue);
             if (!_sqlParameters.ContainsKey(propertyName))
             {
                 _sqlParameters.Add(propertyName, parameter);
             }
             _rawSqlBuilder.Append(parameterName);
-            _formattedSqlBuilder.Append(_config.ConvertToLogFormat(propertyValue));
+            _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(propertyValue));
+        }
+
+        private (string parameterName, IDbDataParameter parameter) CreateDbParameter(
+            string parameterKey, object parameterValue = null,
+            ParameterDirection direction = ParameterDirection.Input)
+        {
+            var param = _config.DataParameterCreator()
+                .AddName(parameterKey);
+            if (direction == ParameterDirection.Input || 
+                direction == ParameterDirection.InputOutput)
+            {
+                param.AddValue(parameterValue ?? DBNull.Value);
+            }
+            param.Direction = direction;
+            // parameterKey is sql parameter name
+            var localParameterKey = parameterKey;
+            if (!_config.Dialect.EnableNamedParameter)
+            {
+                localParameterKey = _config.Dialect.ParameterPrefix;
+            }
+
+            return (localParameterKey, param);
+
         }
 
         public void AppendComma(int counter)
@@ -233,7 +258,7 @@ namespace EasySqlParser.SqlGenerator
             int counter,
             out object identityValue)
         {
-            if (!parameter.Config.UseSqlite())
+            if (!UseSqlite)
             {
                 identityValue = null;
                 return false;
@@ -257,12 +282,14 @@ namespace EasySqlParser.SqlGenerator
             return true;
         }
 
-        public bool TryAppendIdentityValue<T>(QueryBuilderParameter<T> parameter,
+        private bool UseSqlite => _config.DbConnectionKind == DbConnectionKind.SQLite;
+
+        public bool TryAppendIdentityValue(
             PropertyInfo property,
             int counter,
             object identityValue)
         {
-            if (!parameter.Config.UseSqlite())
+            if (!UseSqlite)
             {
                 return false;
             }
@@ -272,7 +299,7 @@ namespace EasySqlParser.SqlGenerator
                 return false;
             }
             AppendComma(counter);
-            AppendParameter(parameter.Config.GetParameterName(property.Name), identityValue);
+            AppendParameter(property, identityValue);
             AppendLine();
             return true;
         }
@@ -282,7 +309,7 @@ namespace EasySqlParser.SqlGenerator
             int counter,
             out object identityValue)
         {
-            if (!parameter.Config.UseSqlite() || entityInfo.IdentityColumn == null)
+            if (!UseSqlite || entityInfo.IdentityColumn == null)
             {
                 identityValue = null;
                 return false;
@@ -305,7 +332,7 @@ namespace EasySqlParser.SqlGenerator
             }
 
             AppendComma(counter);
-            AppendLine(parameter.Config.GetQuotedName(entityInfo.IdentityColumn.ColumnName));
+            AppendLine(parameter.Config.Dialect.ApplyQuote(entityInfo.IdentityColumn.ColumnName));
             return true;
         }
 
@@ -314,7 +341,7 @@ namespace EasySqlParser.SqlGenerator
             int counter,
             object identityValue)
         {
-            if (!parameter.Config.UseSqlite())
+            if (!UseSqlite)
             {
                 return false;
             }
@@ -330,7 +357,7 @@ namespace EasySqlParser.SqlGenerator
             }
 
             AppendComma(counter);
-            AppendParameter(parameter.Config.GetParameterName(entityInfo.IdentityColumn.PropertyInfo.Name), identityValue);
+            AppendParameter(entityInfo.IdentityColumn.PropertyInfo, identityValue);
             AppendLine();
             return true;
 

@@ -105,12 +105,12 @@ namespace EasySqlParser.Internals
             var isDateOnly = false;
             if (valueObject.IsDateTime && node.UseBuiltinFunction)
             {
-                convertedValue = valueObject.TruncateTime((DateTime) convertedValue);
+                convertedValue = _config.Dialect.TruncateTime((DateTime) convertedValue);
                 isDateOnly = true;
             }
             if (valueObject.IsDateTimeOffset && node.UseBuiltinFunction)
             {
-                convertedValue = valueObject.TruncateTime((DateTimeOffset) convertedValue);
+                convertedValue = _config.Dialect.TruncateTime((DateTimeOffset) convertedValue);
                 isDateOnly = true;
             }
 
@@ -119,16 +119,16 @@ namespace EasySqlParser.Internals
                 switch (node.BuiltinFunctionName)
                 {
                     case BuiltinFunctionName.StartsWith:
-                        convertedValue = valueObject.GetStartsWithValue((string) convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetStartsWithValue((string) convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.Contains:
-                        convertedValue = valueObject.GetContainsValue((string) convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetContainsValue((string) convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.EndsWith:
-                        convertedValue = valueObject.GetEndsWithValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetEndsWithValue((string)convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.Escape:
-                        convertedValue = valueObject.GetEscapedValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetEscapedValue((string)convertedValue, node.EscapeChar);
                         break;
                 }
             }
@@ -137,21 +137,22 @@ namespace EasySqlParser.Internals
             {
                 if (valueObject.IsDateTime)
                 {
-                    var value = valueObject.ToLogFormatDateOnly((DateTime) convertedValue);
+                    var value = _config.Dialect.ToLogFormatDateOnly((DateTime) convertedValue);
                     _rawSqlBuilder.Append(value);
                     _formattedSqlBuilder.Append(value);
                 }
 
                 if (valueObject.IsDateTimeOffset)
                 {
-                    var value = valueObject.ToLogFormatDateOnly((DateTimeOffset) convertedValue);
+                    var value = _config.Dialect.ToLogFormatDateOnly((DateTimeOffset) convertedValue);
                     _rawSqlBuilder.Append(value);
                     _formattedSqlBuilder.Append(value);
                 }
             }
             else
             {
-                var value = valueObject.ToLogFormat(convertedValue);
+                
+                var value = _config.Dialect.ConvertToLogFormat(convertedValue);
                 _rawSqlBuilder.Append(value);
                 _formattedSqlBuilder.Append(value);
             }
@@ -167,12 +168,12 @@ namespace EasySqlParser.Internals
             var isDateOnly = false;
             if (valueObject.IsDateTime && node.UseBuiltinFunction)
             {
-                convertedValue = valueObject.TruncateTime((DateTime) convertedValue);
+                convertedValue = _config.Dialect.TruncateTime((DateTime) convertedValue);
                 isDateOnly = true;
             }
             if (valueObject.IsDateTimeOffset && node.UseBuiltinFunction)
             {
-                convertedValue = valueObject.TruncateTime((DateTimeOffset)convertedValue);
+                convertedValue = _config.Dialect.TruncateTime((DateTimeOffset)convertedValue);
                 isDateOnly = true;
             }
 
@@ -181,16 +182,16 @@ namespace EasySqlParser.Internals
                 switch (node.BuiltinFunctionName)
                 {
                     case BuiltinFunctionName.StartsWith:
-                        convertedValue = valueObject.GetStartsWithValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetStartsWithValue((string)convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.Contains:
-                        convertedValue = valueObject.GetContainsValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetContainsValue((string)convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.EndsWith:
-                        convertedValue = valueObject.GetEndsWithValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetEndsWithValue((string)convertedValue, node.EscapeChar);
                         break;
                     case BuiltinFunctionName.Escape:
-                        convertedValue = valueObject.GetEscapedValue((string)convertedValue, node.EscapeChar);
+                        convertedValue = _config.Dialect.GetEscapedValue((string)convertedValue, node.EscapeChar);
                         break;
                 }
             }
@@ -221,17 +222,17 @@ namespace EasySqlParser.Internals
             {
                 if (valueObject.IsDateTime)
                 {
-                    _formattedSqlBuilder.Append(valueObject.ToLogFormatDateOnly((DateTime)convertedValue));
+                    _formattedSqlBuilder.Append(_config.Dialect.ToLogFormatDateOnly((DateTime)convertedValue));
                 }
 
                 if (valueObject.IsDateTimeOffset)
                 {
-                    _formattedSqlBuilder.Append(valueObject.ToLogFormatDateOnly((DateTimeOffset)convertedValue));
+                    _formattedSqlBuilder.Append(_config.Dialect.ToLogFormatDateOnly((DateTimeOffset)convertedValue));
                 }
             }
             else
             {
-                _formattedSqlBuilder.Append(valueObject.ToLogFormat(convertedValue));
+                _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(convertedValue));
             }
         }
 

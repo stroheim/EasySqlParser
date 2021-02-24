@@ -13,32 +13,51 @@ namespace EasySqlParser.Internals.Dialect
     /// <remarks>
     /// 2008以前のSQLServer
     /// </remarks>
-    internal class Mssql2008Dialect : StandardDialect
+    public class Mssql2008Dialect : StandardDialect
     {
-        internal override string ParameterPrefix { get; } = "@";
-        internal override bool EnableNamedParameter { get; } = true;
+        /// <inheritdoc />
+        public override string ParameterPrefix { get; } = "@";
+
+        /// <inheritdoc />
+        public override bool EnableNamedParameter { get; } = true;
 
         internal override char OpenQuote { get; } = '[';
 
         internal override char CloseQuote { get; } = ']';
 
-        internal override bool SupportsIdentity { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsIdentity { get; } = true;
 
+        /// <summary>
+        /// The default wild card characters for the SQL LIKE operator.
+        /// </summary>
         protected static readonly char[] DefaultWildcards = { '%', '_', '[' };
 
-        internal Mssql2008Dialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Mssql2008Dialect"/> class.
+        /// </summary>
+        public Mssql2008Dialect() :
             base(DefaultWildcards)
         {
 
         }
 
-        internal Mssql2008Dialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Mssql2008Dialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Mssql2008Dialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
-        protected Mssql2008Dialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Mssql2008Dialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Mssql2008Dialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -50,7 +69,8 @@ namespace EasySqlParser.Internals.Dialect
             return transformer.Transform(node);
         }
 
-        internal override string GetIdentityWhereClause(string columnName)
+        /// <inheritdoc />
+        public override string GetIdentityWhereClause(string columnName)
         {
             
             return $"{ApplyQuote(columnName)} = scope_identity()";

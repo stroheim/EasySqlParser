@@ -167,7 +167,7 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.SqlKind != SqlKind.Insert) return;
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
-            if (!config.SupportsSequence()) return;
+            if (!config.Dialect.SupportsSequence) return;
             if (entityInfo.SequenceColumns.Count == 0) return;
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
@@ -218,7 +218,7 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.SqlKind != SqlKind.Insert) return;
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
-            if (!config.SupportsSequence()) return;
+            if (!config.Dialect.SupportsSequence) return;
             if (entityInfo.SequenceColumns.Count == 0) return;
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
@@ -280,10 +280,10 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendSql("INSERT INTO ");
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" (");
             var counter = 0;
             object identityValue = null;
@@ -305,7 +305,7 @@ namespace EasySqlParser.SqlGenerator
                 }
                 builder.AppendComma(counter);
 
-                builder.AppendLine(config.GetQuotedName(columnInfo.ColumnName));
+                builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
 
                 counter++;
             }
@@ -328,7 +328,7 @@ namespace EasySqlParser.SqlGenerator
                 {
                     propValue = builder.GetDefaultVersionNo(propValue, columnInfo.PropertyInfo.PropertyType);
                 }
-                builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                 builder.AppendLine();
                 counter++;
             }
@@ -356,10 +356,10 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendSql("UPDATE ");
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" SET ");
             var counter = 0;
             foreach (var columnInfo in entityInfo.Columns)
@@ -372,10 +372,10 @@ namespace EasySqlParser.SqlGenerator
                 }
                 builder.AppendComma(counter);
 
-                var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                 builder.AppendVersion(parameter, columnInfo);
 
                 builder.AppendLine();
@@ -390,7 +390,7 @@ namespace EasySqlParser.SqlGenerator
                 if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
                 builder.AppendAnd(counter);
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 if (propValue == null)
                 {
@@ -399,7 +399,7 @@ namespace EasySqlParser.SqlGenerator
                 else
                 {
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                 }
                 builder.AppendLine();
 
@@ -426,10 +426,10 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendSql("DELETE FROM ");
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" WHERE ");
             var counter = 0;
             foreach (var columnInfo in entityInfo.Columns)
@@ -438,10 +438,10 @@ namespace EasySqlParser.SqlGenerator
                 if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
                 builder.AppendAnd(counter);
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                 builder.AppendLine();
 
 
@@ -471,11 +471,11 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendSql("SELECT COUNT(*) CNT FROM ");
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
 
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             if (keyValues.Count > 0)
             {
                 builder.AppendLine(" WHERE ");
@@ -490,7 +490,7 @@ namespace EasySqlParser.SqlGenerator
                         propValue = keyValues[columnInfo.PropertyInfo.Name];
                     }
 
-                    var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                     builder.AppendSql(columnName);
                     if (propValue == null)
                     {
@@ -499,7 +499,7 @@ namespace EasySqlParser.SqlGenerator
                     else
                     {
                         builder.AppendSql(" = ");
-                        builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                     }
 
                     builder.AppendLine();
@@ -537,7 +537,7 @@ namespace EasySqlParser.SqlGenerator
             foreach (var columnInfo in entityInfo.Columns)
             {
                 builder.AppendComma(counter);
-                builder.AppendLine(config.GetQuotedName(columnInfo.ColumnName));
+                builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
 
                 counter++;
 
@@ -546,11 +546,11 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendLine(" FROM ");
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
 
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" WHERE ");
             counter = 0;
             foreach (var columnInfo in entityInfo.Columns)
@@ -563,7 +563,7 @@ namespace EasySqlParser.SqlGenerator
                     propValue = keyValues[columnInfo.PropertyInfo.Name];
                 }
 
-                var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 if (propValue == null)
                 {
@@ -572,7 +572,7 @@ namespace EasySqlParser.SqlGenerator
                 else
                 {
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                 }
 
                 builder.AppendLine();
@@ -592,14 +592,14 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
             var config = parameter.Config;
-            if (config.SupportsFinalTable() && !callFromFinalTable) return;
-            if (config.SupportsReturning())
+            if (config.Dialect.SupportsFinalTable && !callFromFinalTable) return;
+            if (config.Dialect.SupportsReturning)
             {
                 builder.AppendLine(" RETURNING ");
             }
             else
             {
-                builder.AppendLine(config.GetStatementTerminator());
+                builder.AppendLine(config.Dialect.StatementTerminator);
                 builder.AppendLine("SELECT ");
             }
 
@@ -616,7 +616,7 @@ namespace EasySqlParser.SqlGenerator
                 entityInfo.IdentityColumn != null)
             {
                 builder.AppendComma(0);
-                builder.AppendLine(config.GetQuotedName(entityInfo.IdentityColumn.ColumnName));
+                builder.AppendLine(config.Dialect.ApplyQuote(entityInfo.IdentityColumn.ColumnName));
                 return;
             }
 
@@ -624,19 +624,19 @@ namespace EasySqlParser.SqlGenerator
             foreach (var columnInfo in entityInfo.Columns)
             {
                 builder.AppendComma(counter);
-                if (config.SupportsFinalTable())
+                if (config.Dialect.SupportsFinalTable)
                 {
                     builder.AppendSql("t_.");
                 }
 
-                builder.AppendSql(config.GetQuotedName(columnInfo.ColumnName));
+                builder.AppendSql(config.Dialect.ApplyQuote(columnInfo.ColumnName));
                 builder.AppendLine(" ");
 
                 counter++;
 
             }
 
-            if (config.SupportsReturning())
+            if (config.Dialect.SupportsReturning)
             {
                 builder.AppendLine(" INTO ");
                 counter = 0;
@@ -663,7 +663,7 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
             var config = parameter.Config;
-            if (!config.SupportsFinalTable()) return;
+            if (!config.Dialect.SupportsFinalTable) return;
             AppendSelectAffectedCommandHeader(builder, entityInfo, parameter, true);
             builder.ApplyIndent(4);
 
@@ -675,7 +675,7 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
             var config = parameter.Config;
-            if (!config.SupportsFinalTable()) return;
+            if (!config.Dialect.SupportsFinalTable) return;
             builder.AppendLine(") AS t_");
             builder.RemoveIndent();
 
@@ -687,11 +687,11 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
             var config = parameter.Config;
-            if (config.SupportsReturning())
+            if (config.Dialect.SupportsReturning)
             {
                 return;
             }
-            if (config.SupportsFinalTable())
+            if (config.Dialect.SupportsFinalTable)
             {
                 builder.AppendLine(" FROM FINAL TABLE (");
                 return;
@@ -700,7 +700,7 @@ namespace EasySqlParser.SqlGenerator
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
                 builder.AppendIndent(3);
-                builder.AppendSql(config.GetQuotedName(entityInfo.SchemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
             }
             else
@@ -708,7 +708,7 @@ namespace EasySqlParser.SqlGenerator
                 builder.AppendIndent(3);
             }
 
-            builder.AppendSql(config.GetQuotedName(entityInfo.TableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" ");
             builder.AppendLine("WHERE ");
             var identityAppended = false;
@@ -717,7 +717,7 @@ namespace EasySqlParser.SqlGenerator
                 if (entityInfo.IdentityColumn != null)
                 {
                     builder.AppendIndent(3);
-                    builder.AppendSql(config.GetIdentityWhereClause(entityInfo.IdentityColumn.ColumnName));
+                    builder.AppendSql(config.Dialect.GetIdentityWhereClause(entityInfo.IdentityColumn.ColumnName));
                     identityAppended = true;
                 }
             }
@@ -729,17 +729,17 @@ namespace EasySqlParser.SqlGenerator
                 {
                     builder.AppendAnd(counter);
                     var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                    var columnName = config.GetQuotedName(columnInfo.ColumnName);
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                     builder.AppendSql(columnName);
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(config.GetParameterName(columnInfo.PropertyInfo.Name), propValue);
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
                     builder.AppendLine();
                     counter++;
                 }
             }
-            if (!config.SupportsFinalTable() && !config.SupportsReturning())
+            if (!config.Dialect.SupportsFinalTable && !config.Dialect.SupportsReturning)
             {
-                builder.AppendLine(config.GetStatementTerminator());
+                builder.AppendLine(config.Dialect.StatementTerminator);
             }
 
         }

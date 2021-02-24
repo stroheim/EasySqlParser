@@ -7,27 +7,43 @@ namespace EasySqlParser.Internals.Dialect
     //   package    org.seasar.doma.jdbc.dialect
     //   class      SqliteDialect
     // https://github.com/domaframework/doma
-    internal class SqliteDialect : StandardDialect
+    /// <summary>
+    /// A dialect for SQLite.
+    /// </summary>
+    public class SqliteDialect : StandardDialect
     {
-        internal override string ParameterPrefix { get; } = "@";
-        internal override bool EnableNamedParameter { get; } = true;
+        /// <inheritdoc />
+        public override string ParameterPrefix { get; } = "@";
 
-        internal override bool UseSqlite { get; } = true;
+        /// <inheritdoc />
+        public override bool EnableNamedParameter { get; } = true;
 
 
-        internal SqliteDialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// </summary>
+        public SqliteDialect() :
             base()
         {
 
         }
 
-        internal SqliteDialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public SqliteDialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
-        internal SqliteDialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public SqliteDialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -39,7 +55,8 @@ namespace EasySqlParser.Internals.Dialect
             return transformer.Transform(node);
         }
 
-        internal override string GetIdentityWhereClause(string columnName)
+        /// <inheritdoc />
+        public override string GetIdentityWhereClause(string columnName)
         {
             return "rowid = last_insert_rowid()";
         }

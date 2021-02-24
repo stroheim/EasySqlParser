@@ -62,7 +62,7 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
         public void Foo(Employee employee, DbTransaction transaction)
         {
 
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, new GlobalQueryBuilderConfiguration());
             var count = _context.Database.ExecuteNonQueryByQueryBuilder(parameter, transaction);
             Console.WriteLine(count);
             //var result = _context.Database.GetQueryBuilderResult(parameter);

@@ -7,33 +7,53 @@ namespace EasySqlParser.Internals.Dialect
     //   package    org.seasar.doma.jdbc.dialect
     //   class      Db2Dialect
     // https://github.com/domaframework/doma
-    internal class Db2Dialect : StandardDialect
+    /// <summary>
+    /// A dialect for Db2.
+    /// </summary>
+    public class Db2Dialect : StandardDialect
     {
+        /// <inheritdoc />
+        public override string ParameterPrefix { get; } = "@";
 
-        internal override string ParameterPrefix { get; } = "@";
-        internal override bool EnableNamedParameter { get; } = true;
+        /// <inheritdoc />
+        public override bool EnableNamedParameter { get; } = true;
 
-        internal override bool SupportsIdentity { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsIdentity { get; } = true;
 
-        internal override bool SupportsSequence { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsSequence { get; } = true;
 
-        internal override bool SupportsFinalTable { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsFinalTable { get; } = true;
 
         private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 
-        internal Db2Dialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
+        /// </summary>
+        public Db2Dialect() :
             base(DefaultWildcards)
         {
 
         }
 
-        internal Db2Dialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Db2Dialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
-        protected Db2Dialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Db2Dialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -50,11 +70,13 @@ namespace EasySqlParser.Internals.Dialect
             return base.GetSequencePrefix(prefix, "||");
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSql(string name, string schema)
         {
             return $"SELECT NEXT VALUE FOR {GetSequenceName(name, schema)}";
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
             return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR({length})), {length}, '0')";

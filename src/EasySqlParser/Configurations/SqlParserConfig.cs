@@ -17,14 +17,17 @@ namespace EasySqlParser.Configurations
         /// <summary>
         /// kind of database connection
         /// </summary>
-        public DbConnectionKind DbConnectionKind { get; set; } = DbConnectionKind.Unknown;
+        public DbConnectionKind DbConnectionKind { get; internal set; } = DbConnectionKind.Unknown;
 
-        internal StandardDialect Dialect { get; set; }
+        /// <summary>
+        /// A RDB dialect
+        /// </summary>
+        public StandardDialect Dialect { get; internal set; }
 
         /// <summary>
         /// Delegate for create <see cref="IDbDataParameter"/> instance.
         /// </summary>
-        internal Func<IDbDataParameter> DataParameterCreator { get; set; }
+        public Func<IDbDataParameter> DataParameterCreator { get; internal set; }
     }
 
 }

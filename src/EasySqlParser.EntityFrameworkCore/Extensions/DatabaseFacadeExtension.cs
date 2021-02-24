@@ -629,10 +629,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             builder.AppendSql("INSERT INTO ");
             if (!string.IsNullOrEmpty(schemaName))
             {
-                builder.AppendSql(config.GetQuotedName(schemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(schemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(tableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(tableName));
             builder.AppendLine(" (");
             var counter = 0;
             object identityValue = null;
@@ -645,7 +645,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 }
 
                 var columnName = property.GetColumnName(tableId);
-                var quotedColumnName = config.GetQuotedName(columnName);
+                var quotedColumnName = config.Dialect.ApplyQuote(columnName);
 
                 // identity
                 if (property.ValueGenerated == ValueGenerated.OnAdd)
@@ -669,7 +669,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             {
                 if (property.ValueGenerated == ValueGenerated.OnAdd)
                 {
-                    if (builder.TryAppendIdentityValue(parameter, property.PropertyInfo, counter, identityValue))
+                    if (builder.TryAppendIdentityValue(property.PropertyInfo, counter, identityValue))
                     {
                         counter++;
                     }
@@ -682,7 +682,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 {
                     propValue = builder.GetDefaultVersionNo(propValue, property.PropertyInfo.PropertyType);
                 }
-                builder.AppendParameter(config.GetParameterName(property.PropertyInfo.Name), propValue);
+                builder.AppendParameter(property.PropertyInfo, propValue);
                 builder.AppendLine();
                 counter++;
             }
@@ -717,10 +717,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             builder.AppendSql("UPDATE ");
             if (!string.IsNullOrEmpty(schemaName))
             {
-                builder.AppendSql(config.GetQuotedName(schemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(schemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(tableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(tableName));
             builder.AppendLine(" SET ");
             var counter = 0;
             foreach (var property in properties)
@@ -733,10 +733,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 }
 
                 builder.AppendComma(counter);
-                var columnName = config.GetQuotedName(property.GetColumnName(tableId));
+                var columnName = config.Dialect.ApplyQuote(property.GetColumnName(tableId));
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(config.GetParameterName(property.PropertyInfo.Name), propValue);
+                builder.AppendParameter(property.PropertyInfo, propValue);
                 builder.AppendVersion(parameter, property.PropertyInfo);
 
                 builder.AppendLine();
@@ -754,7 +754,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 if (!property.IsPrimaryKey() && versionAttr == null) continue;
                 builder.AppendAnd(counter);
                 var propValue = property.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.GetQuotedName(property.GetColumnName(tableId));
+                var columnName = config.Dialect.ApplyQuote(property.GetColumnName(tableId));
                 builder.AppendSql(columnName);
                 if (propValue == null)
                 {
@@ -763,7 +763,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 else
                 {
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(config.GetParameterName(property.PropertyInfo.Name), propValue);
+                    builder.AppendParameter(property.PropertyInfo, propValue);
                 }
 
                 builder.AppendLine();
@@ -799,10 +799,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             builder.AppendSql("DELETE FROM ");
             if (!string.IsNullOrEmpty(schemaName))
             {
-                builder.AppendSql(config.GetQuotedName(schemaName));
+                builder.AppendSql(config.Dialect.ApplyQuote(schemaName));
                 builder.AppendSql(".");
             }
-            builder.AppendSql(config.GetQuotedName(tableName));
+            builder.AppendSql(config.Dialect.ApplyQuote(tableName));
             builder.AppendLine(" WHERE ");
             var counter = 0;
             foreach (var property in properties)
@@ -812,10 +812,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 if (!property.IsPrimaryKey() && versionAttr == null) continue;
                 builder.AppendAnd(counter);
                 var propValue = property.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.GetQuotedName(property.GetColumnName(tableId));
+                var columnName = config.Dialect.ApplyQuote(property.GetColumnName(tableId));
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(config.GetParameterName(property.PropertyInfo.Name), propValue);
+                builder.AppendParameter(property.PropertyInfo, propValue);
                 builder.AppendLine();
 
 
@@ -844,16 +844,16 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         //    {
         //        builder.AppendSql(counter == 0 ? "   " : " , ");
 
-        //        builder.AppendLine(config.GetQuotedName(property.GetColumnName(tableId)));
+        //        builder.AppendLine(config.Dialect.ApplyQuote(property.GetColumnName(tableId)));
 
         //        counter++;
         //    }
         //    if (!string.IsNullOrEmpty(schemaName))
         //    {
-        //        builder.AppendSql(config.GetQuotedName(schemaName));
+        //        builder.AppendSql(config.Dialect.ApplyQuote(schemaName));
         //        builder.AppendSql(".");
         //    }
-        //    builder.AppendSql(config.GetQuotedName(tableName));
+        //    builder.AppendSql(config.Dialect.ApplyQuote(tableName));
         //    var hasPrimaryKey = properties.Any(x => x.IsPrimaryKey());
         //    if (!hasPrimaryKey)
         //    {

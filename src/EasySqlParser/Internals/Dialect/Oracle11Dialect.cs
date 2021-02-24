@@ -14,30 +14,47 @@ namespace EasySqlParser.Internals.Dialect
     /// <remarks>
     /// 11g 以前のOracle
     /// </remarks>
-    internal class Oracle11Dialect : StandardDialect
+    public class Oracle11Dialect : StandardDialect
     {
-        internal override string ParameterPrefix { get; } = ":";
-        internal override bool EnableNamedParameter { get; } = true;
+        /// <inheritdoc />
+        public override string ParameterPrefix { get; } = ":";
 
-        internal override bool SupportsSequence { get; } = true;
+        /// <inheritdoc />
+        public override bool EnableNamedParameter { get; } = true;
 
-        internal override bool SupportsReturning { get; } = true;
+        /// <inheritdoc />
+        public override bool SupportsSequence { get; } = true;
+
+        /// <inheritdoc />
+        public override bool SupportsReturning { get; } = true;
 
         private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 
-        internal Oracle11Dialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// </summary>
+        public Oracle11Dialect() :
             base(DefaultWildcards)
         {
 
         }
 
-        internal Oracle11Dialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Oracle11Dialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
-        protected Oracle11Dialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public Oracle11Dialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -49,22 +66,22 @@ namespace EasySqlParser.Internals.Dialect
             return transformer.Transform(node);
         }
 
-        public override string ToLogFormatDateOnly(DateTime value)
+        internal override string ToLogFormatDateOnly(DateTime value)
         {
             return $"date'{value:yyyy-MM-dd}'";
         }
 
-        public override string ToLogFormat(TimeSpan value)
+        internal override string ToLogFormat(TimeSpan value)
         {
             return $"time'{value:hh\\:mm\\:ss}'";
         }
 
-        public override string ToLogFormat(DateTime value)
+        internal override string ToLogFormat(DateTime value)
         {
             return $"timestamp'{value:yyyy-MM-dd HH:mm:ss.fff}'";
         }
 
-        public override string ToLogFormat(DateTimeOffset value)
+        internal override string ToLogFormat(DateTimeOffset value)
         {
             return $"timestamp'{value:yyyy-MM-dd HH:mm:ss.fff}'";
         }
@@ -74,11 +91,13 @@ namespace EasySqlParser.Internals.Dialect
             return base.GetSequencePrefix(prefix, "||");
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSql(string name, string schema)
         {
             return $"SELECT {GetSequenceName(name, schema)}.NEXTVAL FROM DUAL";
         }
 
+        /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
             return $"SELECT {GetSequencePrefix(prefix)}LPAD({GetSequenceName(name, schema)}.NEXTVAL, {length}, '0') FROM DUAL";

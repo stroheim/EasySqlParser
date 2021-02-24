@@ -7,30 +7,49 @@ namespace EasySqlParser.Internals.Dialect
     //   package    org.seasar.doma.jdbc.dialect
     //   class      MysqlDialect
     // https://github.com/domaframework/doma
-    internal class MysqlDialect : StandardDialect
+    /// <summary>
+    /// A dialect for MySQL.
+    /// </summary>
+    public class MysqlDialect : StandardDialect
     {
-        internal override string ParameterPrefix { get; } = "@";
-        internal override bool EnableNamedParameter { get; } = true;
+        /// <inheritdoc />
+        public override string ParameterPrefix { get; } = "@";
 
-        internal override bool SupportsIdentity { get; } = true;
+        /// <inheritdoc />
+        public override bool EnableNamedParameter { get; } = true;
+
+        /// <inheritdoc />
+        public override bool SupportsIdentity { get; } = true;
 
         internal override char OpenQuote { get; } = '`';
 
         internal override char CloseQuote { get; } = '`';
 
-        internal MysqlDialect() :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
+        /// </summary>
+        public MysqlDialect() :
             base()
         {
 
         }
 
-        internal MysqlDialect(char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
+        /// </summary>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public MysqlDialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
-        internal MysqlDialect(char escapeChar, char[] wildcards) :
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
+        /// </summary>
+        /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
+        /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
+        public MysqlDialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -48,7 +67,8 @@ namespace EasySqlParser.Internals.Dialect
             return transformer.Transform(node);
         }
 
-        internal override string GetIdentityWhereClause(string columnName)
+        /// <inheritdoc />
+        public override string GetIdentityWhereClause(string columnName)
         {
 
             return $"{ApplyQuote(columnName)} = LAST_INSERT_ID()";
