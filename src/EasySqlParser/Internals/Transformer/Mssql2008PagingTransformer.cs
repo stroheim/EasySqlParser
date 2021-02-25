@@ -1,14 +1,14 @@
 ﻿using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect
-    //   class      Db2PagingTransformer
+    //   class      Mssql2008PagingTransformer
     // https://github.com/domaframework/doma
-    internal class Db2PagingTransformer : StandardPagingTransformer
+    internal class Mssql2008PagingTransformer : StandardPagingTransformer
     {
-        internal Db2PagingTransformer(long offset, long limit, string rowNumberColumn) : 
+        internal Mssql2008PagingTransformer(long offset, long limit, string rowNumberColumn) : 
             base(offset, limit, rowNumberColumn)
         {
         }
@@ -31,36 +31,36 @@ namespace EasySqlParser.Internals.Dialect.Transformer
                 return node;
             }
 
+            if (RowNumberColumnSpecified)
+            {
+                return base.VisitSelectStatementNode(node, parameter);
+            }
+
             if (Offset > 0)
             {
                 return base.VisitSelectStatementNode(node, parameter);
             }
 
             Processed = true;
+            return AddTopNode(node);
+        }
 
-            var originalOrderBy = node.OrderByClauseNode;
-            OrderByClauseNode orderBy;
-            if (originalOrderBy != null)
+        protected ISqlNode AddTopNode(SelectStatementNode node)
+        {
+            var selectNode = new SelectClauseNode(node.SelectClauseNode.WordNode);
+            selectNode.AddNode(new FragmentNode($" top ({Limit})"));
+            foreach (var child in node.SelectClauseNode.Children)
             {
-                orderBy = new OrderByClauseNode(originalOrderBy.WordNode);
-                foreach (var child in originalOrderBy.Children)
-                {
-                    orderBy.AddNode(child);
-                }
+                selectNode.AddNode(child);
             }
-            else
-            {
-                orderBy = new OrderByClauseNode("");
-            }
-            orderBy.AddNode(new FragmentNode($" fetch first {Limit} rows only"));
 
             var result = new SelectStatementNode();
-            result.SelectClauseNode = node.SelectClauseNode;
+            result.SelectClauseNode = selectNode;
             result.FromClauseNode = node.FromClauseNode;
             result.WhereClauseNode = node.WhereClauseNode;
             result.GroupByClauseNode = node.GroupByClauseNode;
             result.HavingClauseNode = node.HavingClauseNode;
-            result.OrderByClauseNode = orderBy;
+            result.OrderByClauseNode = node.OrderByClauseNode;
             result.ForUpdateClauseNode = node.ForUpdateClauseNode;
             result.OptionClauseNode = node.OptionClauseNode;
             return result;

@@ -1,17 +1,26 @@
-﻿using EasySqlParser.Internals.Node;
+﻿using EasySqlParser.Exceptions;
+using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect
-    //   class      SqlitePagingTransformer
+    //   class      MssqlPagingTransformer
     // https://github.com/domaframework/doma
-    internal class SqlitePagingTransformer : StandardPagingTransformer
+    /// <summary>
+    /// A dialect for Microsoft SQL Server.
+    /// </summary>
+    /// <remarks>
+    /// 2012以降のSQLServer
+    /// </remarks>
+    internal class MssqlPagingTransformer : Mssql2008PagingTransformer
     {
-        protected static string MaximumLimit = long.MaxValue.ToString();
-        internal SqlitePagingTransformer(long offset, long limit, string rowNumberColumn) : 
+        private readonly bool _forceOffsetFetch;
+
+        internal MssqlPagingTransformer(long offset, long limit, bool forceOffsetFetch, string rowNumberColumn) : 
             base(offset, limit, rowNumberColumn)
         {
+            _forceOffsetFetch = forceOffsetFetch;
         }
 
         public override ISqlNode VisitSelectStatementNode(SelectStatementNode node, object parameter)
@@ -27,28 +36,34 @@ namespace EasySqlParser.Internals.Dialect.Transformer
             }
 
             Processed = true;
+            if (!_forceOffsetFetch && Offset <= 0)
+            {
+                return AddTopNode(node);
+            }
 
             var originalOrderBy = node.OrderByClauseNode;
-            OrderByClauseNode orderBy;
-            if (originalOrderBy != null)
+            if (originalOrderBy == null)
             {
-                orderBy = new OrderByClauseNode(originalOrderBy.WordNode);
-                foreach (var child in originalOrderBy.Children)
-                {
-                    orderBy.AddNode(child);
-                }
+                throw new SqlTransformException(ExceptionMessageId.Esp2201);
             }
-            else
+
+            var orderBy = new OrderByClauseNode(originalOrderBy.WordNode);
+            foreach (var child in originalOrderBy.Children)
             {
-                orderBy = new OrderByClauseNode("");
+                orderBy.AddNode(child);
             }
 
             var offset = Offset <= 0 ? "0" : Offset.ToString();
-            var limit = Limit <= 0 ? MaximumLimit : Limit.ToString();
-            orderBy.AddNode(new FragmentNode(" limit "));
-            orderBy.AddNode(new FragmentNode(limit));
+
             orderBy.AddNode(new FragmentNode(" offset "));
             orderBy.AddNode(new FragmentNode(offset));
+            orderBy.AddNode(new FragmentNode(" rows"));
+            if (Limit > 0)
+            {
+                orderBy.AddNode(new FragmentNode(" fetch next "));
+                orderBy.AddNode(new FragmentNode(Limit.ToString()));
+                orderBy.AddNode(new FragmentNode(" rows only"));
+            }
 
             var result = new SelectStatementNode();
             result.SelectClauseNode = node.SelectClauseNode;

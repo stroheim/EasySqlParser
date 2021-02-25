@@ -2,8 +2,8 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using EasySqlParser.Internals.Dialect.Transformer;
 using EasySqlParser.Internals.Node;
+using EasySqlParser.Internals.Transformer;
 
 namespace EasySqlParser.Dialect
 {

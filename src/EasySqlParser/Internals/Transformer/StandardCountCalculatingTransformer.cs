@@ -1,7 +1,7 @@
 ﻿using System;
 using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting org.seasar.doma.internal.jdbc.dialect.StandardCountCalculatingTransformer
     [Obsolete("will remove",true)]

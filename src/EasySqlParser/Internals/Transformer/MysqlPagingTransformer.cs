@@ -1,14 +1,15 @@
 ﻿using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect
-    //   class      PostgresPagingTransformer
+    //   class      MysqlPagingTransformer
     // https://github.com/domaframework/doma
-    internal class PostgresPagingTransformer : StandardPagingTransformer
+    internal class MysqlPagingTransformer : StandardPagingTransformer
     {
-        internal PostgresPagingTransformer(long offset, long limit, string rowNumberColumn) : 
+        protected const string MaximumLimit = "18446744073709551615";
+        internal MysqlPagingTransformer(long offset, long limit, string rowNumberColumn) : 
             base(offset, limit, rowNumberColumn)
         {
         }
@@ -26,6 +27,14 @@ namespace EasySqlParser.Internals.Dialect.Transformer
             }
 
             Processed = true;
+
+            var selectNode = new SelectClauseNode("select");
+            selectNode.AddNode(new FragmentNode(" sql_calc_found_rows"));
+            foreach (var child in node.SelectClauseNode.Children)
+            {
+                selectNode.AddNode(child);
+            }
+
             var originalOrderBy = node.OrderByClauseNode;
             OrderByClauseNode orderBy;
             if (originalOrderBy != null)
@@ -41,20 +50,17 @@ namespace EasySqlParser.Internals.Dialect.Transformer
                 orderBy = new OrderByClauseNode("");
             }
 
-            if (Limit > 0)
-            {
-                orderBy.AddNode(new FragmentNode(" limit "));
-                orderBy.AddNode(new FragmentNode(Limit.ToString()));
-            }
-
-            if (Offset >= 0)
-            {
-                orderBy.AddNode(new FragmentNode(" offset "));
-                orderBy.AddNode(new FragmentNode(Offset.ToString()));
-            }
+            var offset = Offset <= 0 ? "0" : Offset.ToString();
+            var limit = Limit <= 0 ? MaximumLimit : Limit.ToString();
+            orderBy.AddNode(new FragmentNode(" limit "));
+            orderBy.AddNode(new FragmentNode(offset));
+            orderBy.AddNode(new FragmentNode(", "));
+            orderBy.AddNode(new FragmentNode(limit));
 
             var result = new SelectStatementNode();
-            result.SelectClauseNode = node.SelectClauseNode;
+            // customized
+            //result.SelectClauseNode = node.SelectClauseNode;
+            result.SelectClauseNode = selectNode;
             result.FromClauseNode = node.FromClauseNode;
             result.WhereClauseNode = node.WhereClauseNode;
             result.GroupByClauseNode = node.GroupByClauseNode;

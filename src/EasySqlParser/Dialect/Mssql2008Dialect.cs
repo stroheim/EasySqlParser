@@ -1,5 +1,5 @@
-﻿using EasySqlParser.Internals.Dialect.Transformer;
-using EasySqlParser.Internals.Node;
+﻿using EasySqlParser.Internals.Node;
+using EasySqlParser.Internals.Transformer;
 
 namespace EasySqlParser.Dialect
 {

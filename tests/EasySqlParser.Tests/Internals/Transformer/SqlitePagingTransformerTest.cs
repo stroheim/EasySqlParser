@@ -1,29 +1,28 @@
 ﻿using System.Collections.Generic;
 using EasySqlParser.Configurations;
 using EasySqlParser.Internals;
-using EasySqlParser.Internals.Dialect.Transformer;
+using EasySqlParser.Internals.Transformer;
 using Xunit;
 
-namespace EasySqlParser.Tests.Internals.Dialect.Transformer
+namespace EasySqlParser.Tests.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect
-    //   class      MysqlPagingTransformerTest
+    //   class      SqlitePagingTransformerTest
     // https://github.com/domaframework/doma
-    public class MysqlPagingTransformerTest
+    public class SqlitePagingTransformerTest
     {
         private readonly SqlParserConfig _config;
-        public MysqlPagingTransformerTest()
+        public SqlitePagingTransformerTest()
         {
-            _config = ConfigContainer.CreateConfigForTest(DbConnectionKind.MySql, nameof(MysqlPagingTransformerTest));
+            _config = ConfigContainer.CreateConfigForTest(DbConnectionKind.SQLite, nameof(SqlitePagingTransformerTest));
         }
-
 
         [Fact]
         public void testOffsetLimit()
         {
-            var expected = "select sql_calc_found_rows * from emp order by emp.id limit 5, 10";
-            var transformer = new MysqlPagingTransformer(5, 10, null);
+            var expected = "select * from emp order by emp.id limit 10 offset 5";
+            var transformer = new SqlitePagingTransformer(5, 10, null);
             var parser = new DomaSqlParser("select * from emp order by emp.id");
             var node = transformer.Transform(parser.Parse());
             var parameters = new List<ParameterEmulator>();
@@ -35,8 +34,8 @@ namespace EasySqlParser.Tests.Internals.Dialect.Transformer
         [Fact]
         public void testOffsetLimit_forUpdate()
         {
-            var expected = "select sql_calc_found_rows * from emp order by emp.id  limit 5, 10 for update";
-            var transformer = new MysqlPagingTransformer(5, 10, null);
+            var expected = "select * from emp order by emp.id  limit 10 offset 5 for update";
+            var transformer = new SqlitePagingTransformer(5, 10, null);
             var parser = new DomaSqlParser("select * from emp order by emp.id for update");
             var node = transformer.Transform(parser.Parse());
             var parameters = new List<ParameterEmulator>();
@@ -48,8 +47,8 @@ namespace EasySqlParser.Tests.Internals.Dialect.Transformer
         [Fact]
         public void testOffsetOnly()
         {
-            var expected = "select sql_calc_found_rows * from emp order by emp.id limit 5, 18446744073709551615";
-            var transformer = new MysqlPagingTransformer(5, -1, null);
+            var expected = "select * from emp order by emp.id limit 9223372036854775807 offset 5";
+            var transformer = new SqlitePagingTransformer(5, -1, null);
             var parser = new DomaSqlParser("select * from emp order by emp.id");
             var node = transformer.Transform(parser.Parse());
             var parameters = new List<ParameterEmulator>();
@@ -61,8 +60,8 @@ namespace EasySqlParser.Tests.Internals.Dialect.Transformer
         [Fact]
         public void testLimitOnly()
         {
-            var expected = "select sql_calc_found_rows * from emp order by emp.id limit 0, 10";
-            var transformer = new MysqlPagingTransformer(-1, 10, null);
+            var expected = "select * from emp order by emp.id limit 10 offset 0";
+            var transformer = new SqlitePagingTransformer(-1, 10, null);
             var parser = new DomaSqlParser("select * from emp order by emp.id");
             var node = transformer.Transform(parser.Parse());
             var parameters = new List<ParameterEmulator>();

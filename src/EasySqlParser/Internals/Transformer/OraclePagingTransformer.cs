@@ -1,6 +1,6 @@
 ﻿using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect

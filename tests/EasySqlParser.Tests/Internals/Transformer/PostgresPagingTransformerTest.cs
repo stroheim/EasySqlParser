@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using EasySqlParser.Configurations;
 using EasySqlParser.Internals;
-using EasySqlParser.Internals.Dialect.Transformer;
+using EasySqlParser.Internals.Transformer;
 using Xunit;
 
-namespace EasySqlParser.Tests.Internals.Dialect.Transformer
+namespace EasySqlParser.Tests.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect

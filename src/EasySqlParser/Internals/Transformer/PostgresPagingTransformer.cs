@@ -1,27 +1,16 @@
-﻿using System;
-using EasySqlParser.Exceptions;
-using EasySqlParser.Internals.Node;
+﻿using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect.Transformer
+namespace EasySqlParser.Internals.Transformer
 {
     // Porting from DOMA
     //   package    org.seasar.doma.internal.jdbc.dialect
-    //   class      MssqlPagingTransformer
+    //   class      PostgresPagingTransformer
     // https://github.com/domaframework/doma
-    /// <summary>
-    /// A dialect for Microsoft SQL Server.
-    /// </summary>
-    /// <remarks>
-    /// 2012以降のSQLServer
-    /// </remarks>
-    internal class MssqlPagingTransformer : Mssql2008PagingTransformer
+    internal class PostgresPagingTransformer : StandardPagingTransformer
     {
-        private readonly bool _forceOffsetFetch;
-
-        internal MssqlPagingTransformer(long offset, long limit, bool forceOffsetFetch, string rowNumberColumn) : 
+        internal PostgresPagingTransformer(long offset, long limit, string rowNumberColumn) : 
             base(offset, limit, rowNumberColumn)
         {
-            _forceOffsetFetch = forceOffsetFetch;
         }
 
         public override ISqlNode VisitSelectStatementNode(SelectStatementNode node, object parameter)
@@ -37,33 +26,31 @@ namespace EasySqlParser.Internals.Dialect.Transformer
             }
 
             Processed = true;
-            if (!_forceOffsetFetch && Offset <= 0)
-            {
-                return AddTopNode(node);
-            }
-
             var originalOrderBy = node.OrderByClauseNode;
-            if (originalOrderBy == null)
+            OrderByClauseNode orderBy;
+            if (originalOrderBy != null)
             {
-                throw new SqlTransformException(ExceptionMessageId.Esp2201);
+                orderBy = new OrderByClauseNode(originalOrderBy.WordNode);
+                foreach (var child in originalOrderBy.Children)
+                {
+                    orderBy.AddNode(child);
+                }
+            }
+            else
+            {
+                orderBy = new OrderByClauseNode("");
             }
 
-            var orderBy = new OrderByClauseNode(originalOrderBy.WordNode);
-            foreach (var child in originalOrderBy.Children)
-            {
-                orderBy.AddNode(child);
-            }
-
-            var offset = Offset <= 0 ? "0" : Offset.ToString();
-
-            orderBy.AddNode(new FragmentNode(" offset "));
-            orderBy.AddNode(new FragmentNode(offset));
-            orderBy.AddNode(new FragmentNode(" rows"));
             if (Limit > 0)
             {
-                orderBy.AddNode(new FragmentNode(" fetch next "));
+                orderBy.AddNode(new FragmentNode(" limit "));
                 orderBy.AddNode(new FragmentNode(Limit.ToString()));
-                orderBy.AddNode(new FragmentNode(" rows only"));
+            }
+
+            if (Offset >= 0)
+            {
+                orderBy.AddNode(new FragmentNode(" offset "));
+                orderBy.AddNode(new FragmentNode(Offset.ToString()));
             }
 
             var result = new SelectStatementNode();
