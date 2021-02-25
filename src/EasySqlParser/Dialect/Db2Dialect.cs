@@ -1,19 +1,19 @@
 ﻿using EasySqlParser.Internals.Dialect.Transformer;
 using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect
+namespace EasySqlParser.Dialect
 {
     // Porting from DOMA
     //   package    org.seasar.doma.jdbc.dialect
-    //   class      PostgresDialect
+    //   class      Db2Dialect
     // https://github.com/domaframework/doma
     /// <summary>
-    /// A dialect for PostgreSQL.
+    /// A dialect for Db2.
     /// </summary>
-    public class PostgresDialect : StandardDialect
+    public class Db2Dialect : StandardDialect
     {
         /// <inheritdoc />
-        public override string ParameterPrefix { get; } = ":";
+        public override string ParameterPrefix { get; } = "@";
 
         /// <inheritdoc />
         public override bool EnableNamedParameter { get; } = true;
@@ -25,33 +25,35 @@ namespace EasySqlParser.Internals.Dialect
         public override bool SupportsSequence { get; } = true;
 
         /// <inheritdoc />
-        public override bool SupportsReturning { get; } = true;
+        public override bool SupportsFinalTable { get; } = true;
+
+        private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
         /// </summary>
-        public PostgresDialect() :
-            base()
+        public Db2Dialect() :
+            base(DefaultWildcards)
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
         /// </summary>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public PostgresDialect(char[] wildcards) :
+        public Db2Dialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
+        /// Initializes a new instance of the <see cref="Db2Dialect"/> class.
         /// </summary>
         /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public PostgresDialect(char escapeChar, char[] wildcards) :
+        public Db2Dialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -59,7 +61,7 @@ namespace EasySqlParser.Internals.Dialect
 
         internal override ISqlNode ToPagingSqlNode(ISqlNode node, long offset, long limit, string rowNumberColumn)
         {
-            var transformer = new PostgresPagingTransformer(offset, limit, rowNumberColumn);
+            var transformer = new Db2PagingTransformer(offset, limit, rowNumberColumn);
             return transformer.Transform(node);
         }
 
@@ -77,7 +79,7 @@ namespace EasySqlParser.Internals.Dialect
         /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
-            return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR), {length}, '0')";
+            return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR({length})), {length}, '0')";
         }
     }
 }

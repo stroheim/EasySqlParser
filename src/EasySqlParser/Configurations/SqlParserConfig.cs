@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using EasySqlParser.Internals.Dialect;
+using EasySqlParser.Dialect;
 
 namespace EasySqlParser.Configurations
 {

@@ -1,7 +1,7 @@
-﻿using EasySqlParser.Internals.Dialect;
+﻿using EasySqlParser.Dialect;
 using Xunit;
 
-namespace EasySqlParser.Tests.Internals.Dialect
+namespace EasySqlParser.Tests.Dialect
 {
     // Porting from DOMA
     //   package    org.seasar.doma.jdbc.dialect

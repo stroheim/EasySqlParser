@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using EasySqlParser.Internals.Dialect;
+﻿using EasySqlParser.Dialect;
 using Xunit;
 
-namespace EasySqlParser.Tests.Internals.Dialect
+namespace EasySqlParser.Tests.Dialect
 {
     public class PostgresDialectTest
     {

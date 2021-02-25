@@ -1,4 +1,4 @@
-﻿namespace EasySqlParser.Internals.Dialect
+﻿namespace EasySqlParser.Dialect
 {
     // Porting from DOMA
     //   package    org.seasar.doma.jdbc.dialect

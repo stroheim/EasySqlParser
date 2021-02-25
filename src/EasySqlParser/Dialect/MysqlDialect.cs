@@ -1,16 +1,16 @@
 ﻿using EasySqlParser.Internals.Dialect.Transformer;
 using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect
+namespace EasySqlParser.Dialect
 {
     // Porting from DOMA
     //   package    org.seasar.doma.jdbc.dialect
-    //   class      SqliteDialect
+    //   class      MysqlDialect
     // https://github.com/domaframework/doma
     /// <summary>
-    /// A dialect for SQLite.
+    /// A dialect for MySQL.
     /// </summary>
-    public class SqliteDialect : StandardDialect
+    public class MysqlDialect : StandardDialect
     {
         /// <inheritdoc />
         public override string ParameterPrefix { get; } = "@";
@@ -18,32 +18,38 @@ namespace EasySqlParser.Internals.Dialect
         /// <inheritdoc />
         public override bool EnableNamedParameter { get; } = true;
 
+        /// <inheritdoc />
+        public override bool SupportsIdentity { get; } = true;
+
+        internal override char OpenQuote { get; } = '`';
+
+        internal override char CloseQuote { get; } = '`';
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
         /// </summary>
-        public SqliteDialect() :
+        public MysqlDialect() :
             base()
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
         /// </summary>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public SqliteDialect(char[] wildcards) :
+        public MysqlDialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
+        /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
         /// </summary>
         /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public SqliteDialect(char escapeChar, char[] wildcards) :
+        public MysqlDialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -51,14 +57,21 @@ namespace EasySqlParser.Internals.Dialect
 
         internal override ISqlNode ToPagingSqlNode(ISqlNode node, long offset, long limit, string rowNumberColumn)
         {
-            var transformer = new SqlitePagingTransformer(offset, limit, rowNumberColumn);
+            var transformer = new MysqlPagingTransformer(offset, limit, rowNumberColumn);
+            return transformer.Transform(node);
+        }
+
+        internal override ISqlNode ToCountGettingSqlNode(ISqlNode node)
+        {
+            var transformer = new MysqlCountGettingTransformer();
             return transformer.Transform(node);
         }
 
         /// <inheritdoc />
         public override string GetIdentityWhereClause(string columnName)
         {
-            return "rowid = last_insert_rowid()";
+
+            return $"{ApplyQuote(columnName)} = LAST_INSERT_ID()";
         }
     }
 }

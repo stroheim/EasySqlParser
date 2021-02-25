@@ -1,20 +1,16 @@
-﻿using System;
-using EasySqlParser.Internals.Dialect.Transformer;
+﻿using EasySqlParser.Internals.Dialect.Transformer;
 using EasySqlParser.Internals.Node;
 
-namespace EasySqlParser.Internals.Dialect
+namespace EasySqlParser.Dialect
 {
     // Porting from DOMA
     //   package    org.seasar.doma.jdbc.dialect
-    //   class      Oracle11Dialect
+    //   class      PostgresDialect
     // https://github.com/domaframework/doma
     /// <summary>
-    /// A dialect for Oracle Database 11g and below.
+    /// A dialect for PostgreSQL.
     /// </summary>
-    /// <remarks>
-    /// 11g 以前のOracle
-    /// </remarks>
-    public class Oracle11Dialect : StandardDialect
+    public class PostgresDialect : StandardDialect
     {
         /// <inheritdoc />
         public override string ParameterPrefix { get; } = ":";
@@ -23,38 +19,39 @@ namespace EasySqlParser.Internals.Dialect
         public override bool EnableNamedParameter { get; } = true;
 
         /// <inheritdoc />
+        public override bool SupportsIdentity { get; } = true;
+
+        /// <inheritdoc />
         public override bool SupportsSequence { get; } = true;
 
         /// <inheritdoc />
         public override bool SupportsReturning { get; } = true;
 
-        private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
         /// </summary>
-        public Oracle11Dialect() :
-            base(DefaultWildcards)
+        public PostgresDialect() :
+            base()
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
         /// </summary>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public Oracle11Dialect(char[] wildcards) :
+        public PostgresDialect(char[] wildcards) :
             base(wildcards)
         {
 
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Oracle11Dialect"/> class.
+        /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
         /// </summary>
         /// <param name="escapeChar">escape character for the SQL LIKE operator</param>
         /// <param name="wildcards">wild card characters for the SQL LIKE operator</param>
-        public Oracle11Dialect(char escapeChar, char[] wildcards) :
+        public PostgresDialect(char escapeChar, char[] wildcards) :
             base(escapeChar, wildcards)
         {
 
@@ -62,28 +59,8 @@ namespace EasySqlParser.Internals.Dialect
 
         internal override ISqlNode ToPagingSqlNode(ISqlNode node, long offset, long limit, string rowNumberColumn)
         {
-            var transformer = new OraclePagingTransformer(offset, limit, rowNumberColumn);
+            var transformer = new PostgresPagingTransformer(offset, limit, rowNumberColumn);
             return transformer.Transform(node);
-        }
-
-        internal override string ToLogFormatDateOnly(DateTime value)
-        {
-            return $"date'{value:yyyy-MM-dd}'";
-        }
-
-        internal override string ToLogFormat(TimeSpan value)
-        {
-            return $"time'{value:hh\\:mm\\:ss}'";
-        }
-
-        internal override string ToLogFormat(DateTime value)
-        {
-            return $"timestamp'{value:yyyy-MM-dd HH:mm:ss.fff}'";
-        }
-
-        internal override string ToLogFormat(DateTimeOffset value)
-        {
-            return $"timestamp'{value:yyyy-MM-dd HH:mm:ss.fff}'";
         }
 
         private string GetSequencePrefix(string prefix)
@@ -94,13 +71,13 @@ namespace EasySqlParser.Internals.Dialect
         /// <inheritdoc />
         public override string GetNextSequenceSql(string name, string schema)
         {
-            return $"SELECT {GetSequenceName(name, schema)}.NEXTVAL FROM DUAL";
+            return $"SELECT NEXT VALUE FOR {GetSequenceName(name, schema)}";
         }
 
         /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
-            return $"SELECT {GetSequencePrefix(prefix)}LPAD({GetSequenceName(name, schema)}.NEXTVAL, {length}, '0') FROM DUAL";
+            return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR), {length}, '0')";
         }
     }
 }

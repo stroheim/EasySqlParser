@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using EasySqlParser.Dialect;
 using EasySqlParser.Exceptions;
-using EasySqlParser.Internals.Dialect;
 
 namespace EasySqlParser.Configurations
 {
