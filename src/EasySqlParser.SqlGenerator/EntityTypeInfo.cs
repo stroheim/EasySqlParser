@@ -16,5 +16,7 @@ namespace EasySqlParser.SqlGenerator
         public EntityColumnInfo IdentityColumn { get; internal set; }
 
         public IReadOnlyList<EntityColumnInfo> SequenceColumns { get; internal set; }
+
+        public bool HasSoftDeleteKey { get; internal set; }
     }
 }

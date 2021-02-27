@@ -38,6 +38,8 @@ namespace EasySqlParser.SqlGenerator
                     return GetInsertSql(parameter);
                 case SqlKind.Update:
                     return GetUpdateSql(parameter);
+                case SqlKind.SoftDelete:
+                    return GetSoftDeleteSql(parameter);
                 case SqlKind.Delete:
                     return GetDeleteSql(parameter);
             }
@@ -303,6 +305,22 @@ namespace EasySqlParser.SqlGenerator
                     }
                     continue;
                 }
+
+                if (columnInfo.IsCurrentTimestamp)
+                {
+                    if (!builder.IncludeCurrentTimestampColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+                }
+
+                if (columnInfo.IsCurrentUser)
+                {
+                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+                }
                 builder.AppendComma(counter);
 
                 builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
@@ -315,10 +333,43 @@ namespace EasySqlParser.SqlGenerator
             {
                 if (columnInfo.IsIdentity)
                 {
-                    if (builder.TryAppendIdentityValue(parameter, entityInfo, counter, identityValue))
+                    if (!builder.HasIdentityValue(entityInfo, identityValue))
                     {
-                        counter++;
+                        continue;
                     }
+                    builder.AppendIdentityValue(entityInfo, counter, identityValue);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsSoftDeleteKey)
+                {
+                    builder.AppendSoftDeleteKey(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsCurrentTimestamp)
+                {
+                    if (!builder.IncludeCurrentTimestampColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+
+                    builder.AppendCurrentTimestamp(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+
+                }
+
+                if (columnInfo.IsCurrentUser)
+                {
+                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+                    builder.AppendCurrentUser(parameter, columnInfo, counter);
+                    counter++;
                     continue;
                 }
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
@@ -340,6 +391,111 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
+        private static QueryBuilderResult GetSoftDeleteSql(QueryBuilderParameter<T> parameter)
+        {
+            var entityInfo = parameter.EntityTypeInfo;
+            if (!entityInfo.HasSoftDeleteKey)
+            {
+                return GetUpdateSql(parameter);
+            }
+            var config = parameter.Config;
+            if (entityInfo.KeyColumns.Count == 0)
+            {
+                // pkがなければupdateできない
+                throw new InvalidOperationException("");
+            }
+            var builder = new QueryStringBuilder(config, parameter.WriteIndented);
+            AppendFinalTableSelectCommandHeader(builder, entityInfo, parameter);
+            builder.AppendSql("UPDATE ");
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
+            builder.AppendLine(" SET ");
+            var counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                if (columnInfo.IsPrimaryKey) continue;
+                if (columnInfo.IsSoftDeleteKey)
+                {
+                    builder.AppendSoftDeleteKey(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsCurrentTimestamp)
+                {
+                    if (!builder.IncludeCurrentTimestampColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+
+                    builder.AppendCurrentTimestamp(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsCurrentUser)
+                {
+                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+                    builder.AppendCurrentUser(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsVersion)
+                {
+                    builder.AppendComma(counter);
+                    var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
+
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                    builder.AppendSql(columnName);
+                    builder.AppendSql(" = ");
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendVersion(parameter, columnInfo);
+
+                    builder.AppendLine();
+
+                }
+            }
+
+            builder.AppendLine("WHERE ");
+            counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                if (parameter.IgnoreVersion && columnInfo.IsVersion) continue;
+                if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
+                builder.AppendAnd(counter);
+                var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                builder.AppendSql(columnName);
+                if (propValue == null)
+                {
+                    builder.AppendSql(" IS NULL ");
+                }
+                else
+                {
+                    builder.AppendSql(" = ");
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                }
+                builder.AppendLine();
+
+                counter++;
+
+            }
+
+            AppendFinalTableSelectCommandTerminator(builder, parameter);
+            AppendSelectAffectedCommandHeader(builder, entityInfo, parameter);
+            AppendFromClause(builder, entityInfo, parameter);
+
+            return builder.GetResult();
+
+        }
 
         private static QueryBuilderResult GetUpdateSql(QueryBuilderParameter<T> parameter)
         {
@@ -370,6 +526,37 @@ namespace EasySqlParser.SqlGenerator
                 {
                     continue;
                 }
+
+                if (columnInfo.IsSoftDeleteKey)
+                {
+                    builder.AppendSoftDeleteKey(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsCurrentTimestamp)
+                {
+                    if (!builder.IncludeCurrentTimestampColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+
+                    builder.AppendCurrentTimestamp(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
+                if (columnInfo.IsCurrentUser)
+                {
+                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
+                    {
+                        continue;
+                    }
+                    builder.AppendCurrentUser(parameter, columnInfo, counter);
+                    counter++;
+                    continue;
+                }
+
                 builder.AppendComma(counter);
 
                 var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
@@ -685,7 +872,7 @@ namespace EasySqlParser.SqlGenerator
             QueryStringBuilder builder, EntityTypeInfo entityInfo, QueryBuilderParameter<T> parameter)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
-            if (parameter.SqlKind == SqlKind.Delete) return;
+            if (parameter.SqlKind == SqlKind.Delete || parameter.SqlKind == SqlKind.SoftDelete) return;
             var config = parameter.Config;
             if (config.Dialect.SupportsReturning)
             {
@@ -737,6 +924,7 @@ namespace EasySqlParser.SqlGenerator
                     counter++;
                 }
             }
+
             if (!config.Dialect.SupportsFinalTable && !config.Dialect.SupportsReturning)
             {
                 builder.AppendLine(config.Dialect.StatementTerminator);

@@ -20,9 +20,11 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             Fixture = fixture;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, output.WriteLine);
             _mockConfig.WriteIndented = true;
+            _output = output;
 
         }
         private readonly MockConfig _mockConfig;
+        private readonly ITestOutputHelper _output;
 
         public DatabaseFixture Fixture { get; }
 
@@ -34,12 +36,14 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             var characters = new Characters
                              {
                                  Name = "Roy Cambell",
-                                 Height = 185,
-                                 CreateDate = DateTime.Now
+                                 Height = 185
                              };
             var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Insert, _mockConfig);
             var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
+            characters.Id.IsNot(0);
+            _output.WriteLine($"{characters.Id}");
+            _output.WriteLine($"{characters.CreateDate}");
         }
     }
 }

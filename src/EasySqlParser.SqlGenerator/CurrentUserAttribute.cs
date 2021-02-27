@@ -1,22 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace EasySqlParser.SqlGenerator
 {
     [AttributeUsage(AttributeTargets.Property)]
-    public class CurrentTimestampAttribute : Attribute
+    public class CurrentUserAttribute : Attribute
     {
-        public CurrentTimestampAttribute(
-            string sql,
-            GenerationStrategy strategy = GenerationStrategy.Always
-        )
+        public CurrentUserAttribute(GenerationStrategy strategy = GenerationStrategy.Always)
         {
             Strategy = strategy;
-            Sql = sql;
         }
 
         public GenerationStrategy Strategy { get; }
-
-        public string Sql { get; }
 
         internal bool IsAvailable(SqlKind sqlKind)
         {
@@ -55,5 +51,6 @@ namespace EasySqlParser.SqlGenerator
 
             return false;
         }
+
     }
 }

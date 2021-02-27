@@ -4,12 +4,8 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator
 {
-    public enum GenerationStrategy
+    [AttributeUsage(AttributeTargets.Property)]
+    public class SoftDeleteKeyAttribute : Attribute
     {
-        Always,
-        Insert,
-        Update,
-        InsertOrUpdate,
-        SoftDelete
     }
 }

@@ -22,7 +22,7 @@ namespace EasySqlParser.SqlGenerator
         /// <summary>
         /// SQL parameters generated from dynamic conditional expressions.
         /// </summary>
-        public List<IDbDataParameter> DbDataParameters { get; internal set; }
+        public IReadOnlyList<IDbDataParameter> DbDataParameters { get; internal set; }
 
     }
 }

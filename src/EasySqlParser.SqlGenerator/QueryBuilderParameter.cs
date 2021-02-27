@@ -15,6 +15,8 @@ namespace EasySqlParser.SqlGenerator
         bool WriteIndented { get; }
         QueryBehavior QueryBehavior { get; }
         Action<string> LoggerAction { get; }
+
+        string CurrentUser { get; }
     }
 
     public class GlobalQueryBuilderConfiguration : IQueryBuilderConfiguration
@@ -36,6 +38,7 @@ namespace EasySqlParser.SqlGenerator
         public bool WriteIndented { get; }
         public QueryBehavior QueryBehavior { get; }
         public Action<string> LoggerAction { get; }
+        public string CurrentUser { get; set; }
     }
 
     public class QueryBuilderParameter<T>
@@ -64,6 +67,7 @@ namespace EasySqlParser.SqlGenerator
             SqlFile = sqlFile;
             QueryBehavior = builderConfiguration.QueryBehavior;
             _loggerAction = builderConfiguration.LoggerAction;
+            CurrentUser = builderConfiguration.CurrentUser;
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
@@ -95,6 +99,7 @@ namespace EasySqlParser.SqlGenerator
                 var columns = new List<EntityColumnInfo>();
                 var keyColumns = new List<EntityColumnInfo>();
                 var sequenceColumns = new List<EntityColumnInfo>();
+                var hasSoftDeleteKey = false;
                 foreach (var propertyInfo in props)
                 {
                     var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
@@ -132,6 +137,21 @@ namespace EasySqlParser.SqlGenerator
                     if (currentTimestampAttr != null)
                     {
                         columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
+                        columnInfo.IsCurrentTimestamp = true;
+                    }
+
+                    var softDeleteKeyAttr = propertyInfo.GetCustomAttribute<SoftDeleteKeyAttribute>();
+                    if (softDeleteKeyAttr != null)
+                    {
+                        columnInfo.IsSoftDeleteKey = true;
+                        hasSoftDeleteKey = true;
+                    }
+
+                    var currentUserAttr = propertyInfo.GetCustomAttribute<CurrentUserAttribute>();
+                    if (currentUserAttr != null)
+                    {
+                        columnInfo.CurrentUserAttribute = currentUserAttr;
+                        columnInfo.IsCurrentUser = true;
                     }
 
                     var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
@@ -157,6 +177,7 @@ namespace EasySqlParser.SqlGenerator
                     columns.Add(columnInfo);
                 }
 
+                entityInfo.HasSoftDeleteKey = hasSoftDeleteKey;
                 entityInfo.Columns = columns.AsReadOnly();
                 entityInfo.KeyColumns = keyColumns.AsReadOnly();
                 entityInfo.SequenceColumns = sequenceColumns.AsReadOnly();
@@ -208,6 +229,8 @@ namespace EasySqlParser.SqlGenerator
         public string SqlFile { get; }
 
         public QueryBehavior QueryBehavior { get; }
+
+        public string CurrentUser { get; }
 
         internal Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>
             ReturningColumns { get; set; } =
@@ -288,6 +311,13 @@ namespace EasySqlParser.SqlGenerator
                         return CommandExecutionType.ExecuteNonQuery;
                 }
             }
+        }
+
+        public bool ThrowableOptimisticLockException(int affectedCount)
+        {
+            return (SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
+                   UseVersion && !SuppressOptimisticLockException
+                   && affectedCount == 0;
         }
 
     }

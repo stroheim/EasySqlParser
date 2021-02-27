@@ -18,5 +18,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public bool WriteIndented { get; internal set; }
         public QueryBehavior QueryBehavior { get; }
         public Action<string> LoggerAction { get; }
+
+        public string CurrentUser { get; set; }
     }
 }

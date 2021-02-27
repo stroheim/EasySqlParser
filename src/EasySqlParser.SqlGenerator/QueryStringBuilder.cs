@@ -284,9 +284,10 @@ namespace EasySqlParser.SqlGenerator
 
         private bool UseSqlite => _config.DbConnectionKind == DbConnectionKind.SQLite;
 
-        public bool TryAppendIdentityValue(
-            PropertyInfo property,
-            int counter,
+        private bool UseStandardDialect => (_config.DbConnectionKind == DbConnectionKind.Odbc ||
+                                            _config.DbConnectionKind == DbConnectionKind.OleDb);
+
+        public bool HasIdentityValue(
             object identityValue)
         {
             if (!UseSqlite)
@@ -298,10 +299,18 @@ namespace EasySqlParser.SqlGenerator
             {
                 return false;
             }
+
+            return true;
+        }
+
+        public void AppendIdentityValue(
+            PropertyInfo property,
+            int counter,
+            object identityValue)
+        {
             AppendComma(counter);
             AppendParameter(property, identityValue);
             AppendLine();
-            return true;
         }
 
         internal bool TryAppendIdentity<T>(QueryBuilderParameter<T> parameter, 
@@ -317,6 +326,7 @@ namespace EasySqlParser.SqlGenerator
 
             var property = entityInfo.IdentityColumn.PropertyInfo;
             identityValue = property.GetValue(parameter.Entity);
+            parameter.WriteLog($"indentityValue\t{identityValue}");
             if (identityValue == null) return false;
             if (identityValue is int intValue)
             {
@@ -336,9 +346,7 @@ namespace EasySqlParser.SqlGenerator
             return true;
         }
 
-        internal bool TryAppendIdentityValue<T>(QueryBuilderParameter<T> parameter,
-            EntityTypeInfo entityInfo,
-            int counter,
+        internal bool HasIdentityValue(EntityTypeInfo entityInfo,
             object identityValue)
         {
             if (!UseSqlite)
@@ -356,10 +364,93 @@ namespace EasySqlParser.SqlGenerator
                 return false;
             }
 
+            return true;
+        }
+
+        internal void AppendIdentityValue(
+            EntityTypeInfo entityInfo,
+            int counter,
+            object identityValue)
+        {
+
             AppendComma(counter);
             AppendParameter(entityInfo.IdentityColumn.PropertyInfo, identityValue);
             AppendLine();
-            return true;
+        }
+
+
+        internal bool IncludeCurrentTimestampColumn<T>(QueryBuilderParameter<T> parameter,
+            EntityColumnInfo columnInfo)
+        {
+            return !UseStandardDialect && columnInfo.CurrentTimestampAttribute.IsAvailable(parameter.SqlKind);
+        }
+
+        internal void AppendCurrentTimestamp<T>(QueryBuilderParameter<T> parameter,
+            EntityColumnInfo columnInfo,
+            int counter)
+        {
+
+            AppendComma(counter);
+            if (parameter.SqlKind == SqlKind.Insert)
+            {
+                AppendLine(columnInfo.CurrentTimestampAttribute.Sql);
+                return;
+            }
+            // update
+            var columnName = parameter.Config.Dialect.ApplyQuote(columnInfo.ColumnName);
+            AppendSql(columnName);
+            AppendSql(" = ");
+            AppendSql(columnInfo.CurrentTimestampAttribute.Sql);
+            AppendLine();
+        }
+
+        internal bool IncludeCurrentUserColumn<T>(QueryBuilderParameter<T> parameter,
+            EntityColumnInfo columnInfo)
+        {
+            return columnInfo.CurrentUserAttribute.IsAvailable(parameter.SqlKind);
+        }
+
+        internal void AppendCurrentUser<T>(QueryBuilderParameter<T> parameter,
+            EntityColumnInfo columnInfo,
+            int counter)
+        {
+            AppendComma(counter);
+            if (parameter.SqlKind == SqlKind.Insert)
+            {
+                AppendParameter(columnInfo.PropertyInfo, parameter.CurrentUser);
+                AppendLine();
+                return;
+            }
+
+            // update
+            var columnName = parameter.Config.Dialect.ApplyQuote(columnInfo.ColumnName);
+            AppendSql(columnName);
+            AppendSql(" = ");
+            AppendParameter(columnInfo.PropertyInfo, parameter.CurrentUser);
+            AppendLine();
+
+        }
+
+        internal void AppendSoftDeleteKey<T>(QueryBuilderParameter<T> parameter,
+            EntityColumnInfo columnInfo,
+            int counter)
+        {
+            AppendComma(counter);
+            if (parameter.SqlKind != SqlKind.Insert)
+            {
+                var columnName = parameter.Config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                AppendSql(columnName);
+                AppendSql(" = ");
+            }
+            var flgValue = parameter.SqlKind == SqlKind.SoftDelete ? "1" : "0";
+            if (columnInfo.PropertyInfo.PropertyType == typeof(string))
+            {
+                AppendSql($"'{flgValue}'");
+            }
+            else
+            {
+                AppendSql(flgValue);
+            }
 
         }
 
@@ -369,7 +460,7 @@ namespace EasySqlParser.SqlGenerator
                    {
                        ParsedSql = _rawSqlBuilder.ToString(),
                        DebugSql = _formattedSqlBuilder.ToString(),
-                       DbDataParameters = _sqlParameters.Values.ToList()
+                       DbDataParameters = _sqlParameters.Values.ToList().AsReadOnly()
                    };
         }
     }

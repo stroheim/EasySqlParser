@@ -19,9 +19,17 @@ namespace EasySqlParser.SqlGenerator
 
         public bool IsSequence { get; internal set; }
 
+        public bool IsCurrentTimestamp { get; internal set; }
+
         public SequenceGeneratorAttribute SequenceGeneratorAttribute { get; internal set; }
 
         public CurrentTimestampAttribute CurrentTimestampAttribute { get; internal set; }
+
+        public bool IsSoftDeleteKey { get; internal set; }
+
+        public bool IsCurrentUser { get; internal set; }
+
+        public CurrentUserAttribute CurrentUserAttribute { get; internal set; }
 
         internal EntityColumnInfo Clone()
         {

@@ -210,9 +210,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             DbTransaction transaction = null,
             IDbContextTransaction dbContextTransaction = null)
         {
-            if ((parameter.SqlKind == SqlKind.Update || parameter.SqlKind == SqlKind.Delete) &&
-                parameter.UseVersion && !parameter.SuppressOptimisticLockException
-                && affectedCount == 0)
+            if (parameter.ThrowableOptimisticLockException(affectedCount))
             {
                 transaction?.Rollback();
                 dbContextTransaction?.Rollback();
@@ -669,10 +667,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             {
                 if (property.ValueGenerated == ValueGenerated.OnAdd)
                 {
-                    if (builder.TryAppendIdentityValue(property.PropertyInfo, counter, identityValue))
+                    if (!builder.HasIdentityValue(identityValue))
                     {
-                        counter++;
+                        continue;
                     }
+
+                    builder.AppendIdentityValue(property.PropertyInfo, counter, identityValue);
+                    counter++;
                     continue;
                 }
                 var propValue = property.PropertyInfo.GetValue(parameter.Entity);

@@ -80,6 +80,68 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 (10,'Janice Galvin',9,1);
 ");
 
+                    ExecuteCommand(localConnection, @"CREATE TABLE [EMP_WITH_DATE](
+[ID] int not null primary key,
+[NAME] varchar(30),
+[SALARY] numeric(10, 0) not null,
+[DELETE_FLAG] bit DEFAULT 0 not null,
+[CREATE_DATETIME] datetime2 DEFAULT CURRENT_TIMESTAMP not null,
+[UPDATE_DATETIME] datetime2 ,
+[DELETE_DATETIME] datetime2 ,
+[VERSION] bigint not null
+)");
+
+                    ExecuteCommand(localConnection, @"INSERT INTO [EMP_WITH_DATE](
+[ID],
+[NAME],
+[SALARY],
+[VERSION]
+)VALUES
+(1,'John Doe',0,1),
+(2,'Rob Walters',1,1),
+(3,'Gail Erickson',2,1),
+(4,'Jossef Goldberg',3,1),
+(5,'Dylan Miller',4,1),
+(6,'Diane Margheim',5,1),
+(7,'Gigi Matthew',6,1),
+(8,'Michael Raheem',7,1),
+(9,'Ovidiu Cracium',8,1),
+(10,'Janice Galvin',9,1);
+");
+
+                    ExecuteCommand(localConnection, @"CREATE TABLE [EMP_WITH_DATE_USER](
+[ID] int not null primary key,
+[NAME] varchar(30),
+[SALARY] numeric(10, 0) not null,
+[DELETE_FLAG] bit DEFAULT 0 not null,
+[CREATE_DATETIME] datetime2 DEFAULT CURRENT_TIMESTAMP not null,
+[CREATE_USER] varchar(30),
+[UPDATE_DATETIME] datetime2 ,
+[UPDATE_USER] varchar(30),
+[DELETE_DATETIME] datetime2 ,
+[DELETE_USER] varchar(30),
+[VERSION] bigint not null
+)");
+
+
+                    ExecuteCommand(localConnection, @"INSERT INTO [EMP_WITH_DATE_USER](
+[ID],
+[NAME],
+[SALARY],
+[VERSION]
+)VALUES
+(1,'John Doe',0,1),
+(2,'Rob Walters',1,1),
+(3,'Gail Erickson',2,1),
+(4,'Jossef Goldberg',3,1),
+(5,'Dylan Miller',4,1),
+(6,'Diane Margheim',5,1),
+(7,'Gigi Matthew',6,1),
+(8,'Michael Raheem',7,1),
+(9,'Ovidiu Cracium',8,1),
+(10,'Janice Galvin',9,1);
+");
+
                     ExecuteCommand(localConnection, @"CREATE TABLE [MetalGearCharacters](
     [ID] INT IDENTITY NOT NULL,
     [NAME] VARCHAR(30),

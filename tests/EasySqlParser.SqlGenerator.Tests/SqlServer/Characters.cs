@@ -21,6 +21,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Column("HEIGHT")]
         public decimal? Height { get; set; }
 
+        [CurrentTimestamp("GETDATE()", GenerationStrategy.Insert)]
         [Column("CREATE_DATE")]
         public DateTime CreateDate { get; set; }
 

@@ -23,10 +23,7 @@ namespace EasySqlParser.SqlGenerator
                 return false;
             }
 
-            var sql = attribute.PaddingLength == 0
-                ? config.Dialect.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
-                : config.Dialect.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
-                    attribute.PaddingLength, attribute.Prefix);
+            var sql = attribute.GetSequenceGeneratorSql(config);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())
             {
@@ -55,10 +52,7 @@ namespace EasySqlParser.SqlGenerator
                 return (false, default);
             }
 
-            var sql = attribute.PaddingLength == 0
-                ? config.Dialect.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
-                : config.Dialect.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
-                    attribute.PaddingLength, attribute.Prefix);
+            var sql = attribute.GetSequenceGeneratorSql(config);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())
             {
@@ -187,9 +181,7 @@ namespace EasySqlParser.SqlGenerator
             QueryBuilderResult builderResult,
             DbTransaction transaction)
         {
-            if ((parameter.SqlKind == SqlKind.Update || parameter.SqlKind == SqlKind.Delete) &&
-                parameter.UseVersion && !parameter.SuppressOptimisticLockException
-                && affectedCount == 0)
+            if (parameter.ThrowableOptimisticLockException(affectedCount))
             {
                 transaction.Rollback();
                 throw new OptimisticLockException(builderResult.ParsedSql, builderResult.DebugSql, parameter.SqlFile);
