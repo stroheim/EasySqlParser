@@ -88,6 +88,25 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.AppendLine(sql);
         }
 
+        public void ForceAppendLine()
+        {
+            _firstWord = true;
+            _rawSqlBuilder.AppendLine();
+            _formattedSqlBuilder.AppendLine();
+        }
+
+        public void ForceAppendLine(string sql)
+        {
+            if (_firstWord)
+            {
+                _rawSqlBuilder.Append(_indent);
+                _formattedSqlBuilder.Append(_indent);
+                _firstWord = false;
+            }
+            _rawSqlBuilder.AppendLine(sql);
+            _formattedSqlBuilder.AppendLine(sql);
+        }
+
         public void AppendReturnParameter<T>(QueryBuilderParameter<T> builderParameter, EntityColumnInfo columnInfo)
         {
             var propertyName = $"{_config.Dialect.ParameterPrefix}p_{columnInfo.PropertyInfo.Name}";

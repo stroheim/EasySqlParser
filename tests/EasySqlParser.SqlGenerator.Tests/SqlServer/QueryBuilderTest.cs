@@ -1,4 +1,5 @@
-﻿using EasySqlParser.Configurations;
+﻿using System;
+using EasySqlParser.Configurations;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,6 +9,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
     public class QueryBuilderTest
     {
         private readonly MockConfig _mockConfig;
+        private readonly ITestOutputHelper _output;
 
         public QueryBuilderTest(ITestOutputHelper output)
         {
@@ -16,7 +18,9 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                 () => new SqlParameter()
             );
             _mockConfig = new MockConfig(QueryBehavior.None, output.WriteLine);
+            _output = output;
         }
+
 
         [Fact]
         public void Test_Insert_Default()
@@ -166,6 +170,71 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             builderResult.IsNotNull();
             builderResult.ParsedSql.Is("SELECT COUNT(*) CNT FROM [dbo].[EMP]");
             builderResult.DbDataParameters.Count.Is(0);
+        }
+
+        [Fact]
+        public void Test_IdentityOnly()
+        {
+            var employee = new EmployeeIdentity
+                           {
+                               Name = "John Doe"
+                           };
+            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            _output.WriteLine(builder.ParsedSql);
+            var sqls = builder.ParsedSql.Split(new[] {"\r\n"}, StringSplitOptions.None);
+            sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
+            sqls[1].Is("SELECT [ID] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            builder.DbDataParameters.Count.Is(2);
+            builder.DbDataParameters[0].Value.Is("John Doe");
+            builder.DbDataParameters[1].Value.Is(1L);
+        }
+
+        [Fact]
+        public void Test_IdentityAllColumns()
+        {
+            var employee = new EmployeeIdentity
+                           {
+                               Name = "John Doe"
+                           };
+            var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
+            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            _output.WriteLine(builder.ParsedSql);
+            var sqls = builder.ParsedSql.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
+            sqls[1].Is("SELECT [ID], [NAME], [VERSION] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            builder.DbDataParameters.Count.Is(2);
+            builder.DbDataParameters[0].Value.Is("John Doe");
+            builder.DbDataParameters[1].Value.Is(1L);
+        }
+
+        [Fact]
+        public void Test_IdentityOrAllColumns()
+        {
+            var employee = new Employee
+                           {
+                               Id = 1,
+                               Name = "John Doe"
+                           };
+            var localConfig = new MockConfig(QueryBehavior.IdentityOrAllColumns, _output.WriteLine);
+            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            _output.WriteLine(builder.ParsedSql);
+            var sqls = builder.ParsedSql.Split(new[] { "\r\n" }, StringSplitOptions.None);
+            sqls[0].Is("INSERT INTO [dbo].[EMP] ([ID], [NAME], [SALARY], [VERSION]) VALUES (@Id, @Name, @Salary, @VersionNo);");
+            sqls[1].Is("SELECT [ID], [NAME], [SALARY], [VERSION] FROM [dbo].[EMP] WHERE [ID] = @Id;");
+
+            builder.DbDataParameters.Count.Is(4);
+            builder.DbDataParameters[0].Value.Is(1);
+            builder.DbDataParameters[1].Value.Is("John Doe");
+            builder.DbDataParameters[2].Value.Is(0M);
+            builder.DbDataParameters[3].Value.Is(1L);
+
         }
     }
 }

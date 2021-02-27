@@ -25,10 +25,11 @@ namespace EasySqlParser.SqlGenerator
 
             var sql = attribute.GetSequenceGeneratorSql(config);
             builderParameter.WriteLog(sql);
+            object rawResult;
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = sql;
-                var rawResult = command.ExecuteScalar();
+                rawResult = command.ExecuteScalar();
                 if (rawResult is TResult result)
                 {
                     sequenceValue = result;
@@ -36,8 +37,10 @@ namespace EasySqlParser.SqlGenerator
                 }
             }
 
-            sequenceValue = default;
-            return false;
+            // error
+            // not match TResult
+            var message = $"戻されたシーケンスの型が期待されたものではありませんでした。期待された型：{typeof(TResult).Name} 実際の型：{rawResult.GetType().Name}";
+            throw new InvalidOperationException(message);
         }
 
         public static async Task<(bool isSuccess, TResult sequenceValue)> TryGenerateSequenceAsync<T, TResult>(
@@ -54,17 +57,21 @@ namespace EasySqlParser.SqlGenerator
 
             var sql = attribute.GetSequenceGeneratorSql(config);
             builderParameter.WriteLog(sql);
+            object rawResult;
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = sql;
-                var rawResult = await command.ExecuteScalarAsync(cancellationToken);
+                rawResult = await command.ExecuteScalarAsync(cancellationToken);
                 if (rawResult is TResult result)
                 {
                     return (true, result);
                 }
             }
 
-            return (false, default);
+            // error
+            // not match TResult
+            var message = $"戻されたシーケンスの型が期待されたものではありませんでした。期待された型：{typeof(TResult).Name} 実際の型：{rawResult.GetType().Name}";
+            throw new InvalidOperationException(message);
         }
 
 

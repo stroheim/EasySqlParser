@@ -173,6 +173,26 @@ namespace EasySqlParser.SqlGenerator
             if (entityInfo.SequenceColumns.Count == 0) return;
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
+                if (columnInfo.PropertyInfo.PropertyType == typeof(byte))
+                {
+                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                        out byte byteValue))
+                    {
+                        columnInfo.PropertyInfo.SetValue(parameter.Entity, byteValue);
+                        continue;
+                    }
+                }
+
+                if (columnInfo.PropertyInfo.PropertyType == typeof(short))
+                {
+                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                        out short shortValue))
+                    {
+                        columnInfo.PropertyInfo.SetValue(parameter.Entity, shortValue);
+                        continue;
+                    }
+                }
+
                 if (columnInfo.PropertyInfo.PropertyType == typeof(int))
                 {
                     if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
@@ -224,6 +244,28 @@ namespace EasySqlParser.SqlGenerator
             if (entityInfo.SequenceColumns.Count == 0) return;
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
+                if (columnInfo.PropertyInfo.PropertyType == typeof(byte))
+                {
+                    var (isSuccess, byteValue) = await connection.TryGenerateSequenceAsync<T, byte>(parameter,
+                        columnInfo.SequenceGeneratorAttribute);
+                    if (isSuccess)
+                    {
+                        columnInfo.PropertyInfo.SetValue(parameter.Entity, byteValue);
+                        continue;
+                    }
+                }
+
+                if (columnInfo.PropertyInfo.PropertyType == typeof(short))
+                {
+                    var (isSuccess, shortValue) = await connection.TryGenerateSequenceAsync<T, short>(parameter,
+                        columnInfo.SequenceGeneratorAttribute);
+                    if (isSuccess)
+                    {
+                        columnInfo.PropertyInfo.SetValue(parameter.Entity, shortValue);
+                        continue;
+                    }
+                }
+
                 if (columnInfo.PropertyInfo.PropertyType == typeof(int))
                 {
                     var (isSuccess, intValue) = await connection.TryGenerateSequenceAsync<T, int>(parameter,
@@ -786,7 +828,7 @@ namespace EasySqlParser.SqlGenerator
             }
             else
             {
-                builder.AppendLine(config.Dialect.StatementTerminator);
+                builder.ForceAppendLine(config.Dialect.StatementTerminator);
                 builder.AppendLine("SELECT ");
             }
 
@@ -817,7 +859,10 @@ namespace EasySqlParser.SqlGenerator
                 }
 
                 builder.AppendSql(config.Dialect.ApplyQuote(columnInfo.ColumnName));
-                builder.AppendLine(" ");
+                if (parameter.WriteIndented)
+                {
+                    builder.AppendLine(" ");
+                }
 
                 counter++;
 
@@ -883,16 +928,17 @@ namespace EasySqlParser.SqlGenerator
                 builder.AppendLine(" FROM FINAL TABLE (");
                 return;
             }
+
+            builder.AppendSql(parameter.WriteIndented ? "" : " ");
             builder.AppendLine("FROM ");
+            if (parameter.WriteIndented)
+            {
+                builder.AppendIndent(3);
+            }
             if (!string.IsNullOrEmpty(entityInfo.SchemaName))
             {
-                builder.AppendIndent(3);
                 builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
                 builder.AppendSql(".");
-            }
-            else
-            {
-                builder.AppendIndent(3);
             }
 
             builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
@@ -903,7 +949,10 @@ namespace EasySqlParser.SqlGenerator
             {
                 if (entityInfo.IdentityColumn != null)
                 {
-                    builder.AppendIndent(3);
+                    if (parameter.WriteIndented)
+                    {
+                        builder.AppendIndent(3);
+                    }
                     builder.AppendSql(config.Dialect.GetIdentityWhereClause(entityInfo.IdentityColumn.ColumnName));
                     identityAppended = true;
                 }
@@ -927,7 +976,7 @@ namespace EasySqlParser.SqlGenerator
 
             if (!config.Dialect.SupportsFinalTable && !config.Dialect.SupportsReturning)
             {
-                builder.AppendLine(config.Dialect.StatementTerminator);
+                builder.ForceAppendLine(config.Dialect.StatementTerminator);
             }
 
         }
