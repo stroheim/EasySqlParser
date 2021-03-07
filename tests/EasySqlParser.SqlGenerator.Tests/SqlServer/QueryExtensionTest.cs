@@ -7,26 +7,25 @@ using Xunit.Abstractions;
 
 namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
-    public class QueryExtensionTest : IClassFixture<DatabaseFixture>
+    public class QueryExtensionTest : IClassFixture<QueryExtensionFixture>
     {
         private readonly MockConfig _mockConfig;
-        public QueryExtensionTest(DatabaseFixture fixture, ITestOutputHelper output)
+        public QueryExtensionTest(QueryExtensionFixture fixture, ITestOutputHelper output)
         {
             ConfigContainer.AddDefault(
                 DbConnectionKind.SqlServer,
                 () => new SqlParameter()
             );
 
-            Fixture = fixture;
+            _fixture = fixture;
             _mockConfig = new MockConfig(QueryBehavior.None, output.WriteLine);
         }
 
-        public DatabaseFixture Fixture { get; }
+        private readonly QueryExtensionFixture _fixture;
 
         [Fact]
         public void Test_insert_default()
         {
-            using var connection = Fixture.Connection;
             var employee = new Employee
                            {
                                Id = 11,
@@ -34,7 +33,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                            };
 
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
 
         }
@@ -42,7 +41,6 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public async Task Test_insert_default_async()
         {
-            await using var connection = Fixture.Connection;
             var employee = new Employee
                            {
                                Id = 12,
@@ -50,9 +48,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             };
 
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig);
-            var affected = await connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
             affected.Is(1);
-
         }
 
 
@@ -65,11 +62,10 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Salary = 100M
                            };
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig, excludeNull: true);
-            using var connection = Fixture.Connection;
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             var instance =
-                connection.ExecuteReaderByQueryBuilder<Employee>((x) => x.Id == employee.Id,
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>((x) => x.Id == employee.Id,
                     _mockConfig).Single();
             instance.Name.IsNull();
         }
@@ -83,12 +79,11 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Salary = 100M
                            };
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig, excludeNull: true);
-            await using var connection = Fixture.Connection;
             var affected =
-                await connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+                await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
             affected.Is(1);
             var instance =
-                connection.ExecuteReaderByQueryBuilder<Employee>((x) => x.Id == employee.Id,
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>((x) => x.Id == employee.Id,
                     _mockConfig).Single();
             instance.Name.IsNull();
         }
@@ -96,18 +91,17 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_default()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 1, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 1, _mockConfig)
                     .Single();
 
             employee.Salary = 5000M;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);
             var instance=
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 1, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 1, _mockConfig)
                     .Single();
             instance.Salary.Is(5000M);
         }
@@ -115,16 +109,15 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_excludeNull()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 2, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 2, _mockConfig)
                     .Single();
             employee.Name = null;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig, excludeNull: true);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             var instance =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 2, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 2, _mockConfig)
                     .Single();
             instance.Name.Is("Rob Walters");
 
@@ -133,16 +126,15 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_ignoreVersion()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 3, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 3, _mockConfig)
                     .Single();
             employee.VersionNo = 100L;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig, ignoreVersion: true);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             var instance =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 3, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 3, _mockConfig)
                     .Single();
             instance.VersionNo.Is(100L);
 
@@ -151,14 +143,13 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_optimisticLockException()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 4, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 4, _mockConfig)
                     .Single();
             employee.VersionNo = 100L;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig);
             var ex = Assert.Throws<OptimisticLockException>(
-                () => connection.ExecuteNonQueryByQueryBuilder(parameter));
+                () => _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter));
             ex.IsNotNull();
 
         }
@@ -166,13 +157,12 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_suppressOptimisticLockException()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 5, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 5, _mockConfig)
                     .Single();
             employee.VersionNo = 100L;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Update, _mockConfig, suppressOptimisticLockException: true);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(0);
 
         }
@@ -180,14 +170,13 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_delete_default()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 6, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 6, _mockConfig)
                     .Single();
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete, _mockConfig);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
-            var cnt = connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 6, _mockConfig)
+            var cnt = _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 6, _mockConfig)
                 .Count();
             cnt.Is(0);
 
@@ -196,13 +185,12 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_delete_ignoreVersion()
         {
-            using var connection = Fixture.Connection;
             var employee =
-                connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 7, _mockConfig)
+                _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 7, _mockConfig)
                     .Single();
             employee.VersionNo = 100L;
             var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Delete, _mockConfig, ignoreVersion: true);
-            var affected = connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
 
         }

@@ -63,6 +63,11 @@ namespace EasySqlParser.Dialect
         public virtual bool SupportsFinalTable { get; } = false;
 
         /// <summary>
+        /// Gets whether "RETURNING INTO clause" are supported. 
+        /// </summary>
+        public virtual bool SupportsReturningInto { get; } = false;
+
+        /// <summary>
         /// Gets whether "RETURNING clause" are supported. 
         /// </summary>
         public virtual bool SupportsReturning { get; } = false;

@@ -84,6 +84,8 @@ namespace EasySqlParser.SqlGenerator
                 _formattedSqlBuilder.Append(_indent);
                 _firstWord = false;
             }
+
+            _firstWord = true;
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
         }
@@ -103,6 +105,7 @@ namespace EasySqlParser.SqlGenerator
                 _formattedSqlBuilder.Append(_indent);
                 _firstWord = false;
             }
+            _firstWord = true;
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
         }
@@ -111,6 +114,16 @@ namespace EasySqlParser.SqlGenerator
         {
             var propertyName = $"{_config.Dialect.ParameterPrefix}p_{columnInfo.PropertyInfo.Name}";
             var (parameterName, parameter) = CreateDbParameter(propertyName, direction: ParameterDirection.ReturnValue);
+            if (columnInfo.StringMaxLength.HasValue)
+            {
+                parameter.Size = columnInfo.StringMaxLength.Value;
+            }
+
+            if (_config.DbConnectionKind == DbConnectionKind.Oracle ||
+                _config.DbConnectionKind == DbConnectionKind.OracleLegacy)
+            {
+                parameter.DbType = columnInfo.DbType;
+            }
             if (!_sqlParameters.ContainsKey(propertyName))
             {
                 _sqlParameters.Add(propertyName, parameter);
@@ -277,11 +290,13 @@ namespace EasySqlParser.SqlGenerator
             int counter,
             out object identityValue)
         {
-            if (!UseSqlite)
-            {
-                identityValue = null;
-                return false;
-            }
+            //if (!UseSqlite)
+            //{
+            //    identityValue = null;
+            //    return false;
+            //}
+            identityValue = null;
+            return false;
             identityValue = property.GetValue(parameter.Entity);
             parameter.WriteLog($"indentityValue\t{identityValue}");
             if (identityValue == null) return false;
@@ -309,10 +324,11 @@ namespace EasySqlParser.SqlGenerator
         public bool HasIdentityValue(
             object identityValue)
         {
-            if (!UseSqlite)
-            {
-                return false;
-            }
+            //if (!UseSqlite)
+            //{
+            //    return false;
+            //}
+            return false;
 
             if (identityValue == null)
             {
@@ -337,7 +353,7 @@ namespace EasySqlParser.SqlGenerator
             int counter,
             out object identityValue)
         {
-            if (!UseSqlite || entityInfo.IdentityColumn == null)
+            if (entityInfo.IdentityColumn == null)
             {
                 identityValue = null;
                 return false;
@@ -368,10 +384,11 @@ namespace EasySqlParser.SqlGenerator
         internal bool HasIdentityValue(EntityTypeInfo entityInfo,
             object identityValue)
         {
-            if (!UseSqlite)
-            {
-                return false;
-            }
+            //if (!UseSqlite)
+            //{
+            //    return false;
+            //}
+            return false;
 
             if (identityValue == null)
             {
@@ -470,7 +487,7 @@ namespace EasySqlParser.SqlGenerator
             {
                 AppendSql(flgValue);
             }
-
+            AppendLine();
         }
 
         public QueryBuilderResult GetResult()
@@ -481,6 +498,58 @@ namespace EasySqlParser.SqlGenerator
                        DebugSql = _formattedSqlBuilder.ToString(),
                        DbDataParameters = _sqlParameters.Values.ToList().AsReadOnly()
                    };
+        }
+    }
+
+    internal static class DbTypeExtension
+    {
+        // code from Dapper
+        // https://github.com/StackExchange/Dapper/blob/4fb1ea29d490d13251b0135658ecc337aeb60cdb/Dapper/SqlMapper.cs#L169
+        private static readonly Dictionary<Type, DbType> Mappings = new Dictionary<Type, DbType>
+                                                                    {
+                                                                        [typeof(byte)] = DbType.Byte,
+                                                                        [typeof(sbyte)] = DbType.SByte,
+                                                                        [typeof(short)] = DbType.Int16,
+                                                                        [typeof(ushort)] = DbType.UInt16,
+                                                                        [typeof(int)] = DbType.Int32,
+                                                                        [typeof(uint)] = DbType.UInt32,
+                                                                        [typeof(long)] = DbType.Int64,
+                                                                        [typeof(ulong)] = DbType.UInt64,
+                                                                        [typeof(float)] = DbType.Single,
+                                                                        [typeof(double)] = DbType.Double,
+                                                                        [typeof(decimal)] = DbType.Decimal,
+                                                                        [typeof(bool)] = DbType.Boolean,
+                                                                        [typeof(string)] = DbType.String,
+                                                                        [typeof(char)] = DbType.StringFixedLength,
+                                                                        [typeof(Guid)] = DbType.Guid,
+                                                                        [typeof(DateTime)] = DbType.DateTime,
+                                                                        [typeof(DateTimeOffset)] =
+                                                                            DbType.DateTimeOffset,
+                                                                        [typeof(TimeSpan)] = DbType.Time,
+                                                                        [typeof(byte[])] = DbType.Binary,
+                                                                        [typeof(byte?)] = DbType.Byte,
+                                                                        [typeof(sbyte?)] = DbType.SByte,
+                                                                        [typeof(short?)] = DbType.Int16,
+                                                                        [typeof(ushort?)] = DbType.UInt16,
+                                                                        [typeof(int?)] = DbType.Int32,
+                                                                        [typeof(uint?)] = DbType.UInt32,
+                                                                        [typeof(long?)] = DbType.Int64,
+                                                                        [typeof(ulong?)] = DbType.UInt64,
+                                                                        [typeof(float?)] = DbType.Single,
+                                                                        [typeof(double?)] = DbType.Double,
+                                                                        [typeof(decimal?)] = DbType.Decimal,
+                                                                        [typeof(bool?)] = DbType.Boolean,
+                                                                        [typeof(char?)] = DbType.StringFixedLength,
+                                                                        [typeof(Guid?)] = DbType.Guid,
+                                                                        [typeof(DateTime?)] = DbType.DateTime,
+                                                                        [typeof(DateTimeOffset?)] =
+                                                                            DbType.DateTimeOffset,
+                                                                        [typeof(TimeSpan?)] = DbType.Time,
+                                                                        [typeof(object)] = DbType.Object
+                                                                    };
+        internal static DbType ResolveDbType(this Type type)
+        {
+            return Mappings[type];
         }
     }
 }

@@ -113,12 +113,57 @@ namespace EasySqlParser.SqlGenerator
                         PropertyInfo = propertyInfo
                     };
 
+                    if (propertyInfo.PropertyType == typeof(DateTime) ||
+                        propertyInfo.PropertyType == typeof(DateTime?) ||
+                        propertyInfo.PropertyType == typeof(DateTimeOffset) ||
+                        propertyInfo.PropertyType == typeof(DateTimeOffset?))
+                    {
+                        columnInfo.IsDateTime = true;
+                    }
+
 
                     var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                     columnInfo.ColumnName = propertyInfo.Name;
                     if (column != null)
                     {
                         columnInfo.ColumnName = column.Name;
+                        columnInfo.TypeName = column.TypeName;
+                        columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
+                        //if (propertyInfo.PropertyType == typeof(string))
+                        //{
+                        //    if (string.IsNullOrEmpty(column.TypeName))
+                        //    {
+                        //        columnInfo.DbType = DbType.String;
+                        //    }
+                        //    else
+                        //    {
+                        //        switch (column.TypeName)
+                        //        {
+                        //            case "CHAR":
+                        //                columnInfo.DbType = DbType.AnsiStringFixedLength;
+                        //                break;
+                        //            case "NCHAR":
+                        //                columnInfo.DbType = DbType.StringFixedLength;
+                        //                break;
+                        //            case "VARCHAR":
+                        //                columnInfo.DbType = DbType.AnsiString;
+                        //                break;
+                        //            case "VARCHAR2":
+                        //                columnInfo.DbType = DbType.AnsiString;
+                        //                break;
+                        //            //case "NVARCHAR":
+                        //            //    parameter.DbType = DbType.String;
+                        //            //    break;
+                        //            case "NVARCHAR2":
+                        //                columnInfo.DbType = DbType.String;
+                        //                break;
+                        //        }
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
+                        //}
                     }
 
                     var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
@@ -152,6 +197,12 @@ namespace EasySqlParser.SqlGenerator
                     {
                         columnInfo.CurrentUserAttribute = currentUserAttr;
                         columnInfo.IsCurrentUser = true;
+                    }
+
+                    var lengthAttr = propertyInfo.GetCustomAttribute<StringLengthAttribute>();
+                    if (lengthAttr != null)
+                    {
+                        columnInfo.StringMaxLength = lengthAttr.MaximumLength;
                     }
 
                     var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
@@ -243,6 +294,9 @@ namespace EasySqlParser.SqlGenerator
         public void IncrementVersion()
         {
             if (VersionPropertyInfo == null) return;
+            if (QueryBehavior == QueryBehavior.AllColumns) return;
+            if (QueryBehavior == QueryBehavior.IdentityOrAllColumns &&
+                EntityTypeInfo.IdentityColumn == null) return;
             var versionValue = VersionPropertyInfo.GetValue(Entity);
             if (versionValue == null) return;
             if (versionValue is int intValue)
@@ -265,11 +319,14 @@ namespace EasySqlParser.SqlGenerator
         public void ApplyReturningColumns()
         {
             if (ReturningColumns.Count == 0) return;
+            _loggerAction?.Invoke("[START] returning value read");
             foreach (var kvp in ReturningColumns)
             {
                 var returningValue = kvp.Value.dataParameter.Value;
+                _loggerAction?.Invoke($"{kvp.Value.dataParameter.ParameterName}\t{returningValue}");
                 kvp.Value.columnInfo.PropertyInfo.SetValue(Entity, returningValue);
             }
+            _loggerAction?.Invoke("[END] returning value read");
         }
 
 
@@ -297,7 +354,7 @@ namespace EasySqlParser.SqlGenerator
                     case DbConnectionKind.Oracle:
                         return CommandExecutionType.ExecuteNonQuery;
                     case DbConnectionKind.PostgreSql:
-                        return CommandExecutionType.ExecuteNonQuery;
+                        return CommandExecutionType.ExecuteReader;
                     case DbConnectionKind.SQLite:
                         return CommandExecutionType.ExecuteReader;
                     case DbConnectionKind.SqlServerLegacy:

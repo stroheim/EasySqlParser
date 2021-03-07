@@ -259,6 +259,20 @@ CREATE SEQUENCE STRING_SEQ AS SMALLINT
 
                     #endregion
 
+                    #region EMP_MULTIPLE_KEY
+
+
+                    ExecuteCommand(localConnection, @"
+CREATE TABLE [MetalGearSeries](
+    [KEY_COL1] VARCHAR(10) NOT NULL,
+    [KEY_COL2] VARCHAR(10) NOT NULL,
+    [NAME] VARCHAR(50) NOT NULL,
+    PRIMARY KEY([KEY_COL1],[KEY_COL2])
+);
+");
+
+                    #endregion
+
                     _initialized = true;
                 }
             }
@@ -283,5 +297,213 @@ CREATE SEQUENCE STRING_SEQ AS SMALLINT
             ExecuteCommand(localConnection, $"DROP DATABASE [{DbName}]");
         }
 
+    }
+
+    public class QueryExtensionFixture : FixtureBase
+    {
+        private static readonly object _lock = new object();
+        private static bool _initialized;
+        public QueryExtensionFixture() : base("QueryExtensionFixture")
+        {
+        }
+
+        protected override void Seed()
+        {
+            lock (_lock)
+            {
+                if (_initialized) return;
+                using var localConnection = new SqlConnection(BaseConnectionString);
+                localConnection.Open();
+                ExecuteCommand(localConnection, $"DROP DATABASE IF EXISTS [{DbName}]");
+                ExecuteCommand(localConnection, $"CREATE DATABASE [{DbName}]");
+                ExecuteCommand(localConnection, $"USE [{DbName}]");
+
+                #region EMP
+
+                ExecuteCommand(localConnection, @"CREATE TABLE [EMP](
+[ID] int not null primary key,
+[NAME] varchar(30),
+[SALARY] numeric(10, 0) not null,
+[VERSION] bigint not null
+)");
+                ExecuteCommand(localConnection, @"INSERT INTO [EMP](
+[ID],
+[NAME],
+[SALARY],
+[VERSION]
+)VALUES
+(1,'John Doe',0,1),
+(2,'Rob Walters',1,1),
+(3,'Gail Erickson',2,1),
+(4,'Jossef Goldberg',3,1),
+(5,'Dylan Miller',4,1),
+(6,'Diane Margheim',5,1),
+(7,'Gigi Matthew',6,1),
+(8,'Michael Raheem',7,1),
+(9,'Ovidiu Cracium',8,1),
+(10,'Janice Galvin',9,1);
+");
+                #endregion
+
+                _initialized = true;
+            }
+        }
+    }
+
+    public class IdentityFixture : FixtureBase
+    {
+        private static readonly object _lock = new object();
+        private static bool _initialized;
+
+        public IdentityFixture() : base("IdentityFixture")
+        {
+        }
+
+        protected override void Seed()
+        {
+            lock (_lock)
+            {
+                if (_initialized) return;
+                using var localConnection = new SqlConnection(BaseConnectionString);
+                localConnection.Open();
+                ExecuteCommand(localConnection, $"DROP DATABASE IF EXISTS [{DbName}]");
+                ExecuteCommand(localConnection, $"CREATE DATABASE [{DbName}]");
+                ExecuteCommand(localConnection, $"USE [{DbName}]");
+                #region MetalGearCharacters
+
+                ExecuteCommand(localConnection, @"CREATE TABLE [MetalGearCharacters](
+    [ID] INT IDENTITY NOT NULL,
+    [NAME] VARCHAR(30),
+    [HEIGHT] NUMERIC(18, 2),
+    [CREATE_DATE] DATETIME2 DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    [VERSION] BIGINT NOT NULL,
+    PRIMARY KEY([ID])
+);
+");
+                ExecuteCommand(localConnection,
+                    @"INSERT INTO [MetalGearCharacters]([NAME], [HEIGHT], [VERSION])VALUES('Solid Snake',182,1);");
+                #endregion
+
+                _initialized = true;
+            }
+        }
+    }
+
+    public class SequenceFixture : FixtureBase
+    {
+        private static readonly object _lock = new object();
+        private static bool _initialized;
+
+        public SequenceFixture() : base("SequenceFixture")
+        {
+        }
+
+        protected override void Seed()
+        {
+            lock (_lock)
+            {
+                if (_initialized) return;
+                using var localConnection = new SqlConnection(BaseConnectionString);
+                localConnection.Open();
+                ExecuteCommand(localConnection, $"DROP DATABASE IF EXISTS [{DbName}]");
+                ExecuteCommand(localConnection, $"CREATE DATABASE [{DbName}]");
+                ExecuteCommand(localConnection, $"USE [{DbName}]");
+
+                #region EMP_SEQ
+                ExecuteCommand(localConnection, @"
+CREATE TABLE [EMP_SEQ](
+    [ID] INT IDENTITY NOT NULL,
+    [NAME] VARCHAR(50) NOT NULL,
+    [BYTE_COL] tinyint NOT NULL,
+    [SHORT_COL] smallint NOT NULL,
+    [INT_COL] int NOT NULL,
+    [LONG_COL] bigint NOT NULL,
+    [DECIMAL_COL] numeric(26) NOT NULL,
+    [STRING_COL] VARCHAR(10) NOT NULL,
+    [VERSION] BIGINT NOT NULL,
+    PRIMARY KEY([ID])
+);
+CREATE SEQUENCE BYTE_SEQ AS TINYINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+CREATE SEQUENCE SHORT_SEQ AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+CREATE SEQUENCE INT_SEQ AS INT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+CREATE SEQUENCE LONG_SEQ AS BIGINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+CREATE SEQUENCE DECIMAL_SEQ AS NUMERIC(26)
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+CREATE SEQUENCE STRING_SEQ AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+
+");
+
+
+
+                #endregion
+
+                #region MetalGearSeries
+
+                ExecuteCommand(localConnection, @"
+CREATE TABLE [MetalGearSeries](
+    [ID] INT NOT NULL,
+    [NAME] VARCHAR(50) NOT NULL,
+    [RELEASE_DATE] DATETIME2 NOT NULL,
+    [PLATFORM] VARCHAR(60) NOT NULL,
+    [CREATE_DATE] DATETIME2 DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    [VERSION] BIGINT NOT NULL,
+    PRIMARY KEY([ID])
+);
+CREATE SEQUENCE METAL_GEAR_SERIES_SEQ AS INT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NO CACHE;
+
+");
+
+                ExecuteCommand(localConnection, @"
+INSERT INTO [MetalGearSeries]([ID], [NAME], [RELEASE_DATE], [PLATFORM], [VERSION])VALUES
+(NEXT VALUE FOR METAL_GEAR_SERIES_SEQ, 'METAL GEAR', '1987-07-13', 'MSX2', 1);
+
+");
+                #endregion
+
+
+                _initialized = true;
+            }
+        }
     }
 }

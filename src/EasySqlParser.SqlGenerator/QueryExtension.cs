@@ -11,10 +11,12 @@ namespace EasySqlParser.SqlGenerator
 {
     public static class QueryExtension
     {
+
         public static bool TryGenerateSequence<T, TResult>(this DbConnection connection,
             QueryBuilderParameter<T> builderParameter,
             SequenceGeneratorAttribute attribute,
-            out TResult sequenceValue)
+            out TResult sequenceValue,
+            Func<decimal, TResult> converter = null)
         {
             var config = builderParameter.Config;
             if (!config.Dialect.SupportsSequence)
@@ -30,6 +32,21 @@ namespace EasySqlParser.SqlGenerator
             {
                 command.CommandText = sql;
                 rawResult = command.ExecuteScalar();
+                if ((config.DbConnectionKind == DbConnectionKind.Oracle ||
+                     config.DbConnectionKind == DbConnectionKind.OracleLegacy) &&
+                    converter != null)
+                {
+                    sequenceValue = converter.Invoke((decimal) rawResult);
+                    return true;
+                }
+
+                if (config.DbConnectionKind == DbConnectionKind.PostgreSql &&
+                    converter != null)
+                {
+                    sequenceValue = converter.Invoke((long) rawResult);
+                    return true;
+                }
+
                 if (rawResult is TResult result)
                 {
                     sequenceValue = result;
@@ -47,7 +64,8 @@ namespace EasySqlParser.SqlGenerator
             this DbConnection connection,
             QueryBuilderParameter<T> builderParameter,
             SequenceGeneratorAttribute attribute,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            Func<decimal, TResult> converter = null)
         {
             var config = builderParameter.Config;
             if (!config.Dialect.SupportsSequence)
@@ -62,6 +80,19 @@ namespace EasySqlParser.SqlGenerator
             {
                 command.CommandText = sql;
                 rawResult = await command.ExecuteScalarAsync(cancellationToken);
+                if ((config.DbConnectionKind == DbConnectionKind.Oracle ||
+                     config.DbConnectionKind == DbConnectionKind.OracleLegacy) &&
+                    converter != null)
+                {
+                    return (true, converter.Invoke((decimal)rawResult));
+                }
+
+                if (config.DbConnectionKind == DbConnectionKind.PostgreSql &&
+                    converter != null)
+                {
+                    return (true, converter.Invoke((long) rawResult));
+                }
+
                 if (rawResult is TResult result)
                 {
                     return (true, result);
@@ -80,11 +111,11 @@ namespace EasySqlParser.SqlGenerator
             DbTransaction transaction = null)
         {
             QueryBuilder<T>.PreInsert(builderParameter, connection);
-            DbTransaction localTransaction = null;
-            if (transaction == null)
-            {
-                localTransaction = connection.BeginTransaction();
-            }
+            //DbTransaction localTransaction = null;
+            //if (transaction == null)
+            //{
+            //    localTransaction = connection.BeginTransaction();
+            //}
 
             var builderResult = QueryBuilder<T>.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
@@ -94,7 +125,11 @@ namespace EasySqlParser.SqlGenerator
                 command.CommandText = builderResult.ParsedSql;
                 command.Parameters.Clear();
                 command.Parameters.AddRange(builderResult.DbDataParameters.ToArray());
-                command.Transaction = transaction ?? localTransaction;
+                if (transaction != null)
+                {
+                    command.Transaction = transaction;
+                }
+                //command.Transaction = transaction ?? localTransaction;
 
                 command.CommandTimeout = builderParameter.CommandTimeout;
                 int affectedCount;
@@ -116,7 +151,7 @@ namespace EasySqlParser.SqlGenerator
                 }
 
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
-                localTransaction?.Commit();
+                //localTransaction?.Commit();
                 if (builderParameter.SqlKind == SqlKind.Update)
                 {
                     builderParameter.IncrementVersion();
@@ -134,11 +169,11 @@ namespace EasySqlParser.SqlGenerator
         {
             await QueryBuilder<T>.PreInsertAsync(builderParameter, connection);
 
-            DbTransaction localTransaction = null;
-            if (transaction == null)
-            {
-                localTransaction = connection.BeginTransaction();
-            }
+            //DbTransaction localTransaction = null;
+            //if (transaction == null)
+            //{
+            //    localTransaction = connection.BeginTransaction();
+            //}
             var builderResult = QueryBuilder<T>.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
 
@@ -147,7 +182,11 @@ namespace EasySqlParser.SqlGenerator
                 command.CommandText = builderResult.ParsedSql;
                 command.Parameters.Clear();
                 command.Parameters.AddRange(builderResult.DbDataParameters.ToArray());
-                command.Transaction = transaction ?? localTransaction;
+                if (transaction != null)
+                {
+                    command.Transaction = transaction;
+                }
+                //command.Transaction = transaction ?? localTransaction;
 
                 command.CommandTimeout = builderParameter.CommandTimeout;
                 int affectedCount;
@@ -170,7 +209,7 @@ namespace EasySqlParser.SqlGenerator
                         throw new InvalidOperationException("");
                 }
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
-                localTransaction?.Commit();
+                //localTransaction?.Commit();
                 if (builderParameter.SqlKind == SqlKind.Update)
                 {
                     builderParameter.IncrementVersion();
@@ -190,7 +229,7 @@ namespace EasySqlParser.SqlGenerator
         {
             if (parameter.ThrowableOptimisticLockException(affectedCount))
             {
-                transaction.Rollback();
+                transaction?.Rollback();
                 throw new OptimisticLockException(builderResult.ParsedSql, builderResult.DebugSql, parameter.SqlFile);
             }
         }
@@ -292,17 +331,22 @@ namespace EasySqlParser.SqlGenerator
         {
             var (builderResult, entityInfo) = QueryBuilder<T>.GetSelectSql(predicate, configName, builderConfiguration.WriteIndented);
             builderConfiguration.LoggerAction?.Invoke(builderResult.DebugSql);
-            DbTransaction localTransaction = null;
-            if (transaction == null)
-            {
-                localTransaction = connection.BeginTransaction();
-            }
+            //DbTransaction localTransaction = null;
+            //if (transaction == null)
+            //{
+            //    localTransaction = connection.BeginTransaction();
+            //}
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = builderResult.ParsedSql;
                 command.Parameters.Clear();
                 command.Parameters.AddRange(builderResult.DbDataParameters.ToArray());
-                command.Transaction = localTransaction ?? transaction;
+                if (transaction != null)
+                {
+                    command.Transaction = transaction;
+                }
+
+                //command.Transaction = transaction ?? localTransaction;
 
                 command.CommandTimeout = builderConfiguration.CommandTimeout;
                 var reader = command.ExecuteReader();
@@ -329,7 +373,7 @@ namespace EasySqlParser.SqlGenerator
                 }
                 reader.Close();
                 reader.Dispose();
-                localTransaction?.Commit();
+                //localTransaction?.Commit();
             }
 
 

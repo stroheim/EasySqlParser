@@ -26,7 +26,7 @@ namespace EasySqlParser.Dialect
         public override bool SupportsSequence { get; } = true;
 
         /// <inheritdoc />
-        public override bool SupportsReturning { get; } = true;
+        public override bool SupportsReturningInto { get; } = true;
 
         private static readonly char[] DefaultWildcards = { '%', '_', '％', '＿' };
 

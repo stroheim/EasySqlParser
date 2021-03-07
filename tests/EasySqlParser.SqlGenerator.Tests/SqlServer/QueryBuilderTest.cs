@@ -61,6 +61,24 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         }
 
         [Fact]
+        public void Test_Insert_MultipleKey()
+        {
+            var employee = new EmployeeMultipleKey
+                           {
+                               Key1 = "1",
+                               Key2 = "1",
+                               Name = "11"
+                           };
+            var parameter = new QueryBuilderParameter<EmployeeMultipleKey>(employee, SqlKind.Insert, _mockConfig);
+            var builder = QueryBuilder<EmployeeMultipleKey>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            builder.ParsedSql.Is(
+                "INSERT INTO [dbo].[EMP_MULTIPLE_KEY] ([KEY_COL1], [KEY_COL2], [NAME]) VALUES (@Key1, @Key2, @Name)");
+            builder.DbDataParameters.Count.Is(3);
+
+        }
+
+        [Fact]
         public void Test_Update_Default()
         {
             var employee = new Employee
@@ -78,6 +96,22 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             builder.DbDataParameters[1].Value.Is(0M);
             builder.DbDataParameters[2].Value.Is(100L);
             builder.DbDataParameters[3].Value.Is(1);
+        }
+
+        [Fact]
+        public void Test_Update_IgnoreCreateDate()
+        {
+            var characters = new Characters
+                             {
+                                 Id = 1,
+                                 Name = "John Doe",
+                                 VersionNo = 1L
+                             };
+            var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Update, _mockConfig);
+            var builder = QueryBuilder<Characters>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            builder.ParsedSql.Is("UPDATE [MetalGearCharacters] SET [NAME] = @Name, [HEIGHT] = @Height, [VERSION] = @VersionNo + 1 WHERE [ID] = @Id AND [VERSION] = @VersionNo");
+
         }
 
         [Fact]
@@ -180,13 +214,17 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "John Doe"
                            };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.WriteIndented = true;
             var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
             var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             _output.WriteLine(builder.ParsedSql);
-            var sqls = builder.ParsedSql.Split(new[] {"\r\n"}, StringSplitOptions.None);
-            sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
-            sqls[1].Is("SELECT [ID] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            if (!localConfig.WriteIndented)
+            {
+                var sqls = builder.ParsedSql.Split(new[] { "\r\n" }, StringSplitOptions.None);
+                sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
+                sqls[1].Is("SELECT [ID] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            }
             builder.DbDataParameters.Count.Is(2);
             builder.DbDataParameters[0].Value.Is("John Doe");
             builder.DbDataParameters[1].Value.Is(1L);
@@ -200,13 +238,17 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "John Doe"
                            };
             var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
+            localConfig.WriteIndented = true;
             var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
             var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             _output.WriteLine(builder.ParsedSql);
-            var sqls = builder.ParsedSql.Split(new[] { "\r\n" }, StringSplitOptions.None);
-            sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
-            sqls[1].Is("SELECT [ID], [NAME], [VERSION] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            if (!localConfig.WriteIndented)
+            {
+                var sqls = builder.ParsedSql.Split(new[] { "\r\n" }, StringSplitOptions.None);
+                sqls[0].Is("INSERT INTO [dbo].[EMP_IDENTITY] ([NAME], [VERSION]) VALUES (@Name, @VersionNo);");
+                sqls[1].Is("SELECT [ID], [NAME], [VERSION] FROM [dbo].[EMP_IDENTITY] WHERE [ID] = scope_identity();");
+            }
             builder.DbDataParameters.Count.Is(2);
             builder.DbDataParameters[0].Value.Is("John Doe");
             builder.DbDataParameters[1].Value.Is(1L);
@@ -235,6 +277,21 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             builder.DbDataParameters[2].Value.Is(0M);
             builder.DbDataParameters[3].Value.Is(1L);
 
+        }
+
+        [Fact]
+        public void Test_AllColumns()
+        {
+            var employee = new EmployeeWithDateAndUser
+                           {
+                               Name = "John Doe"
+                           };
+            var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
+            localConfig.WriteIndented = true;
+            var parameter = new QueryBuilderParameter<EmployeeWithDateAndUser>(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder<EmployeeWithDateAndUser>.GetQueryBuilderResult(parameter);
+            builder.IsNotNull();
+            _output.WriteLine(builder.ParsedSql);
         }
     }
 }

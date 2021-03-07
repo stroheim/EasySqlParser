@@ -167,5 +167,20 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
     }
 
+    [Table("EMP_MULTIPLE_KEY", Schema = "dbo")]
+    public class EmployeeMultipleKey
+    {
+        [Key]
+        [Column("KEY_COL1")]
+        public string Key1 { get; set; }
+
+        [Key]
+        [Column("KEY_COL2")]
+        public string Key2 { get; set; }
+
+        [Column("NAME")]
+        public string Name { get; set; }
+    }
+
 
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.Reflection;
 using System.Text;
 
@@ -30,6 +32,15 @@ namespace EasySqlParser.SqlGenerator
         public bool IsCurrentUser { get; internal set; }
 
         public CurrentUserAttribute CurrentUserAttribute { get; internal set; }
+
+        public string TypeName { get; internal set; }
+
+        public DbType DbType { get; internal set; }
+
+        public int? StringMaxLength { get; internal set; }
+
+        public bool IsDateTime { get; internal set; }
+
 
         internal EntityColumnInfo Clone()
         {
