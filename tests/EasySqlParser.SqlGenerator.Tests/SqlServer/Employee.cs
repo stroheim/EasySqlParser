@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
+    [Entity]
     [Table("EMP", Schema = "dbo")]
     public class Employee
     {
@@ -22,6 +23,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         public long VersionNo { get; set; }
     }
 
+    [Entity]
     [Table("EMP_WITH_DATE", Schema = "dbo")]
     public class EmployeeWithDate
     {
@@ -59,6 +61,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
     }
 
+    [Entity]
     [Table("EMP_WITH_DATE_USER", Schema = "dbo")]
     public class EmployeeWithDateAndUser
     {
@@ -110,6 +113,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
     }
 
+    [Entity]
     [Table("EMP_IDENTITY", Schema = "dbo")]
     public class EmployeeIdentity
     {
@@ -126,6 +130,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         public long VersionNo { get; set; }
     }
 
+    [Entity]
     [Table("EMP_SEQ", Schema = "dbo")]
     public class EmployeeSeq
     {
@@ -167,6 +172,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
     }
 
+    [Entity]
     [Table("EMP_MULTIPLE_KEY", Schema = "dbo")]
     public class EmployeeMultipleKey
     {

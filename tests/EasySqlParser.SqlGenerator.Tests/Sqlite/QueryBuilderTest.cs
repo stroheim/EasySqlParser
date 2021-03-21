@@ -30,8 +30,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                            };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
             //localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             _output.WriteLine(builder.ParsedSql);
             if (!localConfig.WriteIndented)
@@ -52,8 +52,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                            };
             var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
             localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             if (!localConfig.WriteIndented)
             {

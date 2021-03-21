@@ -11,6 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\*.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
     <ProjectReference Include="..\EasySqlParser.SqlGenerator\EasySqlParser.SqlGenerator.csproj" />
   </ItemGroup>
 

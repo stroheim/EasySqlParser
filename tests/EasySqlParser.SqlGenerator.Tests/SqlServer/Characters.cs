@@ -7,6 +7,7 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {
+    [Entity]
     [Table("MetalGearCharacters")]
     public class Characters
     {

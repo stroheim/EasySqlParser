@@ -1,87 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
-using EasySqlParser.Extensions;
 
 namespace EasySqlParser.SqlGenerator
 {
-    public class QueryBuilder<T>
+    public static class DbCommandHelper
     {
-        public static QueryBuilderResult GetQueryBuilderResultFromSqlFile(QueryBuilderParameter<T> parameter)
+        public static int ConsumeScalar(object scalarValue, QueryBuilderParameter builderParameter)
         {
-            var parser = new SqlParser(parameter.SqlFile, parameter.Entity, parameter.Config);
-            var parserResult = parser.Parse();
-            return new QueryBuilderResult
-                   {
-                       ParsedSql = parserResult.ParsedSql,
-                       DebugSql = parserResult.DebugSql,
-                       DbDataParameters = parserResult.DbDataParameters
-                   };
-        }
-
-        public static QueryBuilderResult GetQueryBuilderResult(QueryBuilderParameter<T> parameter)
-        {
-            if (!string.IsNullOrEmpty(parameter.SqlFile))
-            {
-                return GetQueryBuilderResultFromSqlFile(parameter);
-            }
-            switch (parameter.SqlKind)
-            {
-                case SqlKind.Insert:
-                    return GetInsertSql(parameter);
-                case SqlKind.Update:
-                    return GetUpdateSql(parameter);
-                case SqlKind.SoftDelete:
-                    return GetSoftDeleteSql(parameter);
-                case SqlKind.Delete:
-                    return GetDeleteSql(parameter);
-            }
-
-            return null;
-        }
-
-
-        internal static int ConsumeScalar(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command)
-        {
-            var rawScalarValue = command.ExecuteScalar();
-            if (rawScalarValue == null)
+            if (scalarValue == null)
             {
                 return 0;
             }
+
             var entityInfo = builderParameter.EntityTypeInfo;
             var instance = builderParameter.Entity;
-            entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, rawScalarValue);
+            var config = builderParameter.Config;
+            if (config.DbConnectionKind == DbConnectionKind.SQLite)
+            {
+                if (entityInfo.IdentityColumn != null && scalarValue is long longValue)
+                {
+                    var converted = Convert.ChangeType(longValue,
+                        entityInfo.IdentityColumn.PropertyInfo.PropertyType);
+                    entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, converted);
+                    if (!builderParameter.IsSameVersion())
+                    {
+                        return 0;
+                    }
+                    return 1;
+                }
+            }
+
+            entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, scalarValue);
 
 
+            if (!builderParameter.IsSameVersion())
+            {
+                return 0;
+            }
             return 1;
+
         }
 
-        internal static int ConsumeNonQuery(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command)
-
+        public static int ConsumeReader(DbDataReader reader, QueryBuilderParameter builderParameter)
         {
-            var affectedCount = command.ExecuteNonQuery();
-            builderParameter.ApplyReturningColumns();
-            return affectedCount;
-        }
-
-
-        internal static int ConsumeReader(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command)
-        {
-            var reader = command.ExecuteReader();
             if (!reader.HasRows)
             {
                 reader.Close();
@@ -105,43 +72,8 @@ namespace EasySqlParser.SqlGenerator
                     {
                         if (value is long longValue)
                         {
-                            // longから変換する
-                            if (columnInfo.PropertyInfo.PropertyType == typeof(bool))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToBoolean(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(byte))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToByte(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(short))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToInt16(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(int))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToInt32(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(long))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, longValue);
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(sbyte))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToSByte(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(ushort))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToUInt16(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(uint))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToUInt32(longValue));
-                            }
-                            else if (columnInfo.PropertyInfo.PropertyType == typeof(ulong))
-                            {
-                                columnInfo.PropertyInfo.SetValue(instance, Convert.ToUInt64(longValue));
-                            }
+                            var converted = Convert.ChangeType(longValue, columnInfo.PropertyInfo.PropertyType);
+                            columnInfo.PropertyInfo.SetValue(instance, converted);
                             continue;
                         }
 
@@ -151,7 +83,7 @@ namespace EasySqlParser.SqlGenerator
                                 columnInfo.PropertyInfo.PropertyType == typeof(DateTime?))
                             {
                                 columnInfo.PropertyInfo.SetValue(instance,
-                                    DateTime.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss",
+                                    DateTime.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFF",
                                         CultureInfo.InvariantCulture));
                                 continue;
                             }
@@ -159,11 +91,11 @@ namespace EasySqlParser.SqlGenerator
                                      columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset?))
                             {
                                 columnInfo.PropertyInfo.SetValue(instance,
-                                    DateTimeOffset.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss",
+                                    DateTimeOffset.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFFzzz",
                                         CultureInfo.InvariantCulture));
                                 continue;
                             }
-                            
+
                         }
                     }
                     columnInfo.PropertyInfo.SetValue(instance, value);
@@ -172,12 +104,106 @@ namespace EasySqlParser.SqlGenerator
             reader.Close();
             reader.Dispose();
             builderParameter.WriteLog("[End] ConsumeReader");
+            if (!builderParameter.IsSameVersion())
+            {
+                return 0;
+            }
             return 1;
+
         }
 
+        public static async Task<int> ConsumeReaderAsync(DbDataReader reader, QueryBuilderParameter builderParameter)
+        {
+            if (!reader.HasRows)
+            {
+                reader.Close();
+                reader.Dispose();
+                return 0;
+            }
+
+            var entityInfo = builderParameter.EntityTypeInfo;
+            await reader.ReadAsync();
+            var instance = builderParameter.Entity;
+            builderParameter.WriteLog("[Start] ConsumeReader");
+            var config = builderParameter.Config;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                var col = reader.GetOrdinal(columnInfo.ColumnName);
+                if (!await reader.IsDBNullAsync(col))
+                {
+                    var value = reader.GetValue(col);
+                    builderParameter.WriteLog($"{columnInfo.PropertyInfo.Name}\t{value}");
+                    if (config.DbConnectionKind == DbConnectionKind.SQLite)
+                    {
+                        if (value is long longValue)
+                        {
+                            var converted = Convert.ChangeType(longValue, columnInfo.PropertyInfo.PropertyType);
+                            columnInfo.PropertyInfo.SetValue(instance, converted);
+                            continue;
+                        }
+
+                        if (value is string stringValue)
+                        {
+                            if (columnInfo.PropertyInfo.PropertyType == typeof(DateTime) ||
+                                columnInfo.PropertyInfo.PropertyType == typeof(DateTime?))
+                            {
+                                columnInfo.PropertyInfo.SetValue(instance,
+                                    DateTime.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFF",
+                                        CultureInfo.InvariantCulture));
+                                continue;
+                            }
+                            if (columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset) ||
+                                     columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset?))
+                            {
+                                columnInfo.PropertyInfo.SetValue(instance,
+                                    DateTimeOffset.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFFzzz",
+                                        CultureInfo.InvariantCulture));
+                                continue;
+                            }
+
+                        }
+                    }
+                    columnInfo.PropertyInfo.SetValue(instance, value);
+                }
+            }
+            reader.Close();
+            reader.Dispose();
+            builderParameter.WriteLog("[End] ConsumeReader");
+            if (!builderParameter.IsSameVersion())
+            {
+                return 0;
+            }
+            return 1;
+
+        }
+    }
+
+    internal static class CommandExtension
+    {
+        internal static int ConsumeScalar(this DbCommand command, QueryBuilderParameter builderParameter)
+        {
+            var rawScalarValue = command.ExecuteScalar();
+            return DbCommandHelper.ConsumeScalar(rawScalarValue, builderParameter);
+        }
+
+        internal static int ConsumeNonQuery(this DbCommand command, QueryBuilderParameter builderParameter)
+        {
+            var affectedCount = command.ExecuteNonQuery();
+            builderParameter.ApplyReturningColumns();
+            return affectedCount;
+
+        }
+
+        internal static int ConsumeReader(this DbCommand command, QueryBuilderParameter builderParameter)
+        {
+            var reader = command.ExecuteReader();
+            return DbCommandHelper.ConsumeReader(reader, builderParameter);
+        }
+
+
         internal static async Task<int> ConsumeScalarAsync(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command,
+            this DbCommand command,
+            QueryBuilderParameter builderParameter,
             CancellationToken cancellationToken = default)
         {
             var rawScalarValue = await command.ExecuteScalarAsync(cancellationToken);
@@ -188,6 +214,18 @@ namespace EasySqlParser.SqlGenerator
 
             var entityInfo = builderParameter.EntityTypeInfo;
             var instance = builderParameter.Entity;
+            var config = builderParameter.Config;
+            if (config.DbConnectionKind == DbConnectionKind.SQLite)
+            {
+                if (entityInfo.IdentityColumn != null && rawScalarValue is long longValue)
+                {
+                    var converted = Convert.ChangeType(longValue,
+                        entityInfo.IdentityColumn.PropertyInfo.PropertyType);
+                    entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, converted);
+                    return 1;
+
+                }
+            }
             entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, rawScalarValue);
 
 
@@ -195,8 +233,8 @@ namespace EasySqlParser.SqlGenerator
         }
 
         internal static async Task<int> ConsumeNonQueryAsync(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command,
+            this DbCommand command,
+            QueryBuilderParameter builderParameter,
             CancellationToken cancellationToken = default)
 
         {
@@ -205,10 +243,9 @@ namespace EasySqlParser.SqlGenerator
             return affectedCount;
         }
 
-
         internal static async Task<int> ConsumeReaderAsync(
-            QueryBuilderParameter<T> builderParameter,
-            DbCommand command,
+            this DbCommand command,
+            QueryBuilderParameter builderParameter,
             CancellationToken cancellationToken = default)
         {
             var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -222,171 +259,404 @@ namespace EasySqlParser.SqlGenerator
             var entityInfo = builderParameter.EntityTypeInfo;
             await reader.ReadAsync(cancellationToken);
             var instance = builderParameter.Entity;
+            builderParameter.WriteLog("[Start] ConsumeReader");
+            var config = builderParameter.Config;
             foreach (var columnInfo in entityInfo.Columns)
             {
                 var col = reader.GetOrdinal(columnInfo.ColumnName);
-                if (!await reader.IsDBNullAsync(col, cancellationToken))
+                if (await reader.IsDBNullAsync(col, cancellationToken)) continue;
+                var value = reader.GetValue(col);
+                builderParameter.WriteLog($"{columnInfo.PropertyInfo.Name}\t{value}");
+                if (config.DbConnectionKind == DbConnectionKind.SQLite)
                 {
-                    columnInfo.PropertyInfo.SetValue(instance, reader.GetValue(col));
+                    if (value is long longValue)
+                    {
+                        var converted = Convert.ChangeType(longValue, columnInfo.PropertyInfo.PropertyType);
+                        columnInfo.PropertyInfo.SetValue(instance, converted);
+                        continue;
+                    }
+
+                    if (value is string stringValue)
+                    {
+                        if (columnInfo.PropertyInfo.PropertyType == typeof(DateTime) ||
+                            columnInfo.PropertyInfo.PropertyType == typeof(DateTime?))
+                        {
+                            columnInfo.PropertyInfo.SetValue(instance,
+                                DateTime.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFF",
+                                    CultureInfo.InvariantCulture));
+                            continue;
+                        }
+
+                        if (columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset) ||
+                            columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset?))
+                        {
+                            columnInfo.PropertyInfo.SetValue(instance,
+                                DateTimeOffset.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFFzzz",
+                                    CultureInfo.InvariantCulture));
+                            continue;
+                        }
+
+                    }
                 }
+
+                columnInfo.PropertyInfo.SetValue(instance, value);
             }
+
             reader.Close();
             reader.Dispose();
+            builderParameter.WriteLog("[End] ConsumeReader");
             return 1;
         }
 
-        internal static void PreInsert(QueryBuilderParameter<T> parameter, DbConnection connection)
+    }
+
+    internal static class ConnectionExtension
+    {
+        internal static void PreInsert(this DbConnection connection, QueryBuilderParameter builderParameter)
         {
-            if (parameter.SqlKind != SqlKind.Insert) return;
-            var entityInfo = parameter.EntityTypeInfo;
-            var config = parameter.Config;
+            if (builderParameter.SqlKind != SqlKind.Insert) return;
+            var entityInfo = builderParameter.EntityTypeInfo;
+            var config = builderParameter.Config;
             if (!config.Dialect.SupportsSequence) return;
             if (entityInfo.SequenceColumns.Count == 0) return;
+            builderParameter.WriteLog("[Start] PreInsert");
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
                 if (columnInfo.PropertyInfo.PropertyType == typeof(byte))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
                         out byte byteValue, Convert.ToByte))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, byteValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, byteValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(short))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
                         out short shortValue, Convert.ToInt16))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, shortValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, shortValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(int))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
-                        out int intValue,Convert.ToInt32))
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
+                        out int intValue, Convert.ToInt32))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, intValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, intValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(long))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
-                        out long longValue,Convert.ToInt64))
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
+                        out long longValue, Convert.ToInt64))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, longValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, longValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(decimal))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
                         out decimal decimalValue))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, decimalValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, decimalValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(string))
                 {
-                    if (connection.TryGenerateSequence(parameter, columnInfo.SequenceGeneratorAttribute,
+                    if (connection.TryGenerateSequence(builderParameter, columnInfo.SequenceGeneratorAttribute,
                         out string stringValue))
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, stringValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, stringValue);
                         continue;
                     }
                 }
             }
+            builderParameter.WriteLog("[End] PreInsert");
         }
 
-        internal static async Task PreInsertAsync(QueryBuilderParameter<T> parameter, DbConnection connection)
+        internal static async Task PreInsertAsync(this DbConnection connection, QueryBuilderParameter builderParameter)
         {
-            if (parameter.SqlKind != SqlKind.Insert) return;
-            var entityInfo = parameter.EntityTypeInfo;
-            var config = parameter.Config;
+            if (builderParameter.SqlKind != SqlKind.Insert) return;
+            var entityInfo = builderParameter.EntityTypeInfo;
+            var config = builderParameter.Config;
             if (!config.Dialect.SupportsSequence) return;
             if (entityInfo.SequenceColumns.Count == 0) return;
+            builderParameter.WriteLog("[Start] PreInsertAsync");
             foreach (var columnInfo in entityInfo.SequenceColumns)
             {
                 if (columnInfo.PropertyInfo.PropertyType == typeof(byte))
                 {
-                    var (isSuccess, byteValue) = await connection.TryGenerateSequenceAsync<T, byte>(parameter,
+                    var (isSuccess, byteValue) = await connection.TryGenerateSequenceAsync(builderParameter,
                         columnInfo.SequenceGeneratorAttribute, converter: Convert.ToByte);
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, byteValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, byteValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(short))
                 {
-                    var (isSuccess, shortValue) = await connection.TryGenerateSequenceAsync<T, short>(parameter,
+                    var (isSuccess, shortValue) = await connection.TryGenerateSequenceAsync(builderParameter,
                         columnInfo.SequenceGeneratorAttribute, converter: Convert.ToInt16);
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, shortValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, shortValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(int))
                 {
-                    var (isSuccess, intValue) = await connection.TryGenerateSequenceAsync<T, int>(parameter,
+                    var (isSuccess, intValue) = await connection.TryGenerateSequenceAsync(builderParameter,
                         columnInfo.SequenceGeneratorAttribute, converter: Convert.ToInt32);
 
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, intValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, intValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(long))
                 {
-                    var (isSuccess, longValue) = await connection.TryGenerateSequenceAsync<T, long>(parameter,
+                    var (isSuccess, longValue) = await connection.TryGenerateSequenceAsync(builderParameter,
                         columnInfo.SequenceGeneratorAttribute, converter: Convert.ToInt64);
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, longValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, longValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(decimal))
                 {
-                    var (isSuccess, decimalValue) = await connection.TryGenerateSequenceAsync<T, decimal>(parameter,
+                    var (isSuccess, decimalValue) = await connection.TryGenerateSequenceAsync<decimal>(builderParameter,
                         columnInfo.SequenceGeneratorAttribute);
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, decimalValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, decimalValue);
                         continue;
                     }
                 }
 
                 if (columnInfo.PropertyInfo.PropertyType == typeof(string))
                 {
-                    var (isSuccess, stringValue) = await connection.TryGenerateSequenceAsync<T, string>(parameter,
+                    var (isSuccess, stringValue) = await connection.TryGenerateSequenceAsync<string>(builderParameter,
                         columnInfo.SequenceGeneratorAttribute);
                     if (isSuccess)
                     {
-                        columnInfo.PropertyInfo.SetValue(parameter.Entity, stringValue);
+                        columnInfo.PropertyInfo.SetValue(builderParameter.Entity, stringValue);
                         continue;
                     }
                 }
             }
+            builderParameter.WriteLog("[End] PreInsertAsync");
 
         }
 
 
-        private static QueryBuilderResult GetInsertSql(QueryBuilderParameter<T> parameter)
+
+    }
+
+    public class QueryBuilder
+    {
+        #region for unit tests
+        internal static QueryBuilderResult GetCountSql<T>(
+            Expression<Func<T, bool>> predicate = null,
+            string configName = null,
+            bool writeIndented = false)
+        {
+            var keyValues = new Dictionary<string, object>();
+            if (predicate != null)
+            {
+                var visitor = new PredicateVisitor();
+                keyValues = visitor.GetKeyValues(predicate);
+            }
+            var entityInfo = EntityTypeInfoBuilder.Build(typeof(T));
+            var config = configName == null
+                ? ConfigContainer.DefaultConfig
+                : ConfigContainer.AdditionalConfigs[configName];
+            var builder = new QueryStringBuilder(config, writeIndented);
+            builder.AppendSql("SELECT COUNT(*) CNT FROM ");
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
+            if (keyValues.Count > 0)
+            {
+                builder.AppendLine(" WHERE ");
+
+                var counter = 0;
+                foreach (var columnInfo in entityInfo.Columns)
+                {
+                    builder.AppendComma(counter);
+                    object propValue = null;
+                    if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
+                    {
+                        propValue = keyValues[columnInfo.PropertyInfo.Name];
+                    }
+
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                    builder.AppendSql(columnName);
+                    if (propValue == null)
+                    {
+                        builder.AppendSql(" IS NULL ");
+                    }
+                    else
+                    {
+                        builder.AppendSql(" = ");
+                        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    }
+
+                    builder.AppendLine();
+
+                    counter++;
+                }
+
+            }
+
+            return builder.GetResult();
+        }
+
+
+        internal static (QueryBuilderResult builderResult, EntityTypeInfo entityInfo) GetSelectSql<T>(
+            Expression<Func<T, bool>> predicate,
+            string configName = null,
+            bool writeIndented = false)
+        {
+            var visitor = new PredicateVisitor();
+            var keyValues = visitor.GetKeyValues(predicate);
+            var entityInfo = EntityTypeInfoBuilder.Build(typeof(T));
+            var config = configName == null
+                ? ConfigContainer.DefaultConfig
+                : ConfigContainer.AdditionalConfigs[configName];
+
+            if (entityInfo.KeyColumns.Count == 0)
+            {
+                // pkがなければupdateできない
+                throw new InvalidOperationException("");
+            }
+
+            var builder = new QueryStringBuilder(config, writeIndented);
+            builder.AppendLine("SELECT ");
+            var counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                builder.AppendComma(counter);
+                builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
+
+                counter++;
+
+            }
+
+            if (!writeIndented)
+            {
+                builder.AppendSql(" ");
+            }
+            builder.AppendLine("FROM ");
+            if (writeIndented)
+            {
+                builder.AppendIndent(3);
+            }
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
+            builder.AppendLine(" ");
+            builder.AppendLine("WHERE ");
+            counter = 0;
+            for (int i = 0; i < entityInfo.Columns.Count; i++)
+            {
+                var columnInfo = entityInfo.Columns[i];
+                if (!columnInfo.IsPrimaryKey) continue;
+                builder.AppendComma(counter);
+                object propValue = null;
+                if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
+                {
+                    propValue = keyValues[columnInfo.PropertyInfo.Name];
+                }
+
+                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                builder.AppendSql(columnName);
+                if (propValue == null)
+                {
+                    builder.AppendSql(" IS NULL ");
+                }
+                else
+                {
+                    builder.AppendSql(" = ");
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                }
+
+                if (i < entityInfo.Columns.Count - 1)
+                {
+                    builder.AppendLine();
+                }
+
+                counter++;
+            }
+
+            return (builder.GetResult(), entityInfo);
+
+        }
+        #endregion
+
+
+
+        public static QueryBuilderResult GetQueryBuilderResultFromSqlFile(QueryBuilderParameter parameter)
+        {
+            var parser = new SqlParser(parameter.SqlFile, parameter.Entity, parameter.Config);
+            var parserResult = parser.Parse();
+            return new QueryBuilderResult
+                   {
+                       ParsedSql = parserResult.ParsedSql,
+                       DebugSql = parserResult.DebugSql,
+                       DbDataParameters = parserResult.DbDataParameters
+                   };
+        }
+
+        public static QueryBuilderResult GetQueryBuilderResult(QueryBuilderParameter parameter)
+        {
+            if (!string.IsNullOrEmpty(parameter.SqlFile))
+            {
+                return GetQueryBuilderResultFromSqlFile(parameter);
+            }
+            switch (parameter.SqlKind)
+            {
+                case SqlKind.Insert:
+                    return GetInsertSql(parameter);
+                case SqlKind.Update:
+                    return GetUpdateSql(parameter);
+                case SqlKind.SoftDelete:
+                    return GetSoftDeleteSql(parameter);
+                case SqlKind.Delete:
+                    return GetDeleteSql(parameter);
+                default:
+                    // TODO:
+                    throw new InvalidOperationException("");
+            }
+
+        }
+
+        private static QueryBuilderResult GetInsertSql(QueryBuilderParameter parameter)
         {
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
@@ -401,21 +671,16 @@ namespace EasySqlParser.SqlGenerator
             builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
             builder.AppendLine(" (");
             var counter = 0;
-            object identityValue = null;
             foreach (var columnInfo in entityInfo.Columns)
             {
                 if (parameter.ExcludeNull)
                 {
-                    var propValue= columnInfo.PropertyInfo.GetValue(parameter.Entity);
+                    var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
                     if (propValue == null) continue;
                 }
 
                 if (columnInfo.IsIdentity)
                 {
-                    if (builder.TryAppendIdentity(parameter, entityInfo, counter, out identityValue))
-                    {
-                        counter++;
-                    }
                     continue;
                 }
 
@@ -446,12 +711,6 @@ namespace EasySqlParser.SqlGenerator
             {
                 if (columnInfo.IsIdentity)
                 {
-                    if (!builder.HasIdentityValue(entityInfo, identityValue))
-                    {
-                        continue;
-                    }
-                    builder.AppendIdentityValue(entityInfo, counter, identityValue);
-                    counter++;
                     continue;
                 }
 
@@ -504,7 +763,7 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        private static QueryBuilderResult GetSoftDeleteSql(QueryBuilderParameter<T> parameter)
+        private static QueryBuilderResult GetSoftDeleteSql(QueryBuilderParameter parameter)
         {
             var entityInfo = parameter.EntityTypeInfo;
             if (!entityInfo.HasSoftDeleteKey)
@@ -615,7 +874,7 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        private static QueryBuilderResult GetUpdateSql(QueryBuilderParameter<T> parameter)
+        private static QueryBuilderResult GetUpdateSql(QueryBuilderParameter parameter)
         {
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
@@ -723,7 +982,7 @@ namespace EasySqlParser.SqlGenerator
             return builder.GetResult();
         }
 
-        private static QueryBuilderResult GetDeleteSql(QueryBuilderParameter<T> parameter)
+        private static QueryBuilderResult GetDeleteSql(QueryBuilderParameter parameter)
         {
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
@@ -762,155 +1021,10 @@ namespace EasySqlParser.SqlGenerator
             return builder.GetResult();
         }
 
-        internal static QueryBuilderResult GetCountSql(
-            Expression<Func<T, bool>> predicate = null,
-            string configName = null,
-            bool writeIndented = false)
-        {
-            var keyValues = new Dictionary<string, object>();
-            if (predicate != null)
-            {
-                var visitor = new PredicateVisitor();
-                keyValues = visitor.GetKeyValues(predicate);
-            }
-            var builderParameter = new QueryBuilderParameter<T>();
-            var entityInfo = builderParameter.EntityTypeInfo;
-            var config = configName == null
-                ? ConfigContainer.DefaultConfig
-                : ConfigContainer.AdditionalConfigs[configName];
-            var builder = new QueryStringBuilder(config, writeIndented);
-            builder.AppendSql("SELECT COUNT(*) CNT FROM ");
-            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
-            {
-                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
-                builder.AppendSql(".");
-            }
-
-            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
-            if (keyValues.Count > 0)
-            {
-                builder.AppendLine(" WHERE ");
-
-                var counter = 0;
-                foreach (var columnInfo in entityInfo.Columns)
-                {
-                    builder.AppendComma(counter);
-                    object propValue = null;
-                    if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
-                    {
-                        propValue = keyValues[columnInfo.PropertyInfo.Name];
-                    }
-
-                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                    builder.AppendSql(columnName);
-                    if (propValue == null)
-                    {
-                        builder.AppendSql(" IS NULL ");
-                    }
-                    else
-                    {
-                        builder.AppendSql(" = ");
-                        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                    }
-
-                    builder.AppendLine();
-
-                    counter++;
-                }
-
-            }
-
-            return builder.GetResult();
-        }
-
-        internal static (QueryBuilderResult builderResult, EntityTypeInfo entityInfo) GetSelectSql(
-            Expression<Func<T, bool>> predicate,
-            string configName = null,
-            bool writeIndented = false)
-        {
-            var visitor = new PredicateVisitor();
-            var keyValues = visitor.GetKeyValues(predicate);
-            var builderParameter = new QueryBuilderParameter<T>();
-            var entityInfo = builderParameter.EntityTypeInfo;
-            var config = configName == null
-                ? ConfigContainer.DefaultConfig
-                : ConfigContainer.AdditionalConfigs[configName];
-
-            if (entityInfo.KeyColumns.Count == 0)
-            {
-                // pkがなければupdateできない
-                throw new InvalidOperationException("");
-            }
-
-            var builder = new QueryStringBuilder(config, writeIndented);
-            builder.AppendLine("SELECT ");
-            var counter = 0;
-            foreach (var columnInfo in entityInfo.Columns)
-            {
-                builder.AppendComma(counter);
-                builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
-
-                counter++;
-
-            }
-
-            if (!writeIndented)
-            {
-                builder.AppendSql(" ");
-            }
-            builder.AppendLine("FROM ");
-            if (writeIndented)
-            {
-                builder.AppendIndent(3);
-            }
-            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
-            {
-                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
-                builder.AppendSql(".");
-            }
-
-            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
-            builder.AppendLine(" ");
-            builder.AppendLine("WHERE ");
-            counter = 0;
-            for (int i = 0; i < entityInfo.Columns.Count; i++)
-            {
-                var columnInfo = entityInfo.Columns[i];
-                if (!columnInfo.IsPrimaryKey) continue;
-                builder.AppendComma(counter);
-                object propValue = null;
-                if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
-                {
-                    propValue = keyValues[columnInfo.PropertyInfo.Name];
-                }
-
-                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                builder.AppendSql(columnName);
-                if (propValue == null)
-                {
-                    builder.AppendSql(" IS NULL ");
-                }
-                else
-                {
-                    builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                }
-
-                if (i < entityInfo.Columns.Count - 1)
-                {
-                    builder.AppendLine();
-                }
-
-                counter++;
-            }
-
-            return (builder.GetResult(), entityInfo);
-
-        }
 
         private static void AppendSelectAffectedCommandHeader(
             QueryStringBuilder builder, EntityTypeInfo entityInfo,
-            QueryBuilderParameter<T> parameter,
+            QueryBuilderParameter parameter,
             bool callFromFinalTable = false)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
@@ -1020,7 +1134,7 @@ namespace EasySqlParser.SqlGenerator
         }
 
         private static void AppendFinalTableSelectCommandHeader(
-            QueryStringBuilder builder, EntityTypeInfo entityInfo, QueryBuilderParameter<T> parameter)
+            QueryStringBuilder builder, EntityTypeInfo entityInfo, QueryBuilderParameter parameter)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
@@ -1033,7 +1147,7 @@ namespace EasySqlParser.SqlGenerator
         }
 
         private static void AppendFinalTableSelectCommandTerminator(
-            QueryStringBuilder builder, QueryBuilderParameter<T> parameter)
+            QueryStringBuilder builder, QueryBuilderParameter parameter)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
             if (parameter.SqlKind == SqlKind.Delete) return;
@@ -1046,9 +1160,9 @@ namespace EasySqlParser.SqlGenerator
         }
 
         private static void AppendFromClause(
-            QueryStringBuilder builder, 
-            EntityTypeInfo entityInfo, 
-            QueryBuilderParameter<T> parameter,
+            QueryStringBuilder builder,
+            EntityTypeInfo entityInfo,
+            QueryBuilderParameter parameter,
             bool callFromFinalTable = false)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
@@ -1128,94 +1242,6 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        // generic type cache
-        //private static class Cache<TK>
-        //{
-        //    static Cache()
-        //    {
-        //        var type = typeof(TK);
-        //        var entityInfo = new EntityTypeInfo
-        //                         {
-        //                             TableName = type.Name,
-        //                             Columns = new List<EntityColumnInfo>(),
-        //                             KeyColumns = new List<EntityColumnInfo>(),
-        //                             SequenceColumns = new List<EntityColumnInfo>()
-        //                         };
-        //        var table = type.GetCustomAttribute<TableAttribute>();
-        //        if (table != null)
-        //        {
-        //            entityInfo.TableName = table.Name;
-        //            entityInfo.SchemaName = table.Schema;
-        //        }
-        //        var props = type.GetProperties();
-        //        foreach (var propertyInfo in props)
-        //        {
-        //            var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
-        //            if (notMapped != null)
-        //            {
-        //                continue;
-        //            }
-
-        //            var columnInfo = new EntityColumnInfo
-        //                             {
-        //                                 PropertyInfo = propertyInfo
-        //                             };
-                    
-
-        //            var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
-        //            columnInfo.ColumnName = propertyInfo.Name;
-        //            if (column != null)
-        //            {
-        //                columnInfo.ColumnName = column.Name;
-        //            }
-
-        //            var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
-        //            if (identityAttr != null && identityAttr.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity)
-        //            {
-        //                columnInfo.IsIdentity = true;
-        //            }
-
-        //            var versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
-        //            if (versionAttr != null)
-        //            {
-        //                columnInfo.IsVersion = true;
-        //            }
-
-        //            var currentTimestampAttr = propertyInfo.GetCustomAttribute<CurrentTimestampAttribute>();
-        //            if (currentTimestampAttr != null)
-        //            {
-        //                columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
-        //            }
-
-        //            var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
-        //            if (seqAttr != null)
-        //            {
-        //                columnInfo.IsSequence = true;
-        //                columnInfo.SequenceGeneratorAttribute = seqAttr;
-        //                entityInfo.SequenceColumns.Add(columnInfo.Clone());
-        //            }
-
-        //            var keyAttr = propertyInfo.GetCustomAttribute<KeyAttribute>();
-        //            if (keyAttr != null)
-        //            {
-        //                columnInfo.IsPrimaryKey = true;
-        //                entityInfo.KeyColumns.Add(columnInfo.Clone());
-        //            }
-
-        //            if (columnInfo.IsPrimaryKey && columnInfo.IsIdentity)
-        //            {
-        //                entityInfo.IdentityColumn = columnInfo.Clone();
-        //            }
-
-        //            entityInfo.Columns.Add(columnInfo);
-        //        }
-
-        //        EntityTypeInfo = entityInfo;
-        //    }
-
-        //    // ReSharper disable once StaticMemberInGenericType
-        //    internal static EntityTypeInfo EntityTypeInfo { get; }
-
-        //}
     }
+
 }

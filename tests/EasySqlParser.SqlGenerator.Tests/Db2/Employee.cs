@@ -6,6 +6,7 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests.Db2
 {
+    [Entity]
     [Table("EMP")]
     public class Employee
     {
@@ -34,6 +35,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
         }
     }
 
+    [Entity]
     [Table("EMP_WITH_DATE_USER")]
     public class EmployeeWithDateAndUser
     {
@@ -105,6 +107,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
 
     }
 
+    [Entity]
     [Table("EMP_IDENTITY")]
     public class EmployeeIdentity
     {

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
-using System.Text;
 using EasySqlParser.Configurations;
 
 namespace EasySqlParser.SqlGenerator
@@ -16,42 +13,62 @@ namespace EasySqlParser.SqlGenerator
         QueryBehavior QueryBehavior { get; }
         Action<string> LoggerAction { get; }
 
-        string CurrentUser { get; }
+        void BuildCache();
+
+        EntityTypeInfo GetEntityTypeInfo(Type type);
+
+
     }
 
-    public class GlobalQueryBuilderConfiguration : IQueryBuilderConfiguration
+    public class QueryBuilderConfiguration : IQueryBuilderConfiguration
     {
-        public GlobalQueryBuilderConfiguration(
+        private readonly IEnumerable<Assembly> _assemblies;
+        private TypeHashDictionary<EntityTypeInfo> _hashDictionary;
+        public QueryBuilderConfiguration(
+            IEnumerable<Assembly> entityAssemblies,
             int commandTimeout = 30,
             bool writeIndented = true,
             QueryBehavior queryBehavior = QueryBehavior.None,
             Action<string> loggerAction = null
         )
         {
+            _assemblies = entityAssemblies;
             CommandTimeout = commandTimeout;
             WriteIndented = writeIndented;
             QueryBehavior = queryBehavior;
             LoggerAction = loggerAction;
+            BuildCache();
         }
 
         public int CommandTimeout { get; }
         public bool WriteIndented { get; }
         public QueryBehavior QueryBehavior { get; }
         public Action<string> LoggerAction { get; }
-        public string CurrentUser { get; set; }
+        public void BuildCache()
+        {
+            var prepare = EntityTypeInfoBuilder.Build(_assemblies);
+            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
+        }
+
+        public EntityTypeInfo GetEntityTypeInfo(Type type)
+        {
+            return _hashDictionary.Get(type);
+        }
     }
 
-    public class QueryBuilderParameter<T>
+    public class QueryBuilderParameter
     {
         public QueryBuilderParameter(
-            T entity,
+            object entity,
             SqlKind sqlKind,
             IQueryBuilderConfiguration builderConfiguration,
+            Type entityType=null,
             bool excludeNull = false,
             bool ignoreVersion = false,
             bool useVersion = true,
             bool suppressOptimisticLockException = false,
             //bool useDbSet = true,
+            string currentUser = null,
             string sqlFile = null,
             string configName = null)
         {
@@ -67,184 +84,21 @@ namespace EasySqlParser.SqlGenerator
             SqlFile = sqlFile;
             QueryBehavior = builderConfiguration.QueryBehavior;
             _loggerAction = builderConfiguration.LoggerAction;
-            CurrentUser = builderConfiguration.CurrentUser;
+            CurrentUser = currentUser;
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
-            EntityTypeInfo = Cache<T>.EntityTypeInfo;
+            EntityType = entityType ?? entity.GetType();
+            EntityTypeInfo = builderConfiguration.GetEntityTypeInfo(EntityType);
+            VersionPropertyInfo = EntityTypeInfo.VersionColumn?.PropertyInfo;
         }
 
-        internal QueryBuilderParameter()
-        {
-            EntityTypeInfo = Cache<T>.EntityTypeInfo;
-        }
-
-        // generic type cache
-        private static class Cache<TK>
-        {
-            static Cache()
-            {
-                var type = typeof(TK);
-                var entityInfo = new EntityTypeInfo
-                {
-                    TableName = type.Name
-                };
-                var table = type.GetCustomAttribute<TableAttribute>();
-                if (table != null)
-                {
-                    entityInfo.TableName = table.Name;
-                    entityInfo.SchemaName = table.Schema;
-                }
-                var props = type.GetProperties();
-                var columns = new List<EntityColumnInfo>();
-                var keyColumns = new List<EntityColumnInfo>();
-                var sequenceColumns = new List<EntityColumnInfo>();
-                var hasSoftDeleteKey = false;
-                foreach (var propertyInfo in props)
-                {
-                    var notMapped = propertyInfo.GetCustomAttribute<NotMappedAttribute>();
-                    if (notMapped != null)
-                    {
-                        continue;
-                    }
-
-                    var columnInfo = new EntityColumnInfo
-                    {
-                        PropertyInfo = propertyInfo
-                    };
-
-                    if (propertyInfo.PropertyType == typeof(DateTime) ||
-                        propertyInfo.PropertyType == typeof(DateTime?) ||
-                        propertyInfo.PropertyType == typeof(DateTimeOffset) ||
-                        propertyInfo.PropertyType == typeof(DateTimeOffset?))
-                    {
-                        columnInfo.IsDateTime = true;
-                    }
+        internal EntityTypeInfo EntityTypeInfo { get; }
 
 
-                    var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
-                    columnInfo.ColumnName = propertyInfo.Name;
-                    if (column != null)
-                    {
-                        columnInfo.ColumnName = column.Name;
-                        columnInfo.TypeName = column.TypeName;
-                        columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
-                        //if (propertyInfo.PropertyType == typeof(string))
-                        //{
-                        //    if (string.IsNullOrEmpty(column.TypeName))
-                        //    {
-                        //        columnInfo.DbType = DbType.String;
-                        //    }
-                        //    else
-                        //    {
-                        //        switch (column.TypeName)
-                        //        {
-                        //            case "CHAR":
-                        //                columnInfo.DbType = DbType.AnsiStringFixedLength;
-                        //                break;
-                        //            case "NCHAR":
-                        //                columnInfo.DbType = DbType.StringFixedLength;
-                        //                break;
-                        //            case "VARCHAR":
-                        //                columnInfo.DbType = DbType.AnsiString;
-                        //                break;
-                        //            case "VARCHAR2":
-                        //                columnInfo.DbType = DbType.AnsiString;
-                        //                break;
-                        //            //case "NVARCHAR":
-                        //            //    parameter.DbType = DbType.String;
-                        //            //    break;
-                        //            case "NVARCHAR2":
-                        //                columnInfo.DbType = DbType.String;
-                        //                break;
-                        //        }
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
-                        //}
-                    }
+        public object Entity { get; }
 
-                    var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
-                    if (identityAttr != null && identityAttr.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity)
-                    {
-                        columnInfo.IsIdentity = true;
-                    }
-
-                    var versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
-                    if (versionAttr != null)
-                    {
-                        columnInfo.IsVersion = true;
-                    }
-
-                    var currentTimestampAttr = propertyInfo.GetCustomAttribute<CurrentTimestampAttribute>();
-                    if (currentTimestampAttr != null)
-                    {
-                        columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
-                        columnInfo.IsCurrentTimestamp = true;
-                    }
-
-                    var softDeleteKeyAttr = propertyInfo.GetCustomAttribute<SoftDeleteKeyAttribute>();
-                    if (softDeleteKeyAttr != null)
-                    {
-                        columnInfo.IsSoftDeleteKey = true;
-                        hasSoftDeleteKey = true;
-                    }
-
-                    var currentUserAttr = propertyInfo.GetCustomAttribute<CurrentUserAttribute>();
-                    if (currentUserAttr != null)
-                    {
-                        columnInfo.CurrentUserAttribute = currentUserAttr;
-                        columnInfo.IsCurrentUser = true;
-                    }
-
-                    var lengthAttr = propertyInfo.GetCustomAttribute<StringLengthAttribute>();
-                    if (lengthAttr != null)
-                    {
-                        columnInfo.StringMaxLength = lengthAttr.MaximumLength;
-                    }
-
-                    var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
-                    if (seqAttr != null)
-                    {
-                        columnInfo.IsSequence = true;
-                        columnInfo.SequenceGeneratorAttribute = seqAttr;
-                        sequenceColumns.Add(columnInfo.Clone());
-                    }
-
-                    var keyAttr = propertyInfo.GetCustomAttribute<KeyAttribute>();
-                    if (keyAttr != null)
-                    {
-                        columnInfo.IsPrimaryKey = true;
-                        keyColumns.Add(columnInfo.Clone());
-                    }
-
-                    if (columnInfo.IsPrimaryKey && columnInfo.IsIdentity)
-                    {
-                        entityInfo.IdentityColumn = columnInfo.Clone();
-                    }
-
-                    columns.Add(columnInfo);
-                }
-
-                entityInfo.HasSoftDeleteKey = hasSoftDeleteKey;
-                entityInfo.Columns = columns.AsReadOnly();
-                entityInfo.KeyColumns = keyColumns.AsReadOnly();
-                entityInfo.SequenceColumns = sequenceColumns.AsReadOnly();
-                EntityTypeInfo = entityInfo;
-            }
-
-            // ReSharper disable once StaticMemberInGenericType
-            internal static EntityTypeInfo EntityTypeInfo { get; }
-
-        }
-
-        public EntityTypeInfo EntityTypeInfo { get; }
-
-        public T Entity { get; }
-
-        public bool ExcludeNull { get; } 
+        public bool ExcludeNull { get; }
 
         /// <summary>
         /// VersionNoを更新条件に含めない
@@ -283,13 +137,83 @@ namespace EasySqlParser.SqlGenerator
 
         public string CurrentUser { get; }
 
+        internal Type EntityType { get; }
+
         internal Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>
-            ReturningColumns { get; set; } =
+            ReturningColumns
+        { get; set; } =
             new Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>();
 
-        internal PropertyInfo VersionPropertyInfo { get; set; }
+        internal PropertyInfo VersionPropertyInfo { get; }
 
         private readonly Action<string> _loggerAction;
+
+        private object _beforeChangeVersion;
+
+        private enum VersionType
+        {
+            None,
+            Short,
+            Integer,
+            Long,
+            Decimal,
+        }
+
+        private VersionType _versionType = VersionType.None;
+
+        public void SaveExpectedVersion()
+        {
+            if (VersionPropertyInfo == null) return;
+            if ((SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
+                CommandExecutionType != CommandExecutionType.ExecuteNonQuery)
+            {
+                _beforeChangeVersion = AddVersion(VersionPropertyInfo.GetValue(Entity));
+            }
+
+        }
+
+        public bool IsSameVersion()
+        {
+            if (VersionPropertyInfo == null) return true;
+            if (_beforeChangeVersion == null) return true;
+            if (IgnoreVersion) return true;
+            var currentVersion = VersionPropertyInfo.GetValue(Entity);
+            switch (_versionType)
+            {
+                case VersionType.Short:
+                    return (short) currentVersion == (short) _beforeChangeVersion;
+                case VersionType.Integer:
+                    return (int)currentVersion == (int)_beforeChangeVersion;
+                case VersionType.Long:
+                    return (long)currentVersion == (long)_beforeChangeVersion;
+                case VersionType.Decimal:
+                    return (decimal)currentVersion == (decimal)_beforeChangeVersion;
+            }
+
+            return false;
+        }
+
+        private object AddVersion(object versionValue)
+        {
+            switch (versionValue)
+            {
+                case short shortValue:
+                    _versionType = VersionType.Short;
+                    return shortValue + 1;
+                case int intValue:
+                    _versionType = VersionType.Integer;
+                    return intValue + 1;
+                case long longValue:
+                    _versionType = VersionType.Long;
+                    return longValue + 1L;
+                case decimal decimalValue:
+                    _versionType = VersionType.Decimal;
+                    return decimalValue + 1M;
+                default:
+                    // TODO:
+                    throw new InvalidOperationException("unsupported data type");
+            }
+        }
 
         public void IncrementVersion()
         {
@@ -299,21 +223,7 @@ namespace EasySqlParser.SqlGenerator
                 EntityTypeInfo.IdentityColumn == null) return;
             var versionValue = VersionPropertyInfo.GetValue(Entity);
             if (versionValue == null) return;
-            if (versionValue is int intValue)
-            {
-                VersionPropertyInfo.SetValue(Entity, intValue + 1);
-            }else if (versionValue is long longValue)
-            {
-                VersionPropertyInfo.SetValue(Entity, longValue + 1L);
-            }else if (versionValue is decimal decimalValue)
-            {
-                VersionPropertyInfo.SetValue(Entity, decimalValue + 1M);
-            }
-            else
-            {
-                // TODO:
-                throw new InvalidOperationException("unsupported data type");
-            }
+            VersionPropertyInfo.SetValue(Entity, AddVersion(versionValue));
         }
 
         public void ApplyReturningColumns()
@@ -372,12 +282,20 @@ namespace EasySqlParser.SqlGenerator
 
         public bool ThrowableOptimisticLockException(int affectedCount)
         {
+            //if ((SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
+            //    UseVersion && !SuppressOptimisticLockException)
+            //{
+            //    if (affectedCount == 0) return true;
+            //    if (!IsSameVersion()) return true;
+            //}
+            //return false;
             return (SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
                    UseVersion && !SuppressOptimisticLockException
                    && affectedCount == 0;
         }
 
     }
+
 
     public enum SqlKind
     {

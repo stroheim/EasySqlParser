@@ -34,7 +34,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                                Id = 11,
                                Name = "Jane Doe"
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
@@ -48,7 +48,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                                  Name = "Roy Cambell",
                                  Height = 185
                              };
-            var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
@@ -63,7 +63,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                              ReleaseDate = new DateTime(1990, 7, 20),
                              Platform = "MSX2"
                          };
-            var parameter = new QueryBuilderParameter<MetalGearSeries>(series, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(series.GetDebugString());

@@ -6,6 +6,7 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests.MySql
 {
+    [Entity]
     [Table("EMP")]
     public class Employee
     {
@@ -34,6 +35,7 @@ namespace EasySqlParser.SqlGenerator.Tests.MySql
         }
     }
 
+    [Entity]
     [Table("EMP_IDENTITY")]
     public class EmployeeIdentity
     {

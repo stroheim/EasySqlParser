@@ -6,6 +6,7 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests.Sqlite
 {
+    [Entity]
     [Table("MetalGearCharacters")]
     public class Characters
     {

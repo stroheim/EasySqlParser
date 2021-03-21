@@ -6,6 +6,7 @@ using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests.Postgres
 {
+    [Entity]
     [Table("MetalGearCharacters")]
     public class Characters
     {

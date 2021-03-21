@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace EasySqlParser.SqlGenerator.Tests
@@ -12,13 +16,31 @@ namespace EasySqlParser.SqlGenerator.Tests
             WriteIndented = false;
             QueryBehavior = queryBehavior;
             LoggerAction = loggerAction;
+            BuildCache();
         }
 
         public int CommandTimeout { get; }
         public bool WriteIndented { get; internal set; }
-        public QueryBehavior QueryBehavior { get; }
+        public QueryBehavior QueryBehavior { get; internal set; }
         public Action<string> LoggerAction { get; }
 
-        public string CurrentUser { get; set; }
+        private static readonly ConcurrentDictionary<Type, EntityTypeInfo> Cache =
+            new ConcurrentDictionary<Type, EntityTypeInfo>();
+
+        public void BuildCache()
+        {
+            var assembly = typeof(MockConfig).Assembly;
+            var values = EntityTypeInfoBuilder.Build(new[] {assembly});
+            foreach (var pair in values)
+            {
+                Cache.GetOrAdd(pair.Key, pair.Value);
+            }
+        }
+
+        public EntityTypeInfo GetEntityTypeInfo(Type type)
+        {
+            return Cache[type];
+        }
     }
+
 }

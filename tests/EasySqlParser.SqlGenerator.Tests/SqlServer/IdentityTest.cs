@@ -38,7 +38,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                  Name = "Roy Cambell",
                                  Height = 185
                              };
-            var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
             var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             characters.Id.IsNot(0);
@@ -51,7 +51,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         {
             var characters = _Fixture.Connection.ExecuteReaderByQueryBuilder<Characters>(x => x.Id == 1, _mockConfig).Single();
             characters.Name = "John Doe";
-            var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Update, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Update, _mockConfig);
             var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             characters.VersionNo.Is(2L);

@@ -17,7 +17,6 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                 DbConnectionKind.DB2,
                 () => new DB2Parameter()
             );
-
             _output = output;
         }
 
@@ -30,8 +29,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                            };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
             //localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             if (!localConfig.WriteIndented)
             {
@@ -50,8 +49,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                            };
             var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
             //localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<EmployeeIdentity>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<EmployeeIdentity>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             if (!localConfig.WriteIndented)
             {
@@ -71,8 +70,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                            };
             var localConfig = new MockConfig(QueryBehavior.IdentityOrAllColumns, _output.WriteLine);
             localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<Employee>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             _output.WriteLine(builder.ParsedSql);
             builder.DbDataParameters.Count.Is(4);
@@ -89,8 +88,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
                            };
             var localConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
             localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter<EmployeeWithDateAndUser>(employee, SqlKind.Insert, localConfig);
-            var builder = QueryBuilder<EmployeeWithDateAndUser>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, localConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             _output.WriteLine(builder.ParsedSql);
 

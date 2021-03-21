@@ -36,7 +36,7 @@ namespace EasySqlParser.SqlGenerator.Tests.MySql
                                Id = 11,
                                Name = "Jane Doe"
                            };
-            var parameter = new QueryBuilderParameter<Employee>(employee, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
@@ -50,7 +50,7 @@ namespace EasySqlParser.SqlGenerator.Tests.MySql
                                  Name = "Roy Cambell",
                                  Height = 185
                              };
-            var parameter = new QueryBuilderParameter<Characters>(characters, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());

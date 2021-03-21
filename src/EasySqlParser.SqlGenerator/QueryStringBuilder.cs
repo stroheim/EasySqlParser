@@ -9,7 +9,7 @@ using EasySqlParser.Extensions;
 
 namespace EasySqlParser.SqlGenerator
 {
-    public class QueryStringBuilder
+    internal class QueryStringBuilder
     {
         private readonly StringBuilder _rawSqlBuilder = new StringBuilder(200);
         private readonly StringBuilder _formattedSqlBuilder = new StringBuilder(200);
@@ -22,7 +22,7 @@ namespace EasySqlParser.SqlGenerator
         private string _indent = "";
         private bool _firstWord;
 
-        public QueryStringBuilder(SqlParserConfig config, bool writeIndented)
+        internal QueryStringBuilder(SqlParserConfig config, bool writeIndented)
         {
             _config = config;
             _writeIndented = writeIndented;
@@ -30,7 +30,7 @@ namespace EasySqlParser.SqlGenerator
         }
 
 
-        public void ApplyIndent(int length)
+        internal void ApplyIndent(int length)
         {
             if (_config.Dialect.SupportsFinalTable)
             {
@@ -38,19 +38,19 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
-        public void RemoveIndent()
+        internal void RemoveIndent()
         {
             _indent = "";
         }
 
-        public void AppendIndent(int length)
+        internal void AppendIndent(int length)
         {
             var indent = "".PadLeft(length, ' ');
             _rawSqlBuilder.Append(indent);
             _formattedSqlBuilder.Append(indent);
         }
 
-        public void AppendSql(string sql)
+        internal void AppendSql(string sql)
         {
             if (_writeIndented && _firstWord)
             {
@@ -62,7 +62,7 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.Append(sql);
         }
 
-        public void AppendLine()
+        internal void AppendLine()
         {
             if (!_writeIndented) return;
             _firstWord = true;
@@ -70,7 +70,7 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.AppendLine();
         }
 
-        public void AppendLine(string sql)
+        internal void AppendLine(string sql)
         {
             if (!_writeIndented)
             {
@@ -82,7 +82,6 @@ namespace EasySqlParser.SqlGenerator
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
-                _firstWord = false;
             }
 
             _firstWord = true;
@@ -90,27 +89,26 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.AppendLine(sql);
         }
 
-        public void ForceAppendLine()
+        internal void ForceAppendLine()
         {
             _firstWord = true;
             _rawSqlBuilder.AppendLine();
             _formattedSqlBuilder.AppendLine();
         }
 
-        public void ForceAppendLine(string sql)
+        internal void ForceAppendLine(string sql)
         {
             if (_firstWord)
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
-                _firstWord = false;
             }
             _firstWord = true;
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
         }
 
-        public void AppendReturnParameter<T>(QueryBuilderParameter<T> builderParameter, EntityColumnInfo columnInfo)
+        internal void AppendReturnParameter(QueryBuilderParameter builderParameter, EntityColumnInfo columnInfo)
         {
             var propertyName = $"{_config.Dialect.ParameterPrefix}p_{columnInfo.PropertyInfo.Name}";
             var (parameterName, parameter) = CreateDbParameter(propertyName, direction: ParameterDirection.ReturnValue);
@@ -134,7 +132,7 @@ namespace EasySqlParser.SqlGenerator
         }
 
 
-        public void AppendParameter(PropertyInfo propertyInfo, object propertyValue)
+        internal void AppendParameter(PropertyInfo propertyInfo, object propertyValue)
         {
             var propertyName = _config.Dialect.ParameterPrefix + propertyInfo.Name;
             var (parameterName, parameter) = CreateDbParameter(propertyName, propertyValue);
@@ -169,7 +167,7 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        public void AppendComma(int counter)
+        internal void AppendComma(int counter)
         {
             if (_writeIndented && _firstWord)
             {
@@ -190,7 +188,7 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
-        public void AppendAnd(int counter)
+        internal void AppendAnd(int counter)
         {
             if (_writeIndented && _firstWord)
             {
@@ -211,10 +209,15 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
-        public object GetDefaultVersionNo(object value, Type propertyType)
+
+        internal object GetDefaultVersionNo(object value, Type propertyType)
         {
             if (value == null)
             {
+                if (propertyType == typeof(short))
+                {
+                    return (short) 1;
+                }
                 if (propertyType == typeof(int))
                 {
                     return 1;
@@ -228,7 +231,15 @@ namespace EasySqlParser.SqlGenerator
                 {
                     return 1M;
                 }
-            }else if (value is int intValue)
+            }
+            else if (value is short shortValue)
+            {
+                if (shortValue <= 0)
+                {
+                    return (short) 1;
+                }
+            }
+            else if (value is int intValue)
             {
                 if (intValue <= 0)
                 {
@@ -252,23 +263,7 @@ namespace EasySqlParser.SqlGenerator
             throw new InvalidOperationException("");
         }
 
-        public void AppendVersion<T>(QueryBuilderParameter<T> parameter, PropertyInfo property)
-        {
-            var versionAttr = property.GetCustomAttribute<VersionAttribute>();
-            if (versionAttr == null) return;
-            if (!parameter.IgnoreVersion)
-            {
-                AppendSql(" + 1 ");
-            }
-            else
-            {
-                AppendSql(" ");
-            }
-
-            parameter.VersionPropertyInfo = property;
-        }
-
-        public void AppendVersion<T>(QueryBuilderParameter<T> parameter, EntityColumnInfo columnInfo)
+        internal void AppendVersion(QueryBuilderParameter parameter, EntityColumnInfo columnInfo)
         {
             if (!columnInfo.IsVersion) return;
             if (!parameter.IgnoreVersion)
@@ -280,152 +275,25 @@ namespace EasySqlParser.SqlGenerator
                 AppendSql(" ");
 
             }
-            parameter.VersionPropertyInfo = columnInfo.PropertyInfo;
 
         }
 
-        public bool TryAppendIdentity<T>(QueryBuilderParameter<T> parameter, 
-            PropertyInfo property,
-            string quotedColumnName,
-            int counter,
-            out object identityValue)
-        {
-            //if (!UseSqlite)
-            //{
-            //    identityValue = null;
-            //    return false;
-            //}
-            identityValue = null;
-            return false;
-            identityValue = property.GetValue(parameter.Entity);
-            parameter.WriteLog($"indentityValue\t{identityValue}");
-            if (identityValue == null) return false;
-            if (identityValue is int intValue)
-            {
-                if (intValue <= 0) return false;
-            }else if (identityValue is long longValue)
-            {
-                if (longValue <= 0L) return false;
-            }else if (identityValue is decimal decimalValue)
-            {
-                if (decimalValue <= 0M) return false;
-            }
-
-            AppendComma(counter);
-            AppendLine(quotedColumnName);
-            return true;
-        }
-
-        private bool UseSqlite => _config.DbConnectionKind == DbConnectionKind.SQLite;
 
         private bool UseStandardDialect => (_config.DbConnectionKind == DbConnectionKind.Odbc ||
                                             _config.DbConnectionKind == DbConnectionKind.OleDb);
 
-        public bool HasIdentityValue(
-            object identityValue)
-        {
-            //if (!UseSqlite)
-            //{
-            //    return false;
-            //}
-            return false;
 
-            if (identityValue == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public void AppendIdentityValue(
-            PropertyInfo property,
-            int counter,
-            object identityValue)
-        {
-            AppendComma(counter);
-            AppendParameter(property, identityValue);
-            AppendLine();
-        }
-
-        internal bool TryAppendIdentity<T>(QueryBuilderParameter<T> parameter, 
-            EntityTypeInfo entityInfo,
-            int counter,
-            out object identityValue)
-        {
-            if (entityInfo.IdentityColumn == null)
-            {
-                identityValue = null;
-                return false;
-            }
-
-            var property = entityInfo.IdentityColumn.PropertyInfo;
-            identityValue = property.GetValue(parameter.Entity);
-            parameter.WriteLog($"indentityValue\t{identityValue}");
-            if (identityValue == null) return false;
-            if (identityValue is int intValue)
-            {
-                if (intValue <= 0) return false;
-            }
-            else if (identityValue is long longValue)
-            {
-                if (longValue <= 0L) return false;
-            }
-            else if (identityValue is decimal decimalValue)
-            {
-                if (decimalValue <= 0M) return false;
-            }
-
-            AppendComma(counter);
-            AppendLine(parameter.Config.Dialect.ApplyQuote(entityInfo.IdentityColumn.ColumnName));
-            return true;
-        }
-
-        internal bool HasIdentityValue(EntityTypeInfo entityInfo,
-            object identityValue)
-        {
-            //if (!UseSqlite)
-            //{
-            //    return false;
-            //}
-            return false;
-
-            if (identityValue == null)
-            {
-                return false;
-            }
-
-            if (entityInfo.IdentityColumn == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        internal void AppendIdentityValue(
-            EntityTypeInfo entityInfo,
-            int counter,
-            object identityValue)
-        {
-
-            AppendComma(counter);
-            AppendParameter(entityInfo.IdentityColumn.PropertyInfo, identityValue);
-            AppendLine();
-        }
-
-
-        internal bool IncludeCurrentTimestampColumn<T>(QueryBuilderParameter<T> parameter,
+        internal bool IncludeCurrentTimestampColumn(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo)
         {
             return !UseStandardDialect && columnInfo.CurrentTimestampAttribute.IsAvailable(parameter.SqlKind);
         }
 
-        internal void AppendCurrentTimestamp<T>(QueryBuilderParameter<T> parameter,
+
+        internal void AppendCurrentTimestamp(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo,
             int counter)
         {
-
             AppendComma(counter);
             if (parameter.SqlKind == SqlKind.Insert)
             {
@@ -440,13 +308,15 @@ namespace EasySqlParser.SqlGenerator
             AppendLine();
         }
 
-        internal bool IncludeCurrentUserColumn<T>(QueryBuilderParameter<T> parameter,
+
+        internal bool IncludeCurrentUserColumn(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo)
         {
             return columnInfo.CurrentUserAttribute.IsAvailable(parameter.SqlKind);
         }
 
-        internal void AppendCurrentUser<T>(QueryBuilderParameter<T> parameter,
+
+        internal void AppendCurrentUser(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo,
             int counter)
         {
@@ -467,7 +337,8 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        internal void AppendSoftDeleteKey<T>(QueryBuilderParameter<T> parameter,
+
+        internal void AppendSoftDeleteKey(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo,
             int counter)
         {
@@ -490,7 +361,8 @@ namespace EasySqlParser.SqlGenerator
             AppendLine();
         }
 
-        public QueryBuilderResult GetResult()
+
+        internal QueryBuilderResult GetResult()
         {
             return new QueryBuilderResult
                    {
@@ -501,55 +373,5 @@ namespace EasySqlParser.SqlGenerator
         }
     }
 
-    internal static class DbTypeExtension
-    {
-        // code from Dapper
-        // https://github.com/StackExchange/Dapper/blob/4fb1ea29d490d13251b0135658ecc337aeb60cdb/Dapper/SqlMapper.cs#L169
-        private static readonly Dictionary<Type, DbType> Mappings = new Dictionary<Type, DbType>
-                                                                    {
-                                                                        [typeof(byte)] = DbType.Byte,
-                                                                        [typeof(sbyte)] = DbType.SByte,
-                                                                        [typeof(short)] = DbType.Int16,
-                                                                        [typeof(ushort)] = DbType.UInt16,
-                                                                        [typeof(int)] = DbType.Int32,
-                                                                        [typeof(uint)] = DbType.UInt32,
-                                                                        [typeof(long)] = DbType.Int64,
-                                                                        [typeof(ulong)] = DbType.UInt64,
-                                                                        [typeof(float)] = DbType.Single,
-                                                                        [typeof(double)] = DbType.Double,
-                                                                        [typeof(decimal)] = DbType.Decimal,
-                                                                        [typeof(bool)] = DbType.Boolean,
-                                                                        [typeof(string)] = DbType.String,
-                                                                        [typeof(char)] = DbType.StringFixedLength,
-                                                                        [typeof(Guid)] = DbType.Guid,
-                                                                        [typeof(DateTime)] = DbType.DateTime,
-                                                                        [typeof(DateTimeOffset)] =
-                                                                            DbType.DateTimeOffset,
-                                                                        [typeof(TimeSpan)] = DbType.Time,
-                                                                        [typeof(byte[])] = DbType.Binary,
-                                                                        [typeof(byte?)] = DbType.Byte,
-                                                                        [typeof(sbyte?)] = DbType.SByte,
-                                                                        [typeof(short?)] = DbType.Int16,
-                                                                        [typeof(ushort?)] = DbType.UInt16,
-                                                                        [typeof(int?)] = DbType.Int32,
-                                                                        [typeof(uint?)] = DbType.UInt32,
-                                                                        [typeof(long?)] = DbType.Int64,
-                                                                        [typeof(ulong?)] = DbType.UInt64,
-                                                                        [typeof(float?)] = DbType.Single,
-                                                                        [typeof(double?)] = DbType.Double,
-                                                                        [typeof(decimal?)] = DbType.Decimal,
-                                                                        [typeof(bool?)] = DbType.Boolean,
-                                                                        [typeof(char?)] = DbType.StringFixedLength,
-                                                                        [typeof(Guid?)] = DbType.Guid,
-                                                                        [typeof(DateTime?)] = DbType.DateTime,
-                                                                        [typeof(DateTimeOffset?)] =
-                                                                            DbType.DateTimeOffset,
-                                                                        [typeof(TimeSpan?)] = DbType.Time,
-                                                                        [typeof(object)] = DbType.Object
-                                                                    };
-        internal static DbType ResolveDbType(this Type type)
-        {
-            return Mappings[type];
-        }
-    }
+
 }

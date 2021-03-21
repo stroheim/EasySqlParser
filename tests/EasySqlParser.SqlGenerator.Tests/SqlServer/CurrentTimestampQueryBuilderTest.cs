@@ -30,8 +30,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "John Doe",
                                Salary = 100M
                            };
-            var parameter = new QueryBuilderParameter<EmployeeWithDate>(employee, SqlKind.Insert, _mockConfig);
-            var builder = QueryBuilder<EmployeeWithDate>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("INSERT INTO [dbo].[EMP_WITH_DATE] ([ID], [NAME], [SALARY], [DELETE_FLAG], [CREATE_DATETIME], [VERSION]) VALUES (@Id, @Name, @Salary, 0, GETDATE(), @VersionNo)");
             builder.DbDataParameters.Count.Is(4);
@@ -50,8 +50,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "John Doe",
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<EmployeeWithDate>(employee, SqlKind.Update, _mockConfig);
-            var builder = QueryBuilder<EmployeeWithDate>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("UPDATE [dbo].[EMP_WITH_DATE] SET [NAME] = @Name, [SALARY] = @Salary, [DELETE_FLAG] = 0, [UPDATE_DATETIME] = GETDATE(), [VERSION] = @VersionNo + 1 WHERE [ID] = @Id AND [VERSION] = @VersionNo");
             builder.DbDataParameters.Count.Is(4);
@@ -71,8 +71,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                DeleteFlag = true,
                                VersionNo = 100L
                            };
-            var parameter = new QueryBuilderParameter<EmployeeWithDate>(employee, SqlKind.SoftDelete, _mockConfig);
-            var builder = QueryBuilder<EmployeeWithDate>.GetQueryBuilderResult(parameter);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _mockConfig);
+            var builder = QueryBuilder.GetQueryBuilderResult(parameter);
             builder.IsNotNull();
             builder.ParsedSql.Is("UPDATE [dbo].[EMP_WITH_DATE] SET [DELETE_FLAG] = 1, [DELETE_DATETIME] = GETDATE(), [VERSION] = @VersionNo + 1 WHERE [ID] = @Id AND [VERSION] = @VersionNo");
             builder.DbDataParameters.Count.Is(2);

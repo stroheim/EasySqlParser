@@ -9,40 +9,40 @@ namespace EasySqlParser.SqlGenerator
 {
     public class EntityColumnInfo
     {
-        public string ColumnName { get; internal set; }
+        public string ColumnName { get; set; }
 
-        public PropertyInfo PropertyInfo { get; internal set; }
+        public PropertyInfo PropertyInfo { get; set; }
 
-        public bool IsPrimaryKey { get; internal set; }
+        public bool IsPrimaryKey { get; set; }
 
-        public bool IsVersion { get; internal set; }
+        public bool IsVersion { get; set; }
 
-        public bool IsIdentity { get; internal set; }
+        public bool IsIdentity { get; set; }
 
-        public bool IsSequence { get; internal set; }
+        public bool IsSequence { get; set; }
 
-        public bool IsCurrentTimestamp { get; internal set; }
+        public bool IsCurrentTimestamp { get; set; }
 
-        public SequenceGeneratorAttribute SequenceGeneratorAttribute { get; internal set; }
+        public SequenceGeneratorAttribute SequenceGeneratorAttribute { get; set; }
 
-        public CurrentTimestampAttribute CurrentTimestampAttribute { get; internal set; }
+        public CurrentTimestampAttribute CurrentTimestampAttribute { get; set; }
 
-        public bool IsSoftDeleteKey { get; internal set; }
+        public bool IsSoftDeleteKey { get; set; }
 
-        public bool IsCurrentUser { get; internal set; }
+        public bool IsCurrentUser { get; set; }
 
-        public CurrentUserAttribute CurrentUserAttribute { get; internal set; }
+        public CurrentUserAttribute CurrentUserAttribute { get;  set; }
 
-        public string TypeName { get; internal set; }
+        public string TypeName { get; set; }
 
-        public DbType DbType { get; internal set; }
+        public DbType DbType { get; set; }
 
-        public int? StringMaxLength { get; internal set; }
+        public int? StringMaxLength { get; set; }
 
-        public bool IsDateTime { get; internal set; }
+        public bool IsDateTime { get; set; }
 
 
-        internal EntityColumnInfo Clone()
+        public EntityColumnInfo Clone()
         {
             return (EntityColumnInfo) MemberwiseClone();
         }

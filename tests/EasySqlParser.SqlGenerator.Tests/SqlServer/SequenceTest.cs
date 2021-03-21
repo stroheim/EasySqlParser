@@ -39,7 +39,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                              Platform = "MSX2"
                          };
 
-            var parameter = new QueryBuilderParameter<MetalGearSeries>(series, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             series.Id.IsNot(0);
@@ -55,7 +55,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                            {
                                Name = "John Doe"
                            };
-            var parameter = new QueryBuilderParameter<EmployeeSeq>(employee, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             employee.ByteCol.Is((byte)1);
