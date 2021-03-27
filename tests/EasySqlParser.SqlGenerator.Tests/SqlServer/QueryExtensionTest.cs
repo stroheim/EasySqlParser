@@ -18,7 +18,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             );
 
             _fixture = fixture;
-            _mockConfig = new MockConfig(QueryBehavior.None, output.WriteLine);
+            _mockConfig = new MockConfig(QueryBehavior.AllColumns, output.WriteLine);
+            _mockConfig.WriteIndented = true;
         }
 
         private readonly QueryExtensionFixture _fixture;
@@ -33,6 +34,20 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                            };
 
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+
+        }
+
+        [Fact]
+        public void Test_insert_with_date_and_user()
+        {
+            var employee = new EmployeeWithDateAndUser
+                           {
+                               Id = 11,
+                               Name = "Jane Doe"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
 
@@ -104,6 +119,20 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                 _fixture.Connection.ExecuteReaderByQueryBuilder<Employee>(x => x.Id == 1, _mockConfig)
                     .Single();
             instance.Salary.Is(5000M);
+        }
+
+        [Fact]
+        public void Test_update_with_date_and_user()
+        {
+            var employee =
+                _fixture.Connection.ExecuteReaderByQueryBuilder<EmployeeWithDateAndUser>(x => x.Id == 1, _mockConfig)
+                    .Single();
+            employee.Salary = 5000M;
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            employee.VersionNo.Is(2L);
+
         }
 
         [Fact]
@@ -193,6 +222,19 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
 
+        }
+
+        [Fact]
+        public void Test_soft_delete()
+        {
+            var employee =
+                _fixture.Connection.ExecuteReaderByQueryBuilder<EmployeeWithDateAndUser>(x => x.Id == 7, _mockConfig)
+                    .Single();
+            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _mockConfig,
+                currentUser: "Sariya Harnpadoungsataya");
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            employee.VersionNo.Is(2L);
         }
     }
 

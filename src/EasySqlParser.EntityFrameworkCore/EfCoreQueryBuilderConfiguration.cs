@@ -114,6 +114,7 @@ namespace EasySqlParser.EntityFrameworkCore
                     columnInfo.IsDateTime = true;
                 }
 
+
                 columnInfo.ColumnName = property.GetColumnName(tableId);
                 //columnInfo.TypeName = property.GetColumnType(tableId);
                 columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();

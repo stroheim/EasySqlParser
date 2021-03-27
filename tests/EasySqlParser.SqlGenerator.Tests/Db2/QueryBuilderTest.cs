@@ -94,5 +94,6 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
             _output.WriteLine(builder.ParsedSql);
 
         }
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using EasySqlParser.Configurations;
 using Microsoft.Data.Sqlite;
 using Xunit;
@@ -42,6 +43,21 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
         }
 
         [Fact]
+        public async Task Test_insert_default_async()
+        {
+            var employee = new Employee
+                           {
+                               Id = 12,
+                               Name = "Scott Rodgers"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(employee.GetDebugString());
+        }
+
+
+        [Fact]
         public void Test_insert_identity()
         {
             var characters = new Characters
@@ -54,5 +70,53 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
+
+        [Fact]
+        public async Task Test_insert_identity_async()
+        {
+            var characters = new Characters
+                             {
+                                 Name = "Naomi Hunter",
+                                 Height = 165
+                             };
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(characters.GetDebugString());
+        }
+
+        [Fact]
+        public void Test_insert_identity_select_identity_only()
+        {
+            var characters = new Characters
+                             {
+                                 Name = "Mei Ling",
+                                 Height = 160
+                             };
+            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.WriteIndented = true;
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            _output.WriteLine(characters.GetDebugString());
+        }
+
+        [Fact]
+        public async Task Test_insert_identity_select_identity_only_async()
+        {
+            var characters = new Characters
+                             {
+                                 Name = "Nastasha Romanenko",
+                                 Height = 171
+                             };
+            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.WriteIndented = true;
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(characters.GetDebugString());
+        }
+
+
     }
 }

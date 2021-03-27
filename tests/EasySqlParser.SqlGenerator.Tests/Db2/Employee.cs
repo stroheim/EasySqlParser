@@ -124,4 +124,42 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
         public long VersionNo { get; set; }
     }
 
+    [Entity]
+    [Table("EMP_SEQ")]
+    public class EmployeeSeq
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("ID")]
+        public int Id { get; set; }
+
+        [Column("NAME")]
+        public string Name { get; set; }
+
+        [SequenceGenerator("SHORT_SEQ")]
+        [Column("SHORT_COL")]
+        public short ShortCol { get; set; }
+
+        [SequenceGenerator("INT_SEQ")]
+        [Column("INT_COL")]
+        public int IntCol { get; set; }
+
+        [SequenceGenerator("LONG_SEQ")]
+        [Column("LONG_COL")]
+        public long LongCol { get; set; }
+
+        [SequenceGenerator("DECIMAL_SEQ")]
+        [Column("DECIMAL_COL")]
+        public decimal DecimalCol { get; set; }
+
+        [SequenceGenerator("STRING_SEQ", PaddingLength = 6, Prefix = "T")]
+        [Column("STRING_COL")]
+        public string StringCol { get; set; }
+
+        [Version]
+        [Column("VERSION")]
+        public long VersionNo { get; set; }
+
+    }
+
 }

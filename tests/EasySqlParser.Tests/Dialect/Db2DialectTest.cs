@@ -35,16 +35,16 @@ namespace EasySqlParser.Tests.Dialect
         public void testGetNextSequenceSql()
         {
             var dialect = new Db2Dialect();
-            dialect.GetNextSequenceSql("seq", null).Is("SELECT NEXT VALUE FOR \"seq\"");
-            dialect.GetNextSequenceSql("seq", "aaa").Is("SELECT NEXT VALUE FOR \"aaa\".\"seq\"");
+            dialect.GetNextSequenceSql("seq", null).Is("SELECT NEXT VALUE FOR \"seq\" FROM SYSIBM.DUAL");
+            dialect.GetNextSequenceSql("seq", "aaa").Is("SELECT NEXT VALUE FOR \"aaa\".\"seq\" FROM SYSIBM.DUAL");
         }
 
         [Fact]
         public void testGetNextSequenceSqlZeroPadding()
         {
             var dialect = new Db2Dialect();
-            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5).Is("SELECT LPAD(CAST(NEXT VALUE FOR \"seq\" AS VARCHAR(5)), 5, '0')");
-            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5, "P").Is("SELECT 'P' || LPAD(CAST(NEXT VALUE FOR \"seq\" AS VARCHAR(5)), 5, '0')");
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5).Is("SELECT LPAD(CAST(NEXT VALUE FOR \"seq\" AS VARCHAR(5)), 5, '0') FROM SYSIBM.DUAL");
+            dialect.GetNextSequenceSqlZeroPadding("seq", null, 5, "P").Is("SELECT 'P' || LPAD(CAST(NEXT VALUE FOR \"seq\" AS VARCHAR(5)), 5, '0') FROM SYSIBM.DUAL");
         }
     }
 }

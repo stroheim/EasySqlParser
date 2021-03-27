@@ -173,6 +173,49 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
     }
 
     [Entity]
+    [Table("EMP_SEQ_FOR_ASYNC", Schema = "dbo")]
+    public class EmployeeSeqForAsync
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("ID")]
+        public int Id { get; set; }
+
+        [Column("NAME")]
+        public string Name { get; set; }
+
+        [SequenceGenerator("BYTE_SEQ_FOR_ASYNC")]
+        [Column("BYTE_COL")]
+        public byte ByteCol { get; set; }
+
+        [SequenceGenerator("SHORT_SEQ_FOR_ASYNC")]
+        [Column("SHORT_COL")]
+        public short ShortCol { get; set; }
+
+        [SequenceGenerator("INT_SEQ_FOR_ASYNC")]
+        [Column("INT_COL")]
+        public int IntCol { get; set; }
+
+        [SequenceGenerator("LONG_SEQ_FOR_ASYNC")]
+        [Column("LONG_COL")]
+        public long LongCol { get; set; }
+
+        [SequenceGenerator("DECIMAL_SEQ_FOR_ASYNC")]
+        [Column("DECIMAL_COL")]
+        public decimal DecimalCol { get; set; }
+
+        [SequenceGenerator("STRING_SEQ_FOR_ASYNC", PaddingLength = 6, Prefix = "T")]
+        [Column("STRING_COL")]
+        public string StringCol { get; set; }
+
+        [Version]
+        [Column("VERSION")]
+        public long VersionNo { get; set; }
+
+    }
+
+
+    [Entity]
     [Table("EMP_MULTIPLE_KEY", Schema = "dbo")]
     public class EmployeeMultipleKey
     {

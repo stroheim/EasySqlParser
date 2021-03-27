@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using EasySqlParser.Configurations;
 using Npgsql;
 using Xunit;
@@ -41,6 +42,21 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
         }
 
         [Fact]
+        public async Task Test_insert_default_async()
+        {
+            var employee = new Employee
+                           {
+                               Id = 12,
+                               Name = "Scott Rodgers"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(employee.GetDebugString());
+        }
+
+
+        [Fact]
         public void Test_insert_identity()
         {
             var characters = new Characters
@@ -55,6 +71,21 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
         }
 
         [Fact]
+        public async Task Test_insert_identity_async()
+        {
+            var characters = new Characters
+                             {
+                                 Name = "Naomi Hunter",
+                                 Height = 165
+                             };
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(characters.GetDebugString());
+        }
+
+
+        [Fact]
         public void Test_insert_sequence()
         {
             var series = new MetalGearSeries
@@ -67,6 +98,38 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
             var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
             affected.Is(1);
             _output.WriteLine(series.GetDebugString());
+        }
+
+
+        [Fact]
+        public async Task Test_insert_sequence_async()
+        {
+            var series = new MetalGearSeries
+                         {
+                             Name = "METAL GEAR SOLID",
+                             ReleaseDate = new DateTime(1998, 9, 3),
+                             Platform = "PlayStation"
+                         };
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(series.GetDebugString());
+        }
+
+        [Fact]
+        public void Test_multiple_sequence()
+        {
+            var employee = new EmployeeSeq
+                           {
+                               Name = "John Doe"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            employee.ShortCol.Is((short)1);
+            employee.IntCol.Is(1);
+            employee.LongCol.Is(1L);
+            employee.StringCol.Is("T000001");
         }
 
     }

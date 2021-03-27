@@ -148,7 +148,7 @@ namespace EasySqlParser.SqlGenerator
 
         private readonly Action<string> _loggerAction;
 
-        private object _beforeChangeVersion;
+        private object _expectedVersionNo;
 
         private enum VersionType
         {
@@ -167,7 +167,7 @@ namespace EasySqlParser.SqlGenerator
             if ((SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
                 CommandExecutionType != CommandExecutionType.ExecuteNonQuery)
             {
-                _beforeChangeVersion = AddVersion(VersionPropertyInfo.GetValue(Entity));
+                _expectedVersionNo = AddVersion(VersionPropertyInfo.GetValue(Entity));
             }
 
         }
@@ -175,22 +175,24 @@ namespace EasySqlParser.SqlGenerator
         public bool IsSameVersion()
         {
             if (VersionPropertyInfo == null) return true;
-            if (_beforeChangeVersion == null) return true;
+            if (_expectedVersionNo == null) return true;
             if (IgnoreVersion) return true;
             var currentVersion = VersionPropertyInfo.GetValue(Entity);
             switch (_versionType)
             {
                 case VersionType.Short:
-                    return (short) currentVersion == (short) _beforeChangeVersion;
+                    return (short) currentVersion == (short) _expectedVersionNo;
                 case VersionType.Integer:
-                    return (int)currentVersion == (int)_beforeChangeVersion;
+                    return (int)currentVersion == (int)_expectedVersionNo;
                 case VersionType.Long:
-                    return (long)currentVersion == (long)_beforeChangeVersion;
+                    return (long)currentVersion == (long)_expectedVersionNo;
                 case VersionType.Decimal:
-                    return (decimal)currentVersion == (decimal)_beforeChangeVersion;
+                    return (decimal)currentVersion == (decimal)_expectedVersionNo;
+                default:
+                    // TODO:
+                    throw new InvalidOperationException("unsupported data type");
             }
 
-            return false;
         }
 
         private object AddVersion(object versionValue)
@@ -218,9 +220,12 @@ namespace EasySqlParser.SqlGenerator
         public void IncrementVersion()
         {
             if (VersionPropertyInfo == null) return;
-            if (QueryBehavior == QueryBehavior.AllColumns) return;
-            if (QueryBehavior == QueryBehavior.IdentityOrAllColumns &&
-                EntityTypeInfo.IdentityColumn == null) return;
+            //if (SqlKind == SqlKind.Insert || SqlKind == SqlKind.Update)
+            //{
+                if (QueryBehavior == QueryBehavior.AllColumns) return;
+                if (QueryBehavior == QueryBehavior.IdentityOrAllColumns &&
+                    EntityTypeInfo.IdentityColumn == null) return;
+            //}
             var versionValue = VersionPropertyInfo.GetValue(Entity);
             if (versionValue == null) return;
             VersionPropertyInfo.SetValue(Entity, AddVersion(versionValue));
@@ -229,14 +234,14 @@ namespace EasySqlParser.SqlGenerator
         public void ApplyReturningColumns()
         {
             if (ReturningColumns.Count == 0) return;
-            _loggerAction?.Invoke("[START] returning value read");
+            WriteLog("[START] returning value read");
             foreach (var kvp in ReturningColumns)
             {
                 var returningValue = kvp.Value.dataParameter.Value;
-                _loggerAction?.Invoke($"{kvp.Value.dataParameter.ParameterName}\t{returningValue}");
+                WriteLog($"{kvp.Value.dataParameter.ParameterName}\t{returningValue}");
                 kvp.Value.columnInfo.PropertyInfo.SetValue(Entity, returningValue);
             }
-            _loggerAction?.Invoke("[END] returning value read");
+            WriteLog("[END] returning value read");
         }
 
 
@@ -249,6 +254,7 @@ namespace EasySqlParser.SqlGenerator
         {
             get
             {
+                if (!string.IsNullOrEmpty(SqlFile)) return CommandExecutionType.ExecuteNonQuery;
                 if (SqlKind == SqlKind.Delete) return CommandExecutionType.ExecuteNonQuery;
                 if (QueryBehavior == QueryBehavior.None) return CommandExecutionType.ExecuteNonQuery;
                 if (QueryBehavior == QueryBehavior.IdentityOnly) return CommandExecutionType.ExecuteScalar;
@@ -282,13 +288,6 @@ namespace EasySqlParser.SqlGenerator
 
         public bool ThrowableOptimisticLockException(int affectedCount)
         {
-            //if ((SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
-            //    UseVersion && !SuppressOptimisticLockException)
-            //{
-            //    if (affectedCount == 0) return true;
-            //    if (!IsSameVersion()) return true;
-            //}
-            //return false;
             return (SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
                    UseVersion && !SuppressOptimisticLockException
                    && affectedCount == 0;

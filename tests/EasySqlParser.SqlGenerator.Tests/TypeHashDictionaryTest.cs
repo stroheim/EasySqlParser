@@ -19,6 +19,8 @@ namespace EasySqlParser.SqlGenerator.Tests
                                                                 });
             dic.Count.Is(1);
             dic.TryGetValue(typeof(EmployeeIdentity), out _).IsFalse();
+            var result = dic.Get(typeof(Employee));
+            result.IsNotNull();
 
         }
     }

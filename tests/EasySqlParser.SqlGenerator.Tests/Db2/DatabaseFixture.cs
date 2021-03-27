@@ -154,6 +154,133 @@ INSERT INTO ""MetalGearSeries""(""ID"", ""NAME"", ""RELEASE_DATE"", ""PLATFORM""
 
                 #endregion
 
+                #region EMP_SEQ
+
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT TABNAME FROM SYSCAT.TABLES WHERE TABSCHEMA='DB2INST1' AND TABNAME='EMP_SEQ') THEN
+        PREPARE stmt FROM 'DROP TABLE DB2INST1.""EMP_SEQ""';
+        EXECUTE stmt;
+    END IF;
+END
+                ");
+
+
+                ExecuteCommand(localConnection, @"
+CREATE TABLE ""EMP_SEQ""(
+    ""ID"" INT GENERATED ALWAYS AS IDENTITY NOT NULL,
+    ""NAME"" VARCHAR(50) NOT NULL,
+    ""SHORT_COL"" SMALLINT NOT NULL,
+    ""INT_COL"" INTEGER NOT NULL,
+    ""LONG_COL"" BIGINT NOT NULL,
+    ""DECIMAL_COL"" DECIMAL NOT NULL,
+    ""STRING_COL"" VARCHAR(10) NOT NULL,
+    ""VERSION"" BIGINT NOT NULL,
+    PRIMARY KEY(""ID"")
+)
+");
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT SEQNAME FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='DB2INST1' AND SEQNAME='SHORT_SEQ') THEN
+        PREPARE stmt FROM 'DROP SEQUENCE DB2INST1.SHORT_SEQ';
+        EXECUTE stmt;
+    END IF;
+END
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE SHORT_SEQ AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+    NOCACHE
+    ORDER 
+");
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT SEQNAME FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='DB2INST1' AND SEQNAME='INT_SEQ') THEN
+        PREPARE stmt FROM 'DROP SEQUENCE DB2INST1.INT_SEQ';
+        EXECUTE stmt;
+    END IF;
+END
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE INT_SEQ AS INTEGER
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+    NOCACHE
+    ORDER 
+");
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT SEQNAME FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='DB2INST1' AND SEQNAME='LONG_SEQ') THEN
+        PREPARE stmt FROM 'DROP SEQUENCE DB2INST1.LONG_SEQ';
+        EXECUTE stmt;
+    END IF;
+END
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE LONG_SEQ AS BIGINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+    NOCACHE
+    ORDER 
+");
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT SEQNAME FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='DB2INST1' AND SEQNAME='DECIMAL_SEQ') THEN
+        PREPARE stmt FROM 'DROP SEQUENCE DB2INST1.DECIMAL_SEQ';
+        EXECUTE stmt;
+    END IF;
+END
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE DECIMAL_SEQ AS DECIMAL
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+    NOCACHE
+    ORDER 
+");
+
+                ExecuteCommand(localConnection, @"
+BEGIN
+    IF EXISTS(SELECT SEQNAME FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='DB2INST1' AND SEQNAME='STRING_SEQ') THEN
+        PREPARE stmt FROM 'DROP SEQUENCE DB2INST1.STRING_SEQ';
+        EXECUTE stmt;
+    END IF;
+END
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE STRING_SEQ AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+    NOCACHE
+    ORDER 
+");
+                #endregion
 
 
                 _initialized = true;

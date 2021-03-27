@@ -47,6 +47,24 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         }
 
         [Fact]
+        public void Test_insert_default_select_identity_only()
+        {
+            var characters = new Characters
+                             {
+                                 Name = "Naomi Hunter",
+                                 Height = 165
+                             };
+            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.WriteIndented = true;
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
+            var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            characters.Id.IsNot(0);
+            _output.WriteLine($"{characters.Id}");
+            _output.WriteLine($"{characters.CreateDate}");
+        }
+
+        [Fact]
         public void Test_update_default()
         {
             var characters = _Fixture.Connection.ExecuteReaderByQueryBuilder<Characters>(x => x.Id == 1, _mockConfig).Single();

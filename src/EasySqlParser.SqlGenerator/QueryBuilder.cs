@@ -207,29 +207,7 @@ namespace EasySqlParser.SqlGenerator
             CancellationToken cancellationToken = default)
         {
             var rawScalarValue = await command.ExecuteScalarAsync(cancellationToken);
-            if (rawScalarValue == null)
-            {
-                return 0;
-            }
-
-            var entityInfo = builderParameter.EntityTypeInfo;
-            var instance = builderParameter.Entity;
-            var config = builderParameter.Config;
-            if (config.DbConnectionKind == DbConnectionKind.SQLite)
-            {
-                if (entityInfo.IdentityColumn != null && rawScalarValue is long longValue)
-                {
-                    var converted = Convert.ChangeType(longValue,
-                        entityInfo.IdentityColumn.PropertyInfo.PropertyType);
-                    entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, converted);
-                    return 1;
-
-                }
-            }
-            entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, rawScalarValue);
-
-
-            return 1;
+            return DbCommandHelper.ConsumeScalar(rawScalarValue, builderParameter);
         }
 
         internal static async Task<int> ConsumeNonQueryAsync(
@@ -249,63 +227,7 @@ namespace EasySqlParser.SqlGenerator
             CancellationToken cancellationToken = default)
         {
             var reader = await command.ExecuteReaderAsync(cancellationToken);
-            if (!reader.HasRows)
-            {
-                reader.Close();
-                reader.Dispose();
-                return 0;
-            }
-
-            var entityInfo = builderParameter.EntityTypeInfo;
-            await reader.ReadAsync(cancellationToken);
-            var instance = builderParameter.Entity;
-            builderParameter.WriteLog("[Start] ConsumeReader");
-            var config = builderParameter.Config;
-            foreach (var columnInfo in entityInfo.Columns)
-            {
-                var col = reader.GetOrdinal(columnInfo.ColumnName);
-                if (await reader.IsDBNullAsync(col, cancellationToken)) continue;
-                var value = reader.GetValue(col);
-                builderParameter.WriteLog($"{columnInfo.PropertyInfo.Name}\t{value}");
-                if (config.DbConnectionKind == DbConnectionKind.SQLite)
-                {
-                    if (value is long longValue)
-                    {
-                        var converted = Convert.ChangeType(longValue, columnInfo.PropertyInfo.PropertyType);
-                        columnInfo.PropertyInfo.SetValue(instance, converted);
-                        continue;
-                    }
-
-                    if (value is string stringValue)
-                    {
-                        if (columnInfo.PropertyInfo.PropertyType == typeof(DateTime) ||
-                            columnInfo.PropertyInfo.PropertyType == typeof(DateTime?))
-                        {
-                            columnInfo.PropertyInfo.SetValue(instance,
-                                DateTime.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFF",
-                                    CultureInfo.InvariantCulture));
-                            continue;
-                        }
-
-                        if (columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset) ||
-                            columnInfo.PropertyInfo.PropertyType == typeof(DateTimeOffset?))
-                        {
-                            columnInfo.PropertyInfo.SetValue(instance,
-                                DateTimeOffset.ParseExact(stringValue, "yyyy-MM-dd HH:mm:ss.FFFFFFFzzz",
-                                    CultureInfo.InvariantCulture));
-                            continue;
-                        }
-
-                    }
-                }
-
-                columnInfo.PropertyInfo.SetValue(instance, value);
-            }
-
-            reader.Close();
-            reader.Dispose();
-            builderParameter.WriteLog("[End] ConsumeReader");
-            return 1;
+            return await DbCommandHelper.ConsumeReaderAsync(reader, builderParameter);
         }
 
     }
@@ -1166,7 +1088,7 @@ namespace EasySqlParser.SqlGenerator
             bool callFromFinalTable = false)
         {
             if (parameter.QueryBehavior == QueryBehavior.None) return;
-            if (parameter.SqlKind == SqlKind.Delete || parameter.SqlKind == SqlKind.SoftDelete) return;
+            if (parameter.SqlKind == SqlKind.Delete) return;
             var config = parameter.Config;
             if (config.Dialect.SupportsReturningInto || config.Dialect.SupportsReturning)
             {
@@ -1214,7 +1136,7 @@ namespace EasySqlParser.SqlGenerator
                 }
             }
 
-            if (parameter.SqlKind == SqlKind.Update || !identityAppended)
+            if (parameter.SqlKind == SqlKind.Update || parameter.SqlKind == SqlKind.SoftDelete || !identityAppended)
             {
                 var counter = 0;
                 for (int i = 0; i < entityInfo.KeyColumns.Count; i++)

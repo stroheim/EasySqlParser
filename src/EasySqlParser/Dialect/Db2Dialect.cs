@@ -73,13 +73,13 @@ namespace EasySqlParser.Dialect
         /// <inheritdoc />
         public override string GetNextSequenceSql(string name, string schema)
         {
-            return $"VALUES NEXT VALUE FOR {GetSequenceName(name, schema)}";
+            return $"SELECT NEXT VALUE FOR {GetSequenceName(name, schema)} FROM SYSIBM.DUAL";
         }
 
         /// <inheritdoc />
         public override string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
-            return $"VALUES {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR({length})), {length}, '0')";
+            return $"SELECT {GetSequencePrefix(prefix)}LPAD(CAST(NEXT VALUE FOR {GetSequenceName(name, schema)} AS VARCHAR({length})), {length}, '0') FROM SYSIBM.DUAL";
         }
     }
 }

@@ -69,5 +69,22 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
             _output.WriteLine(series.GetDebugString());
         }
 
+        [Fact]
+        public void Test_multiple_sequence()
+        {
+            var employee = new EmployeeSeq
+                           {
+                               Name = "John Doe"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            affected.Is(1);
+            employee.ShortCol.Is((short)1);
+            employee.IntCol.Is(1);
+            employee.LongCol.Is(1L);
+            employee.DecimalCol.Is(1M);
+            employee.StringCol.Is("T000001");
+        }
+
     }
 }

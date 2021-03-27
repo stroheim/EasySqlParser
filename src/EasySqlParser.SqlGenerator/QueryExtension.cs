@@ -145,7 +145,7 @@ namespace EasySqlParser.SqlGenerator
                 }
 
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
-                if (builderParameter.SqlKind == SqlKind.Update)
+                if (builderParameter.SqlKind == SqlKind.Update || builderParameter.SqlKind == SqlKind.SoftDelete)
                 {
                     builderParameter.IncrementVersion();
                 }
@@ -196,7 +196,7 @@ namespace EasySqlParser.SqlGenerator
                         throw new InvalidOperationException("");
                 }
                 ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, command.Transaction);
-                if (builderParameter.SqlKind == SqlKind.Update)
+                if (builderParameter.SqlKind == SqlKind.Update || builderParameter.SqlKind == SqlKind.SoftDelete)
                 {
                     builderParameter.IncrementVersion();
                 }

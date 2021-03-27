@@ -152,6 +152,73 @@ INSERT INTO ""MetalGearSeries""(""ID"", ""NAME"", ""RELEASE_DATE"", ""PLATFORM""
 
                 #endregion
 
+                ExecuteCommand(localConnection, @"
+DECLARE
+   c NUMBER;
+BEGIN
+   SELECT COUNT(*) INTO c FROM USER_TABLES WHERE TABLE_NAME = 'EMP_SEQ';
+   IF c = 1 THEN
+      EXECUTE IMMEDIATE 'DROP TABLE ""EMP_SEQ""';
+   END IF;
+END;
+");
+                ExecuteCommand(localConnection, @"
+CREATE TABLE ""EMP_SEQ""(
+    ""ID"" NUMBER(10, 0) GENERATED ALWAYS AS IDENTITY,
+    ""NAME"" VARCHAR2(30),
+    ""LONG_COL"" NUMBER(19, 0),
+    ""STRING_COL"" VARCHAR2(10),
+    ""VERSION"" NUMBER(19, 0) NOT NULL,
+    PRIMARY KEY(""ID"")
+)
+");
+
+                ExecuteCommand(localConnection, @"
+DECLARE
+   c NUMBER;
+BEGIN
+   SELECT COUNT(*) INTO c FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'LONG_SEQ';
+   IF c = 1 THEN
+      EXECUTE IMMEDIATE 'DROP SEQUENCE ""LONG_SEQ""';
+   END IF;
+END;
+");
+
+                ExecuteCommand(localConnection, @"
+DECLARE
+   c NUMBER;
+BEGIN
+   SELECT COUNT(*) INTO c FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'STRING_SEQ';
+   IF c = 1 THEN
+      EXECUTE IMMEDIATE 'DROP SEQUENCE ""STRING_SEQ""';
+   END IF;
+END;
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE LONG_SEQ
+    INCREMENT BY 1
+    START WITH 1
+    MAXVALUE 9999999999999999999
+    MINVALUE 1
+    CYCLE 
+    NOCACHE
+    ORDER
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE STRING_SEQ
+    INCREMENT BY 1
+    START WITH 1
+    MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE 
+    NOCACHE
+    ORDER
+");
+
+
+
                 _initialized = true;
             }
         }

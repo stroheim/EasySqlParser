@@ -121,6 +121,72 @@ INSERT INTO ""MetalGearSeries""(""ID"", ""NAME"", ""RELEASE_DATE"", ""PLATFORM""
 
                 #endregion
 
+                ExecuteCommand(localConnection, @"
+DROP TABLE IF EXISTS ""EMP_SEQ""
+");
+
+
+                ExecuteCommand(localConnection, @"
+CREATE TABLE ""EMP_SEQ""(
+    ""ID"" SERIAL NOT NULL,
+    ""NAME"" VARCHAR(50) NOT NULL,
+    ""SHORT_COL"" SMALLINT NOT NULL,
+    ""INT_COL"" INTEGER NOT NULL,
+    ""LONG_COL"" BIGINT NOT NULL,
+    ""STRING_COL"" VARCHAR(10) NOT NULL,
+    ""VERSION"" BIGINT NOT NULL,
+    PRIMARY KEY(""ID"")
+)
+");
+
+                ExecuteCommand(localConnection, @"
+DROP SEQUENCE IF EXISTS ""SHORT_SEQ""
+");
+                ExecuteCommand(localConnection, @"
+DROP SEQUENCE IF EXISTS ""INT_SEQ""
+");
+                ExecuteCommand(localConnection, @"
+DROP SEQUENCE IF EXISTS ""LONG_SEQ""
+");
+                ExecuteCommand(localConnection, @"
+DROP SEQUENCE IF EXISTS ""STRING_SEQ""
+");
+
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE ""SHORT_SEQ"" AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+");
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE ""INT_SEQ"" AS INTEGER
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+");
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE ""LONG_SEQ"" AS BIGINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+");
+                ExecuteCommand(localConnection, @"
+CREATE SEQUENCE ""STRING_SEQ"" AS SMALLINT
+    INCREMENT BY 1
+    START WITH 1
+    --MAXVALUE 9999999999
+    MINVALUE 1
+    CYCLE
+");
+
+
+
                 _initialized = true;
             }
         }
