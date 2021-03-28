@@ -41,6 +41,16 @@ namespace EasySqlParser.SqlGenerator
 
         public bool IsDateTime { get; set; }
 
+        /// <summary>
+        /// Ef Core ValueConverter#ConvertToProvider
+        /// </summary>
+        public Func<object, object> ConvertToProvider { get; set; }
+
+        /// <summary>
+        /// Ef Core ValueConverter#ConvertFromProvider
+        /// </summary>
+        public Func<object, object> ConvertFromProvider { get; set; }
+
 
         public EntityColumnInfo Clone()
         {

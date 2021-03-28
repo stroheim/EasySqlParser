@@ -119,6 +119,12 @@ namespace EasySqlParser.EntityFrameworkCore
                 //columnInfo.TypeName = property.GetColumnType(tableId);
                 columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
 
+                var converter = property.GetValueConverter();
+                if (converter != null)
+                {
+                    columnInfo.ConvertFromProvider = converter.ConvertFromProvider;
+                    columnInfo.ConvertToProvider = converter.ConvertToProvider;
+                }
 
                 if (property.ValueGenerated == ValueGenerated.OnAdd)
                 {

@@ -35,11 +35,21 @@ namespace EasySqlParser.SqlGenerator
             {
                 TableName = type.Name
             };
+            var naming = Naming.None;
+            var entityAttr = type.GetCustomAttribute<EntityAttribute>();
+            if (entityAttr != null)
+            {
+                naming = entityAttr.Naming;
+            }
             var table = type.GetCustomAttribute<TableAttribute>();
             if (table != null)
             {
                 entityInfo.TableName = table.Name;
                 entityInfo.SchemaName = table.Schema;
+            }
+            else
+            {
+                entityInfo.TableName = naming.Apply(type.Name);
             }
 
             var props = type.GetProperties();
@@ -73,11 +83,15 @@ namespace EasySqlParser.SqlGenerator
 
                 var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                 columnInfo.ColumnName = propertyInfo.Name;
+                columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
                 if (column != null)
                 {
                     columnInfo.ColumnName = column.Name;
                     columnInfo.TypeName = column.TypeName;
-                    columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
+                }
+                else
+                {
+                    columnInfo.ColumnName = naming.Apply(propertyInfo.Name);
                 }
 
                 var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
