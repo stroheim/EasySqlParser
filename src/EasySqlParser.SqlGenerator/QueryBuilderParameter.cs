@@ -11,24 +11,34 @@ namespace EasySqlParser.SqlGenerator
         int CommandTimeout { get; }
         bool WriteIndented { get; }
         QueryBehavior QueryBehavior { get; }
+        ExcludeNullBehavior ExcludeNullBehavior { get; }
         Action<string> LoggerAction { get; }
-
-        void BuildCache();
 
         EntityTypeInfo GetEntityTypeInfo(Type type);
 
 
     }
 
-    public class QueryBuilderConfiguration : IQueryBuilderConfiguration
+    public abstract class QueryBuilderConfigurationBase : IQueryBuilderConfiguration
     {
+        public int CommandTimeout { get; }
+        public bool WriteIndented { get; }
+        public QueryBehavior QueryBehavior { get; }
+        public ExcludeNullBehavior ExcludeNullBehavior { get; }
+        public Action<string> LoggerAction { get; set; }
+        public virtual EntityTypeInfo GetEntityTypeInfo(Type type)
+        {
+            return _hashDictionary.Get(type);
+        }
         private readonly IEnumerable<Assembly> _assemblies;
-        private TypeHashDictionary<EntityTypeInfo> _hashDictionary;
-        public QueryBuilderConfiguration(
+        private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
+
+        protected QueryBuilderConfigurationBase(
             IEnumerable<Assembly> entityAssemblies,
             int commandTimeout = 30,
             bool writeIndented = true,
             QueryBehavior queryBehavior = QueryBehavior.None,
+            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
             Action<string> loggerAction = null
         )
         {
@@ -36,24 +46,40 @@ namespace EasySqlParser.SqlGenerator
             CommandTimeout = commandTimeout;
             WriteIndented = writeIndented;
             QueryBehavior = queryBehavior;
+            ExcludeNullBehavior = excludeNullBehavior;
             LoggerAction = loggerAction;
             BuildCache();
         }
 
-        public int CommandTimeout { get; }
-        public bool WriteIndented { get; }
-        public QueryBehavior QueryBehavior { get; }
-        public Action<string> LoggerAction { get; }
-        public void BuildCache()
+        private void BuildCache()
+        {
+            if (_assemblies == null) return;
+            InternalBuildCache();
+        }
+
+        protected virtual void InternalBuildCache()
         {
             var prepare = EntityTypeInfoBuilder.Build(_assemblies);
             _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
-        public EntityTypeInfo GetEntityTypeInfo(Type type)
+    }
+
+    public class QueryBuilderConfiguration : QueryBuilderConfigurationBase
+    {
+
+        public QueryBuilderConfiguration(
+            IEnumerable<Assembly> entityAssemblies,
+            int commandTimeout = 30,
+            bool writeIndented = true,
+            QueryBehavior queryBehavior = QueryBehavior.None,
+            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
+            Action<string> loggerAction = null
+        ) : base(entityAssemblies, commandTimeout, writeIndented, queryBehavior, excludeNullBehavior, loggerAction)
         {
-            return _hashDictionary.Get(type);
+
         }
+
     }
 
     public class QueryBuilderParameter
@@ -83,6 +109,7 @@ namespace EasySqlParser.SqlGenerator
             WriteIndented = builderConfiguration.WriteIndented;
             SqlFile = sqlFile;
             QueryBehavior = builderConfiguration.QueryBehavior;
+            ExcludeNullBehavior = builderConfiguration.ExcludeNullBehavior;
             _loggerAction = builderConfiguration.LoggerAction;
             CurrentUser = currentUser;
             Config = configName == null
@@ -96,7 +123,7 @@ namespace EasySqlParser.SqlGenerator
         internal EntityTypeInfo EntityTypeInfo { get; }
 
 
-        public object Entity { get; }
+        public object Entity { get; private set; }
 
         public bool ExcludeNull { get; }
 
@@ -135,9 +162,17 @@ namespace EasySqlParser.SqlGenerator
 
         public QueryBehavior QueryBehavior { get; }
 
+        public ExcludeNullBehavior ExcludeNullBehavior { get; }
+
         public string CurrentUser { get; }
 
-        internal Type EntityType { get; }
+        public Type EntityType { get; private set; }
+
+        public void ResetEntity(object entity)
+        {
+            Entity = entity;
+            EntityType = entity.GetType();
+        }
 
         internal Dictionary<string, (EntityColumnInfo columnInfo, IDbDataParameter dataParameter)>
             ReturningColumns
@@ -334,5 +369,20 @@ namespace EasySqlParser.SqlGenerator
         ExecuteReader,
         ExecuteNonQuery,
         ExecuteScalar
+    }
+
+    /// <summary>
+    /// ExcludeNull の動作
+    /// </summary>
+    public enum ExcludeNullBehavior
+    {
+        /// <summary>
+        /// nullのみを除外
+        /// </summary>
+        NullOnly,
+        /// <summary>
+        /// null,<see cref="string.Empty"/>,default value of <see cref="ValueType"/> を除外
+        /// </summary>
+        NullOrEmptyOrDefaultValue
     }
 }

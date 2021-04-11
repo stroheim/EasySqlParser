@@ -15,7 +15,6 @@ namespace EasySqlParser.SqlGenerator
         private readonly StringBuilder _formattedSqlBuilder = new StringBuilder(200);
 
         private readonly SqlParserConfig _config;
-        private readonly bool _writeIndented;
         private readonly Dictionary<string, IDbDataParameter> _sqlParameters =
             new Dictionary<string, IDbDataParameter>();
 
@@ -25,9 +24,11 @@ namespace EasySqlParser.SqlGenerator
         internal QueryStringBuilder(SqlParserConfig config, bool writeIndented)
         {
             _config = config;
-            _writeIndented = writeIndented;
+            WriteIndented = writeIndented;
             _firstWord = true;
         }
+
+        internal bool WriteIndented { get; }
 
 
         internal void ApplyIndent(int length)
@@ -52,7 +53,7 @@ namespace EasySqlParser.SqlGenerator
 
         internal void AppendSql(string sql)
         {
-            if (_writeIndented && _firstWord)
+            if (WriteIndented && _firstWord)
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
@@ -64,7 +65,7 @@ namespace EasySqlParser.SqlGenerator
 
         internal void AppendLine()
         {
-            if (!_writeIndented) return;
+            if (!WriteIndented) return;
             _firstWord = true;
             _rawSqlBuilder.AppendLine();
             _formattedSqlBuilder.AppendLine();
@@ -72,7 +73,7 @@ namespace EasySqlParser.SqlGenerator
 
         internal void AppendLine(string sql)
         {
-            if (!_writeIndented)
+            if (!WriteIndented)
             {
                 _rawSqlBuilder.Append(sql);
                 _formattedSqlBuilder.Append(sql);
@@ -106,6 +107,12 @@ namespace EasySqlParser.SqlGenerator
             _firstWord = true;
             _rawSqlBuilder.AppendLine(sql);
             _formattedSqlBuilder.AppendLine(sql);
+        }
+
+        internal void CutBack(int size)
+        {
+            _rawSqlBuilder.Length -= size;
+            _formattedSqlBuilder.Length -= size;
         }
 
         internal void AppendReturnParameter(QueryBuilderParameter builderParameter, EntityColumnInfo columnInfo)
@@ -144,6 +151,30 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(propertyValue));
         }
 
+        internal void AppendColumn(EntityColumnInfo columnInfo)
+        {
+            var columnName = _config.Dialect.ApplyQuote(columnInfo.ColumnName);
+            AppendSql(columnName);
+        }
+
+        internal void AppendParameter(string name, object value)
+        {
+            var propertyName = _config.Dialect.ParameterPrefix + name;
+            var (parameterName, parameter) = CreateDbParameter(propertyName, value);
+            if (!_sqlParameters.ContainsKey(propertyName))
+            {
+                _sqlParameters.Add(propertyName, parameter);
+            }
+            _rawSqlBuilder.Append(parameterName);
+            _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(value));
+
+        }
+
+        internal bool HasSameParameterName(string name)
+        {
+            return _sqlParameters.ContainsKey(name);
+        }
+
         private (string parameterName, IDbDataParameter parameter) CreateDbParameter(
             string parameterKey, object parameterValue = null,
             ParameterDirection direction = ParameterDirection.Input)
@@ -169,7 +200,7 @@ namespace EasySqlParser.SqlGenerator
 
         internal void AppendComma(int counter)
         {
-            if (_writeIndented && _firstWord)
+            if (WriteIndented && _firstWord)
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
@@ -177,20 +208,20 @@ namespace EasySqlParser.SqlGenerator
             }
             if (counter == 0)
             {
-                if (_writeIndented)
+                if (WriteIndented)
                 {
                     AppendSql("   ");
                 }
             }
             else
             {
-                AppendSql(_writeIndented ? " , " : ", ");
+                AppendSql(WriteIndented ? " , " : ", ");
             }
         }
 
         internal void AppendAnd(int counter)
         {
-            if (_writeIndented && _firstWord)
+            if (WriteIndented && _firstWord)
             {
                 _rawSqlBuilder.Append(_indent);
                 _formattedSqlBuilder.Append(_indent);
@@ -198,7 +229,7 @@ namespace EasySqlParser.SqlGenerator
             }
             if (counter == 0)
             {
-                if (_writeIndented)
+                if (WriteIndented)
                 {
                     AppendSql("     ");
                 }
@@ -361,6 +392,52 @@ namespace EasySqlParser.SqlGenerator
             AppendLine();
         }
 
+        internal bool IsNull(QueryBuilderParameter parameter, object value)
+        {
+            if (!parameter.ExcludeNull) return false;
+
+            switch (parameter.ExcludeNullBehavior)
+            {
+                case ExcludeNullBehavior.NullOnly:
+                    if (value == null)
+                    {
+                        return true;
+                    }
+                    break;
+                case ExcludeNullBehavior.NullOrEmptyOrDefaultValue:
+                    if (value == null)
+                    {
+                        return true;
+                    }
+
+                    if (value is string stringValue)
+                    {
+                        if (stringValue == "")
+                        {
+                            return true;
+                        }
+                    }else
+                    {
+                        var type = value.GetType();
+                        if (type.IsValueType)
+                        {
+                            var defaultValue = Activator.CreateInstance(type);
+                            return Equals(value, defaultValue);
+                        }
+                    }
+
+                    break;
+            }
+
+            return false;
+        }
+
+        private static bool IsDefault<T>(T value)
+        {
+            if (value == null) return true;
+            var defaultValue = default(T);
+            return value.Equals(defaultValue);
+        }
 
         internal QueryBuilderResult GetResult()
         {

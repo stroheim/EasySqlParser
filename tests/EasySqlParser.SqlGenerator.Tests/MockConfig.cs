@@ -22,6 +22,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public int CommandTimeout { get; }
         public bool WriteIndented { get; internal set; }
         public QueryBehavior QueryBehavior { get; internal set; }
+        public ExcludeNullBehavior ExcludeNullBehavior { get; internal set; }
         public Action<string> LoggerAction { get; }
 
         private static readonly ConcurrentDictionary<Type, EntityTypeInfo> Cache =

@@ -190,9 +190,10 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_Select()
         {
-            var (builderResult, entityInfo) = QueryBuilder.GetSelectSql<Employee>(x => x.Id == 1);
+            var (builderResult, entityInfo) = QueryBuilder.InternalGetSelectSql<Employee>(x => x.Id == 1);
             builderResult.IsNotNull();
-            builderResult.ParsedSql.Is("SELECT [ID], [NAME], [SALARY], [VERSION] FROM [dbo].[EMP] WHERE [ID] = @Id");
+            builderResult.ParsedSql.Is("SELECT [ID], [NAME], [SALARY], [VERSION] FROM [dbo].[EMP] WHERE [ID] = @p_Id");
+            _output.WriteLine(builderResult.DebugSql);
             builderResult.DbDataParameters.Count.Is(1);
             builderResult.DbDataParameters[0].Value.Is(1);
         }
@@ -205,6 +206,16 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             builderResult.ParsedSql.Is("SELECT COUNT(*) CNT FROM [dbo].[EMP]");
             builderResult.DbDataParameters.Count.Is(0);
         }
+
+        [Fact]
+        public void Test_Count2()
+        {
+            var builderResult = QueryBuilder.GetCountSql<Employee>(x => x.Id > 1);
+            builderResult.IsNotNull();
+            builderResult.ParsedSql.Is("SELECT COUNT(*) CNT FROM [dbo].[EMP] WHERE [ID] > @p_Id");
+            builderResult.DbDataParameters.Count.Is(1);
+        }
+
 
         [Fact]
         public void Test_IdentityOnly()

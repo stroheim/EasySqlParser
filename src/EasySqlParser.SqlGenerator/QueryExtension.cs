@@ -234,7 +234,7 @@ namespace EasySqlParser.SqlGenerator
             string configName = null,
             DbTransaction transaction = null)
         {
-            var (builderResult, entityInfo) = QueryBuilder.GetSelectSql(predicate, configName, builderConfiguration.WriteIndented);
+            var (builderResult, entityInfo) = QueryBuilder.InternalGetSelectSql(predicate, configName, builderConfiguration.WriteIndented);
             builderConfiguration.LoggerAction?.Invoke(builderResult.DebugSql);
 
             using (var command = connection.CreateCommand())

@@ -12,24 +12,21 @@ using Microsoft.Extensions.Logging;
 
 namespace EasySqlParser.EntityFrameworkCore
 {
-    public class EfCoreQueryBuilderConfiguration : IQueryBuilderConfiguration
+    public class EfCoreQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
         private readonly ILogger<EfCoreQueryBuilderConfiguration> _logger;
         private readonly DbContext _dbContext;
         private readonly IEnumerable<Assembly> _assemblies;
         private TypeHashDictionary<EntityTypeInfo> _hashDictionary;
 
-        public int CommandTimeout { get; }
-        public bool WriteIndented { get; }
-        public QueryBehavior QueryBehavior { get; }
-        public Action<string> LoggerAction { get; }
-        public void BuildCache()
+
+        protected override void InternalBuildCache()
         {
             var prepare = EfCoreEntityTypeInfoBuilder.Build(_dbContext, _assemblies);
             _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
-        public EntityTypeInfo GetEntityTypeInfo(Type type)
+        public override EntityTypeInfo GetEntityTypeInfo(Type type)
         {
             return _hashDictionary.Get(type);
         }
@@ -40,21 +37,26 @@ namespace EasySqlParser.EntityFrameworkCore
         }
 
         public EfCoreQueryBuilderConfiguration(
-            DbContext dbContext, 
+            DbContext dbContext,
             ILogger<EfCoreQueryBuilderConfiguration> logger,
             int commandTimeout = 30,
             bool writeIndented = true,
             QueryBehavior queryBehavior = QueryBehavior.None,
-            IEnumerable<Assembly> additionalAssemblies = null)
+            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
+            IEnumerable<Assembly> additionalAssemblies = null) : base(
+            // ReSharper disable once PossibleMultipleEnumeration
+            additionalAssemblies,
+            commandTimeout,
+            writeIndented,
+            queryBehavior,
+            excludeNullBehavior
+        )
         {
             _dbContext = dbContext;
             _logger = logger;
             LoggerAction = WriteLog;
-            CommandTimeout = commandTimeout;
-            WriteIndented = writeIndented;
-            QueryBehavior = queryBehavior;
+            // ReSharper disable once PossibleMultipleEnumeration
             _assemblies = additionalAssemblies;
-            BuildCache();
         }
     }
 

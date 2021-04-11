@@ -11,42 +11,54 @@ namespace EasySqlParser.SqlGenerator
 {
     public static class DbCommandHelper
     {
+        // used by dapper and ef
         public static int ConsumeScalar(object scalarValue, QueryBuilderParameter builderParameter)
         {
-            if (scalarValue == null)
+            if (scalarValue == null || scalarValue is DBNull)
             {
                 return 0;
             }
 
             var entityInfo = builderParameter.EntityTypeInfo;
             var instance = builderParameter.Entity;
-            var config = builderParameter.Config;
-            if (config.DbConnectionKind == DbConnectionKind.SQLite)
+            //var config = builderParameter.Config;
+            if (entityInfo.IdentityColumn != null)
             {
-                if (entityInfo.IdentityColumn != null && scalarValue is long longValue)
+                var changed = Convert.ChangeType(scalarValue, entityInfo.IdentityColumn.PropertyInfo.PropertyType);
+                entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, changed);
+                if (!builderParameter.IsSameVersion())
                 {
-                    var converted = Convert.ChangeType(longValue,
-                        entityInfo.IdentityColumn.PropertyInfo.PropertyType);
-                    entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, converted);
-                    if (!builderParameter.IsSameVersion())
-                    {
-                        return 0;
-                    }
-                    return 1;
+                    return 0;
                 }
+                return 1;
             }
+            //if (config.DbConnectionKind == DbConnectionKind.SQLite)
+            //{
+            //    if (entityInfo.IdentityColumn != null && scalarValue is long longValue)
+            //    {
+            //        var converted = Convert.ChangeType(longValue,
+            //            entityInfo.IdentityColumn.PropertyInfo.PropertyType);
+            //        entityInfo.IdentityColumn.PropertyInfo.SetValue(instance, converted);
+            //        if (!builderParameter.IsSameVersion())
+            //        {
+            //            return 0;
+            //        }
+            //        return 1;
+            //    }
+            //}
 
-            entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, scalarValue);
+            //entityInfo.IdentityColumn?.PropertyInfo.SetValue(instance, scalarValue);
 
 
-            if (!builderParameter.IsSameVersion())
-            {
-                return 0;
-            }
+            //if (!builderParameter.IsSameVersion())
+            //{
+            //    return 0;
+            //}
             return 1;
 
         }
 
+        // used by ef
         public static int ConsumeReader(DbDataReader reader, QueryBuilderParameter builderParameter)
         {
             if (!reader.HasRows)
@@ -112,6 +124,7 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
+        // used by ef
         public static async Task<int> ConsumeReaderAsync(DbDataReader reader, QueryBuilderParameter builderParameter)
         {
             if (!reader.HasRows)
@@ -234,6 +247,7 @@ namespace EasySqlParser.SqlGenerator
 
     internal static class ConnectionExtension
     {
+        // generate sequence
         internal static void PreInsert(this DbConnection connection, QueryBuilderParameter builderParameter)
         {
             if (builderParameter.SqlKind != SqlKind.Insert) return;
@@ -307,6 +321,7 @@ namespace EasySqlParser.SqlGenerator
             builderParameter.WriteLog("[End] PreInsert");
         }
 
+        // generate sequence
         internal static async Task PreInsertAsync(this DbConnection connection, QueryBuilderParameter builderParameter)
         {
             if (builderParameter.SqlKind != SqlKind.Insert) return;
@@ -395,78 +410,19 @@ namespace EasySqlParser.SqlGenerator
     public class QueryBuilder
     {
         #region for unit tests
-        internal static QueryBuilderResult GetCountSql<T>(
-            Expression<Func<T, bool>> predicate = null,
-            string configName = null,
-            bool writeIndented = false)
-        {
-            var keyValues = new Dictionary<string, object>();
-            if (predicate != null)
-            {
-                var visitor = new PredicateVisitor();
-                keyValues = visitor.GetKeyValues(predicate);
-            }
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(T));
-            var config = configName == null
-                ? ConfigContainer.DefaultConfig
-                : ConfigContainer.AdditionalConfigs[configName];
-            var builder = new QueryStringBuilder(config, writeIndented);
-            builder.AppendSql("SELECT COUNT(*) CNT FROM ");
-            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
-            {
-                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
-                builder.AppendSql(".");
-            }
 
-            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
-            if (keyValues.Count > 0)
-            {
-                builder.AppendLine(" WHERE ");
-
-                var counter = 0;
-                foreach (var columnInfo in entityInfo.Columns)
-                {
-                    builder.AppendComma(counter);
-                    object propValue = null;
-                    if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
-                    {
-                        propValue = keyValues[columnInfo.PropertyInfo.Name];
-                    }
-
-                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                    builder.AppendSql(columnName);
-                    if (propValue == null)
-                    {
-                        builder.AppendSql(" IS NULL ");
-                    }
-                    else
-                    {
-                        builder.AppendSql(" = ");
-                        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                    }
-
-                    builder.AppendLine();
-
-                    counter++;
-                }
-
-            }
-
-            return builder.GetResult();
-        }
-
-
-        internal static (QueryBuilderResult builderResult, EntityTypeInfo entityInfo) GetSelectSql<T>(
+        internal static (QueryBuilderResult builderResult, EntityTypeInfo entityInfo) InternalGetSelectSql<T>(
             Expression<Func<T, bool>> predicate,
             string configName = null,
             bool writeIndented = false)
         {
-            var visitor = new PredicateVisitor();
-            var keyValues = visitor.GetKeyValues(predicate);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(T));
             var config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
+            var builder = new QueryStringBuilder(config, writeIndented);
+            //var visitor = new PredicateVisitor();
+            //var keyValues = visitor.GetKeyValues(predicate);
+            var entityInfo = EntityTypeInfoBuilder.Build(typeof(T));
 
             if (entityInfo.KeyColumns.Count == 0)
             {
@@ -474,7 +430,6 @@ namespace EasySqlParser.SqlGenerator
                 throw new InvalidOperationException("");
             }
 
-            var builder = new QueryStringBuilder(config, writeIndented);
             builder.AppendLine("SELECT ");
             var counter = 0;
             foreach (var columnInfo in entityInfo.Columns)
@@ -502,39 +457,41 @@ namespace EasySqlParser.SqlGenerator
             }
 
             builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
-            builder.AppendLine(" ");
-            builder.AppendLine("WHERE ");
-            counter = 0;
-            for (int i = 0; i < entityInfo.Columns.Count; i++)
-            {
-                var columnInfo = entityInfo.Columns[i];
-                if (!columnInfo.IsPrimaryKey) continue;
-                builder.AppendComma(counter);
-                object propValue = null;
-                if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
-                {
-                    propValue = keyValues[columnInfo.PropertyInfo.Name];
-                }
+            var visitor = new PredicateVisitor(builder, entityInfo);
+            visitor.BuildPredicate(predicate);
+            //builder.AppendLine(" ");
+            //builder.AppendLine("WHERE ");
+            //counter = 0;
+            //for (int i = 0; i < entityInfo.Columns.Count; i++)
+            //{
+            //    var columnInfo = entityInfo.Columns[i];
+            //    if (!columnInfo.IsPrimaryKey) continue;
+            //    builder.AppendComma(counter);
+            //    object propValue = null;
+            //    if (keyValues.ContainsKey(columnInfo.PropertyInfo.Name))
+            //    {
+            //        propValue = keyValues[columnInfo.PropertyInfo.Name];
+            //    }
 
-                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                builder.AppendSql(columnName);
-                if (propValue == null)
-                {
-                    builder.AppendSql(" IS NULL ");
-                }
-                else
-                {
-                    builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                }
+            //    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+            //    builder.AppendSql(columnName);
+            //    if (propValue == null)
+            //    {
+            //        builder.AppendSql(" IS NULL ");
+            //    }
+            //    else
+            //    {
+            //        builder.AppendSql(" = ");
+            //        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+            //    }
 
-                if (i < entityInfo.Columns.Count - 1)
-                {
-                    builder.AppendLine();
-                }
+            //    if (i < entityInfo.Columns.Count - 1)
+            //    {
+            //        builder.AppendLine();
+            //    }
 
-                counter++;
-            }
+            //    counter++;
+            //}
 
             return (builder.GetResult(), entityInfo);
 
@@ -578,6 +535,109 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
+        public static QueryBuilderResult GetCountSql<T>(
+            Expression<Func<T, bool>> predicate = null,
+            IQueryBuilderConfiguration configuration = null,
+            string configName = null)
+            where T : class
+        {
+            var entityInfo = configuration == null
+                ? EntityTypeInfoBuilder.Build(typeof(T))
+                : configuration.GetEntityTypeInfo(typeof(T));
+            var config = configName == null
+                ? ConfigContainer.DefaultConfig
+                : ConfigContainer.AdditionalConfigs[configName];
+            var writeIndented = configuration?.WriteIndented ?? false;
+            var builder = new QueryStringBuilder(config, writeIndented);
+            builder.AppendSql("SELECT COUNT(*) CNT FROM ");
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
+            if (predicate != null)
+            {
+                var visitor = new PredicateVisitor(builder, entityInfo);
+                visitor.BuildPredicate(predicate);
+            }
+            return builder.GetResult();
+
+        }
+
+        public static QueryBuilderResult GetUpdateSql<T>(T entity, Expression<Func<T, bool>> predicate,
+            IQueryBuilderConfiguration configuration,
+            bool excludeNull = false,
+            bool ignoreVersion = false,
+            string configName = null)
+            where T : class
+        {
+            var builderParameter = new QueryBuilderParameter(entity, SqlKind.Update, configuration,
+                excludeNull: excludeNull, ignoreVersion: ignoreVersion, configName: configName);
+            return GetUpdateSql(builderParameter, predicate);
+        }
+
+        public static QueryBuilderResult GetDeleteSql<T>(T entity, Expression<Func<T, bool>> predicate,
+            IQueryBuilderConfiguration configuration,
+            bool excludeNull = false,
+            bool ignoreVersion = false,
+            string configName = null)
+            where T : class
+        {
+            var builderParameter = new QueryBuilderParameter(entity, SqlKind.Delete, configuration,
+                excludeNull: excludeNull, ignoreVersion: ignoreVersion, configName: configName);
+            return GetDeleteSql(builderParameter, predicate);
+        }
+
+        public static QueryBuilderResult GetSelectSql<T>(Expression<Func<T, bool>> predicate,
+            IQueryBuilderConfiguration configuration,
+            string configName = null)
+            where T : class
+        {
+            var config = configName == null
+                ? ConfigContainer.DefaultConfig
+                : ConfigContainer.AdditionalConfigs[configName];
+            var builder = new QueryStringBuilder(config, configuration.WriteIndented);
+            var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
+            builder.AppendLine("SELECT ");
+            var counter = 0;
+            foreach (var columnInfo in entityInfo.Columns)
+            {
+                builder.AppendComma(counter);
+                builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
+
+                counter++;
+
+            }
+
+            if (!configuration.WriteIndented)
+            {
+                builder.AppendSql(" ");
+            }
+
+            builder.AppendLine("FROM ");
+            if (configuration.WriteIndented)
+            {
+                builder.AppendIndent(3);
+            }
+
+            if (!string.IsNullOrEmpty(entityInfo.SchemaName))
+            {
+                builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.SchemaName));
+                builder.AppendSql(".");
+            }
+
+            builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
+            if (predicate == null)
+            {
+                return builder.GetResult();
+            }
+            var visitor = new PredicateVisitor(builder, entityInfo);
+            visitor.BuildPredicate(predicate);
+            return builder.GetResult();
+        }
+
         private static QueryBuilderResult GetInsertSql(QueryBuilderParameter parameter)
         {
             var entityInfo = parameter.EntityTypeInfo;
@@ -595,10 +655,10 @@ namespace EasySqlParser.SqlGenerator
             var counter = 0;
             foreach (var columnInfo in entityInfo.Columns)
             {
-                if (parameter.ExcludeNull)
+                var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
+                if (builder.IsNull(parameter, propValue))
                 {
-                    var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                    if (propValue == null) continue;
+                    continue;
                 }
 
                 if (columnInfo.IsIdentity)
@@ -667,7 +727,10 @@ namespace EasySqlParser.SqlGenerator
                     continue;
                 }
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                if (parameter.ExcludeNull && propValue == null) continue;
+                if (builder.IsNull(parameter, propValue))
+                {
+                    continue;
+                }
                 builder.AppendComma(counter);
                 if (columnInfo.IsVersion)
                 {
@@ -796,7 +859,7 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        private static QueryBuilderResult GetUpdateSql(QueryBuilderParameter parameter)
+        private static QueryBuilderResult GetUpdateSql(QueryBuilderParameter parameter, LambdaExpression predicate = null)
         {
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
@@ -821,7 +884,8 @@ namespace EasySqlParser.SqlGenerator
             {
                 if (columnInfo.IsPrimaryKey) continue;
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                if (parameter.ExcludeNull && propValue == null)
+
+                if (builder.IsNull(parameter, propValue))
                 {
                     continue;
                 }
@@ -868,33 +932,46 @@ namespace EasySqlParser.SqlGenerator
                 counter++;
             }
 
-            builder.AppendLine("WHERE ");
-            counter = 0;
-            for (int i = 0; i < entityInfo.Columns.Count; i++)
+            void NormalPredicateBuild()
             {
-                var columnInfo = entityInfo.Columns[i];
-                if (parameter.IgnoreVersion && columnInfo.IsVersion) continue;
-                if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
-                builder.AppendAnd(counter);
-                var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                builder.AppendSql(columnName);
-                if (propValue == null)
+                builder.AppendLine("WHERE ");
+                counter = 0;
+                for (int i = 0; i < entityInfo.Columns.Count; i++)
                 {
-                    builder.AppendSql(" IS NULL ");
-                }
-                else
-                {
-                    builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                }
+                    var columnInfo = entityInfo.Columns[i];
+                    if (parameter.IgnoreVersion && columnInfo.IsVersion) continue;
+                    if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
+                    builder.AppendAnd(counter);
+                    var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                    builder.AppendSql(columnName);
+                    if (propValue == null)
+                    {
+                        builder.AppendSql(" IS NULL ");
+                    }
+                    else
+                    {
+                        builder.AppendSql(" = ");
+                        builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    }
 
-                if (i < entityInfo.Columns.Count - 1)
-                {
-                    builder.AppendLine();
-                }
+                    if (i < entityInfo.Columns.Count - 1)
+                    {
+                        builder.AppendLine();
+                    }
 
-                counter++;
+                    counter++;
+                }
+            }
+
+            if (predicate == null)
+            {
+                NormalPredicateBuild();
+            }
+            else
+            {
+                var visitor = new PredicateVisitor(builder, entityInfo);
+                visitor.BuildPredicate(predicate);
             }
 
             AppendFinalTableSelectCommandTerminator(builder, parameter);
@@ -904,7 +981,7 @@ namespace EasySqlParser.SqlGenerator
             return builder.GetResult();
         }
 
-        private static QueryBuilderResult GetDeleteSql(QueryBuilderParameter parameter)
+        private static QueryBuilderResult GetDeleteSql(QueryBuilderParameter parameter, LambdaExpression predicate = null)
         {
             var entityInfo = parameter.EntityTypeInfo;
             var config = parameter.Config;
@@ -922,22 +999,36 @@ namespace EasySqlParser.SqlGenerator
                 builder.AppendSql(".");
             }
             builder.AppendSql(config.Dialect.ApplyQuote(entityInfo.TableName));
-            builder.AppendLine(" WHERE ");
-            var counter = 0;
-            foreach (var columnInfo in entityInfo.Columns)
+
+            void NormalPredicateBuild()
             {
-                if (parameter.IgnoreVersion && columnInfo.IsVersion) continue;
-                if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
-                builder.AppendAnd(counter);
-                var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
-                var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
-                builder.AppendSql(columnName);
-                builder.AppendSql(" = ");
-                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
-                builder.AppendLine();
+                builder.AppendLine(" WHERE ");
+                var counter = 0;
+                foreach (var columnInfo in entityInfo.Columns)
+                {
+                    if (parameter.IgnoreVersion && columnInfo.IsVersion) continue;
+                    if (!columnInfo.IsPrimaryKey && !columnInfo.IsVersion) continue;
+                    builder.AppendAnd(counter);
+                    var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
+                    var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
+                    builder.AppendSql(columnName);
+                    builder.AppendSql(" = ");
+                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendLine();
 
 
-                counter++;
+                    counter++;
+                }
+            }
+
+            if (predicate == null)
+            {
+                NormalPredicateBuild();
+            }
+            else
+            {
+                var visitor = new PredicateVisitor(builder, entityInfo);
+                visitor.BuildPredicate(predicate);
             }
 
             return builder.GetResult();
