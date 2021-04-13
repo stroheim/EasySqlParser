@@ -25,6 +25,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
         public int CommandTimeout { get; }
         public bool WriteIndented { get; set; }
         public QueryBehavior QueryBehavior { get; }
+        public ExcludeNullBehavior ExcludeNullBehavior { get; internal set; }
         public Action<string> LoggerAction { get; }
         public void BuildCache()
         {

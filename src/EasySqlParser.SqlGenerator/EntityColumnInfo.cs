@@ -42,12 +42,14 @@ namespace EasySqlParser.SqlGenerator
         public bool IsDateTime { get; set; }
 
         /// <summary>
-        /// Ef Core ValueConverter#ConvertToProvider
+        /// Ef Core ValueConverter#ConvertToProvider.
+        /// Write to data store.
         /// </summary>
         public Func<object, object> ConvertToProvider { get; set; }
 
         /// <summary>
-        /// Ef Core ValueConverter#ConvertFromProvider
+        /// Ef Core ValueConverter#ConvertFromProvider.
+        /// Read from data store.
         /// </summary>
         public Func<object, object> ConvertFromProvider { get; set; }
 

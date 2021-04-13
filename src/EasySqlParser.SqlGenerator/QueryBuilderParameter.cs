@@ -65,22 +65,6 @@ namespace EasySqlParser.SqlGenerator
 
     }
 
-    public class QueryBuilderConfiguration : QueryBuilderConfigurationBase
-    {
-
-        public QueryBuilderConfiguration(
-            IEnumerable<Assembly> entityAssemblies,
-            int commandTimeout = 30,
-            bool writeIndented = true,
-            QueryBehavior queryBehavior = QueryBehavior.None,
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
-            Action<string> loggerAction = null
-        ) : base(entityAssemblies, commandTimeout, writeIndented, queryBehavior, excludeNullBehavior, loggerAction)
-        {
-
-        }
-
-    }
 
     public class QueryBuilderParameter
     {
@@ -321,9 +305,19 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
+        public bool ThrowableOptimisticLockException()
+        {
+            return (SqlKind == SqlKind.Update || 
+                    SqlKind == SqlKind.Delete || 
+                    SqlKind == SqlKind.SoftDelete) &&
+                   UseVersion && !SuppressOptimisticLockException;
+        }
+
         public bool ThrowableOptimisticLockException(int affectedCount)
         {
-            return (SqlKind == SqlKind.Update || SqlKind == SqlKind.Delete || SqlKind == SqlKind.SoftDelete) &&
+            return (SqlKind == SqlKind.Update || 
+                    SqlKind == SqlKind.Delete || 
+                    SqlKind == SqlKind.SoftDelete) &&
                    UseVersion && !SuppressOptimisticLockException
                    && affectedCount == 0;
         }

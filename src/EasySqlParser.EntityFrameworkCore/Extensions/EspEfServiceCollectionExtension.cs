@@ -11,22 +11,27 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 {
     public static class EspEfServiceCollectionExtension
     {
-        public static IServiceCollection AddQueryBuilderConfiguration(this IServiceCollection services,
+        public static IServiceCollection AddQueryBuilderConfiguration(
+            this IServiceCollection services,
             int commandTimeout = 30,
             bool writeIndented = true,
             QueryBehavior queryBehavior = QueryBehavior.None,
+            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
             IEnumerable<Assembly> additionalAssemblies = null)
         {
             services
                 .AddSingleton<IQueryBuilderConfiguration>(s =>
                                                           {
                                                               var dbContext = s.GetRequiredService<DbContext>();
-                                                              var logger = s.GetRequiredService<ILogger<EfCoreQueryBuilderConfiguration>>();
+                                                              var logger =
+                                                                  s.GetRequiredService<
+                                                                      ILogger<EfCoreQueryBuilderConfiguration>>();
                                                               return new EfCoreQueryBuilderConfiguration(dbContext,
                                                                   logger,
                                                                   commandTimeout,
                                                                   writeIndented,
                                                                   queryBehavior,
+                                                                  excludeNullBehavior,
                                                                   additionalAssemblies);
                                                           });
             return services;

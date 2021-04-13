@@ -10,6 +10,10 @@ namespace EasySqlParser.Dapper
 {
     public class DapperQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
+        private readonly IEnumerable<Assembly> _entityAssemblies;
+        private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
+        
+
         public DapperQueryBuilderConfiguration(
             IEnumerable<Assembly> entityAssemblies,
             int commandTimeout = 30,
@@ -24,13 +28,24 @@ namespace EasySqlParser.Dapper
             excludeNullBehavior,
             loggerAction)
         {
-            DapperMapBuilder.CreateMap(entityAssemblies);
+            _entityAssemblies = entityAssemblies;
+        }
+
+        protected override void InternalBuildCache()
+        {
+            var prepare= DapperMapBuilder.CreateMap(_entityAssemblies);
+            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
+        }
+
+        public override EntityTypeInfo GetEntityTypeInfo(Type type)
+        {
+            return _hashDictionary.Get(type);
         }
     }
 
     internal static class DapperMapBuilder
     {
-        internal static void CreateMap(IEnumerable<Assembly> assemblies)
+        internal static KeyValuePair<Type, EntityTypeInfo>[] CreateMap(IEnumerable<Assembly> assemblies)
         {
             var keyValuePairs = EntityTypeInfoBuilder.Build(assemblies);
             foreach (var pair in keyValuePairs)
@@ -45,6 +60,7 @@ namespace EasySqlParser.Dapper
                 SqlMapper.SetTypeMap(pair.Key, map);
             }
 
+            return keyValuePairs;
         }
     }
 }

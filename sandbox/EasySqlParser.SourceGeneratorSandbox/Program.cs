@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using EasySqlParser.Configurations;
+using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGeneratorSandbox.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,7 @@ namespace EasySqlParser.SourceGeneratorSandbox
                                                                         {
                                                                             options.UseSqlServer("");
                                                                         });
+                                       services.AddQueryBuilderConfiguration();
                                    })
                 .ConfigureLogging((context, b) =>
                                   {

@@ -28,11 +28,13 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 
     public class EmployeeDaoFuga:IEmployeeDaoFuga
     {
-        private readonly ILogger<EmployeeDaoFuga> _logger;
         private readonly DbContext _context;
-        public EmployeeDaoFuga(DbContext context, ILogger<EmployeeDaoFuga> logger)
+        private readonly IQueryBuilderConfiguration _configuration;
+        private readonly ILogger<EmployeeDaoFuga> _logger;
+        public EmployeeDaoFuga(DbContext context, IQueryBuilderConfiguration configuration, ILogger<EmployeeDaoFuga> logger)
         {
             _context = context;
+            _configuration = configuration;
             _logger = logger;
         }
 

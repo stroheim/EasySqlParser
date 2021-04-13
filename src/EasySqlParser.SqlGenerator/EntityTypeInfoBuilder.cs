@@ -165,6 +165,7 @@ namespace EasySqlParser.SqlGenerator
             entityInfo.Columns = columns.AsReadOnly();
             entityInfo.KeyColumns = keyColumns.AsReadOnly();
             entityInfo.SequenceColumns = sequenceColumns.AsReadOnly();
+            entityInfo.ColumnNameKeyDictionary = columns.ToDictionary(x => x.ColumnName, x => x);
             return entityInfo;
         }
     }

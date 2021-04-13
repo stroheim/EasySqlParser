@@ -17,7 +17,7 @@ namespace EasySqlParser.EntityFrameworkCore
         private readonly ILogger<EfCoreQueryBuilderConfiguration> _logger;
         private readonly DbContext _dbContext;
         private readonly IEnumerable<Assembly> _assemblies;
-        private TypeHashDictionary<EntityTypeInfo> _hashDictionary;
+        private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
 
 
         protected override void InternalBuildCache()
@@ -44,8 +44,7 @@ namespace EasySqlParser.EntityFrameworkCore
             QueryBehavior queryBehavior = QueryBehavior.None,
             ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
             IEnumerable<Assembly> additionalAssemblies = null) : base(
-            // ReSharper disable once PossibleMultipleEnumeration
-            additionalAssemblies,
+            null,
             commandTimeout,
             writeIndented,
             queryBehavior,
@@ -55,7 +54,6 @@ namespace EasySqlParser.EntityFrameworkCore
             _dbContext = dbContext;
             _logger = logger;
             LoggerAction = WriteLog;
-            // ReSharper disable once PossibleMultipleEnumeration
             _assemblies = additionalAssemblies;
         }
     }
@@ -197,6 +195,7 @@ namespace EasySqlParser.EntityFrameworkCore
             entityInfo.Columns = columns.AsReadOnly();
             entityInfo.KeyColumns = keyColumns.AsReadOnly();
             entityInfo.SequenceColumns = sequenceColumns.AsReadOnly();
+            entityInfo.ColumnNameKeyDictionary = columns.ToDictionary(x => x.ColumnName, x => x);
             return entityInfo;
         }
     }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using EasySqlParser.SqlGenerator.Helpers;
 
 namespace EasySqlParser.SqlGenerator
 {
@@ -12,104 +13,11 @@ namespace EasySqlParser.SqlGenerator
     {
         // non generic
 
-        public static bool TryGenerateSequence<TResult>(this DbConnection connection,
-            QueryBuilderParameter builderParameter,
-            SequenceGeneratorAttribute attribute,
-            out TResult sequenceValue,
-            Func<decimal, TResult> converter = null)
-        {
-            var config = builderParameter.Config;
-            if (!config.Dialect.SupportsSequence)
-            {
-                sequenceValue = default;
-                return false;
-            }
-
-            var sql = attribute.GetSequenceGeneratorSql(config);
-            builderParameter.WriteLog(sql);
-            object rawResult;
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = sql;
-                rawResult = command.ExecuteScalar();
-                if ((config.DbConnectionKind == DbConnectionKind.Oracle ||
-                     config.DbConnectionKind == DbConnectionKind.OracleLegacy) &&
-                    converter != null)
-                {
-                    sequenceValue = converter.Invoke((decimal)rawResult);
-                    return true;
-                }
-
-                if (config.DbConnectionKind == DbConnectionKind.PostgreSql &&
-                    converter != null)
-                {
-                    sequenceValue = converter.Invoke((long)rawResult);
-                    return true;
-                }
-
-                if (rawResult is TResult result)
-                {
-                    sequenceValue = result;
-                    return true;
-                }
-            }
-
-            // error
-            // not match TResult
-            var message = $"戻されたシーケンスの型が期待されたものではありませんでした。期待された型：{typeof(TResult).Name} 実際の型：{rawResult.GetType().Name}";
-            throw new InvalidOperationException(message);
-        }
-
-        public static async Task<(bool isSuccess, TResult sequenceValue)> TryGenerateSequenceAsync<TResult>(
-            this DbConnection connection,
-            QueryBuilderParameter builderParameter,
-            SequenceGeneratorAttribute attribute,
-            CancellationToken cancellationToken = default,
-            Func<decimal, TResult> converter = null)
-        {
-            var config = builderParameter.Config;
-            if (!config.Dialect.SupportsSequence)
-            {
-                return (false, default);
-            }
-
-            var sql = attribute.GetSequenceGeneratorSql(config);
-            builderParameter.WriteLog(sql);
-            object rawResult;
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = sql;
-                rawResult = await command.ExecuteScalarAsync(cancellationToken);
-                if ((config.DbConnectionKind == DbConnectionKind.Oracle ||
-                     config.DbConnectionKind == DbConnectionKind.OracleLegacy) &&
-                    converter != null)
-                {
-                    return (true, converter.Invoke((decimal)rawResult));
-                }
-
-                if (config.DbConnectionKind == DbConnectionKind.PostgreSql &&
-                    converter != null)
-                {
-                    return (true, converter.Invoke((long)rawResult));
-                }
-
-                if (rawResult is TResult result)
-                {
-                    return (true, result);
-                }
-            }
-
-            // error
-            // not match TResult
-            var message = $"戻されたシーケンスの型が期待されたものではありませんでした。期待された型：{typeof(TResult).Name} 実際の型：{rawResult.GetType().Name}";
-            throw new InvalidOperationException(message);
-        }
-
         public static int ExecuteNonQueryByQueryBuilder(this DbConnection connection,
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null)
         {
-            connection.PreInsert(builderParameter);
+            SequenceHelper.Generate(connection, builderParameter);
 
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
@@ -159,7 +67,7 @@ namespace EasySqlParser.SqlGenerator
             DbTransaction transaction = null,
             CancellationToken cancellationToken = default)
         {
-            await connection.PreInsertAsync(builderParameter);
+            await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
 
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
@@ -181,15 +89,18 @@ namespace EasySqlParser.SqlGenerator
                 {
                     case CommandExecutionType.ExecuteNonQuery:
                         affectedCount =
-                            await command.ConsumeNonQueryAsync(builderParameter, cancellationToken);
+                            await command.ConsumeNonQueryAsync(builderParameter, cancellationToken)
+                                .ConfigureAwait(false);
                         break;
                     case CommandExecutionType.ExecuteReader:
                         affectedCount =
-                            await command.ConsumeReaderAsync(builderParameter, cancellationToken);
+                            await command.ConsumeReaderAsync(builderParameter, cancellationToken)
+                                .ConfigureAwait(false);
                         break;
                     case CommandExecutionType.ExecuteScalar:
                         affectedCount =
-                            await command.ConsumeScalarAsync(builderParameter, cancellationToken);
+                            await command.ConsumeScalarAsync(builderParameter, cancellationToken)
+                                .ConfigureAwait(false);
                         break;
                     default:
                         // TODO: error
