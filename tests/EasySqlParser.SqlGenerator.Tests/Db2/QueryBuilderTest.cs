@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using EasySqlParser.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
 using IBM.Data.DB2.Core;
 using Xunit;
 using Xunit.Abstractions;

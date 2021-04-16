@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Text;
 using EasySqlParser.Configurations;
 using EasySqlParser.Extensions;
+using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
 {

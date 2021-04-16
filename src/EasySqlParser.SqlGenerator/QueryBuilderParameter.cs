@@ -3,68 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using EasySqlParser.Configurations;
+using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
 {
-    public interface IQueryBuilderConfiguration
-    {
-        int CommandTimeout { get; }
-        bool WriteIndented { get; }
-        QueryBehavior QueryBehavior { get; }
-        ExcludeNullBehavior ExcludeNullBehavior { get; }
-        Action<string> LoggerAction { get; }
-
-        EntityTypeInfo GetEntityTypeInfo(Type type);
-
-
-    }
-
-    public abstract class QueryBuilderConfigurationBase : IQueryBuilderConfiguration
-    {
-        public int CommandTimeout { get; }
-        public bool WriteIndented { get; }
-        public QueryBehavior QueryBehavior { get; }
-        public ExcludeNullBehavior ExcludeNullBehavior { get; }
-        public Action<string> LoggerAction { get; set; }
-        public virtual EntityTypeInfo GetEntityTypeInfo(Type type)
-        {
-            return _hashDictionary.Get(type);
-        }
-        private readonly IEnumerable<Assembly> _assemblies;
-        private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
-
-        protected QueryBuilderConfigurationBase(
-            IEnumerable<Assembly> entityAssemblies,
-            int commandTimeout = 30,
-            bool writeIndented = true,
-            QueryBehavior queryBehavior = QueryBehavior.None,
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
-            Action<string> loggerAction = null
-        )
-        {
-            _assemblies = entityAssemblies;
-            CommandTimeout = commandTimeout;
-            WriteIndented = writeIndented;
-            QueryBehavior = queryBehavior;
-            ExcludeNullBehavior = excludeNullBehavior;
-            LoggerAction = loggerAction;
-            BuildCache();
-        }
-
-        private void BuildCache()
-        {
-            if (_assemblies == null) return;
-            InternalBuildCache();
-        }
-
-        protected virtual void InternalBuildCache()
-        {
-            var prepare = EntityTypeInfoBuilder.Build(_assemblies);
-            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
-        }
-
-    }
-
 
     public class QueryBuilderParameter
     {
@@ -325,58 +269,7 @@ namespace EasySqlParser.SqlGenerator
     }
 
 
-    public enum SqlKind
-    {
-        Insert,
-        Update,
-        Delete,
-        SoftDelete
-    }
 
-    /// <summary>
-    /// INSERT または UPDATE 時の動作
-    /// </summary>
-    public enum QueryBehavior
-    {
-        /// <summary>
-        /// 無し
-        /// エンティティに変更結果は戻されない
-        /// </summary>
-        None,
-        /// <summary>
-        /// 自動採番列の値のみエンティティに戻される
-        /// </summary>
-        IdentityOnly,
-        /// <summary>
-        /// 全ての値がエンティティに戻される
-        /// </summary>
-        AllColumns,
-        /// <summary>
-        /// 自動採番列があればその値のみを
-        /// そうでない場合はすべての列がエンティティに戻される
-        /// </summary>
-        IdentityOrAllColumns
-    }
 
-    public enum CommandExecutionType
-    {
-        ExecuteReader,
-        ExecuteNonQuery,
-        ExecuteScalar
-    }
 
-    /// <summary>
-    /// ExcludeNull の動作
-    /// </summary>
-    public enum ExcludeNullBehavior
-    {
-        /// <summary>
-        /// nullのみを除外
-        /// </summary>
-        NullOnly,
-        /// <summary>
-        /// null,<see cref="string.Empty"/>,default value of <see cref="ValueType"/> を除外
-        /// </summary>
-        NullOrEmptyOrDefaultValue
-    }
 }

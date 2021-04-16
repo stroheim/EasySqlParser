@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;

@@ -2,6 +2,8 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using EasySqlParser.SqlGenerator.Attributes;
+using EasySqlParser.SqlGenerator.Enums;
 
 namespace EasySqlParser.SqlGenerator.Helpers
 {

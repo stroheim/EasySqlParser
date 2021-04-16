@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class SoftDeleteKeyAttribute : Attribute

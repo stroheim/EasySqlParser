@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Attributes;
 
 namespace EasySqlParser.EntityFrameworkCore.Tests
 {

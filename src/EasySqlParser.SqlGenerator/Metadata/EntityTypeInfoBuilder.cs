@@ -5,8 +5,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using EasySqlParser.Extensions;
+using EasySqlParser.SqlGenerator.Attributes;
+using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Metadata
 {
     public static class EntityTypeInfoBuilder
     {

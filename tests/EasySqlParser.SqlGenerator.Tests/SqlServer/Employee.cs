@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using EasySqlParser.SqlGenerator.Attributes;
+using EasySqlParser.SqlGenerator.Enums;
 
 namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 {

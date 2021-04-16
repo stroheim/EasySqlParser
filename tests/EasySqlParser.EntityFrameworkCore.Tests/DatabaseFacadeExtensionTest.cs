@@ -2,6 +2,7 @@
 using EasySqlParser.Configurations;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Xunit;

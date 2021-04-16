@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Metadata
 {
     public class EntityTypeInfo
     {

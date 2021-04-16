@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class CurrentUserAttribute : Attribute

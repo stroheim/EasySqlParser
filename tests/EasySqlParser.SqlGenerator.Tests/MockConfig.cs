@@ -5,6 +5,9 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator.Tests
 {

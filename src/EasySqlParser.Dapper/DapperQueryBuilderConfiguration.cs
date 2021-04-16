@@ -5,6 +5,9 @@ using System.Reflection;
 using System.Text;
 using Dapper;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.Dapper
 {

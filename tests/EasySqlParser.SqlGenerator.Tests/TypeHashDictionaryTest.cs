@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using EasySqlParser.SqlGenerator.Metadata;
 using EasySqlParser.SqlGenerator.Tests.SqlServer;
 using Xunit;
 

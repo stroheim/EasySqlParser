@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class EntityAttribute : Attribute
@@ -11,14 +11,6 @@ namespace EasySqlParser.SqlGenerator
         public Naming Naming { get; set; } = Naming.None;
     }
 
-    public enum Naming
-    {
-        None,
-        LowerCase,
-        UpperCase,
-        SnakeLowerCase,
-        SnakeUpperCase
-    }
 
     internal static class NamingExtension
     {

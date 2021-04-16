@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

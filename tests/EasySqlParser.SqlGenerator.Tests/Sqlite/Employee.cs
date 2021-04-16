@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using EasySqlParser.SqlGenerator.Attributes;
 
 namespace EasySqlParser.SqlGenerator.Tests.Sqlite
 {

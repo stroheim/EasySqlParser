@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using EasySqlParser.Configurations;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Attributes
 {
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class SequenceGeneratorAttribute : Attribute

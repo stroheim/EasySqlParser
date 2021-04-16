@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using Dapper;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Helpers;
 
 namespace EasySqlParser.Dapper.Extensions
@@ -35,7 +36,6 @@ namespace EasySqlParser.Dapper.Extensions
         {
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
-
             int affectedCount;
             await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
             builderParameter.SaveExpectedVersion();

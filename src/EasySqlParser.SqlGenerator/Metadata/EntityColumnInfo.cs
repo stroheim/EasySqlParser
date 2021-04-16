@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Reflection;
-using System.Text;
+using EasySqlParser.SqlGenerator.Attributes;
 
-namespace EasySqlParser.SqlGenerator
+namespace EasySqlParser.SqlGenerator.Metadata
 {
     public class EntityColumnInfo
     {

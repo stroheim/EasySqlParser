@@ -6,7 +6,10 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Helpers;
+using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
 {

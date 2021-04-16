@@ -7,10 +7,11 @@ using EasySqlParser;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGenerator;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SqlKind = EasySqlParser.SqlGenerator.SqlKind;
+using SqlKind = EasySqlParser.SqlGenerator.Enums.SqlKind;
 
 #nullable disable
 
