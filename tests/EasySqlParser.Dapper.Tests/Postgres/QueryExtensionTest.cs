@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
-using Microsoft.Data.Sqlite;
+using Npgsql;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.Sqlite
+namespace EasySqlParser.Dapper.Tests.Postgres
 {
     public class QueryExtensionTest : IClassFixture<DatabaseFixture>
     {
@@ -21,11 +21,9 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
             _fixture = fixture;
             _output = output;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
-
             ConfigContainer.AddDefault(
-                DbConnectionKind.SQLite,
-                () => new SqliteParameter()
+                DbConnectionKind.PostgreSql,
+                () => new NpgsqlParameter()
             );
         }
 
@@ -38,7 +36,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                                Name = "Jane Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -52,7 +50,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                                Name = "Scott Rodgers"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -67,7 +65,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                                  Height = 185
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
@@ -81,43 +79,58 @@ namespace EasySqlParser.SqlGenerator.Tests.Sqlite
                                  Height = 165
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
+        }
+
+
+        [Fact]
+        public void Test_insert_sequence()
+        {
+            var series = new MetalGearSeries
+                         {
+                             Name = "METAL GEAR2 SOLID SNAKE",
+                             ReleaseDate = new DateTime(1990, 7, 20),
+                             Platform = "MSX2"
+                         };
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.Execute(parameter);
+            affected.Is(1);
+            _output.WriteLine(series.GetDebugString());
+        }
+
+
+        [Fact]
+        public async Task Test_insert_sequence_async()
+        {
+            var series = new MetalGearSeries
+                         {
+                             Name = "METAL GEAR SOLID",
+                             ReleaseDate = new DateTime(1998, 9, 3),
+                             Platform = "PlayStation"
+                         };
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
+            affected.Is(1);
+            _output.WriteLine(series.GetDebugString());
         }
 
         [Fact]
-        public void Test_insert_identity_select_identity_only()
+        public void Test_multiple_sequence()
         {
-            var characters = new Characters
-                             {
-                                 Name = "Mei Ling",
-                                 Height = 160
-                             };
-            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
-            localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var employee = new EmployeeSeq
+                           {
+                               Name = "John Doe"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
-            _output.WriteLine(characters.GetDebugString());
+            employee.ShortCol.Is((short)1);
+            employee.IntCol.Is(1);
+            employee.LongCol.Is(1L);
+            employee.StringCol.Is("T000001");
         }
-
-        [Fact]
-        public async Task Test_insert_identity_select_identity_only_async()
-        {
-            var characters = new Characters
-                             {
-                                 Name = "Nastasha Romanenko",
-                                 Height = 171
-                             };
-            var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
-            localConfig.WriteIndented = true;
-            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
-            affected.Is(1);
-            _output.WriteLine(characters.GetDebugString());
-        }
-
 
     }
 }

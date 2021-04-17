@@ -1,30 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator.Tests.Postgres
+namespace EasySqlParser.Dapper.Tests.Oracle
 {
     [Entity]
-    [Table("MetalGearSeries")]
-    public class MetalGearSeries
+    [Table("MetalGearCharacters")]
+    public class Characters
     {
         [Key]
-        [SequenceGenerator("METAL_GEAR_SERIES_SEQ")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("ID")]
         public int Id { get; set; }
 
         [Column("NAME")]
+        [StringLength(30)]
         public string Name { get; set; }
 
-        [Column("RELEASE_DATE")]
-        public DateTime ReleaseDate { get; set; }
-
-        [Column("PLATFORM")]
-        public string Platform { get; set; }
+        [Column("HEIGHT")]
+        public decimal? Height { get; set; }
 
         [CurrentTimestamp("CURRENT_TIMESTAMP", GenerationStrategy.Insert)]
         [Column("CREATE_DATE")]
@@ -39,8 +36,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
             var builder = new StringBuilder();
             builder.AppendLine($"{nameof(Id)}\t{Id}");
             builder.AppendLine($"{nameof(Name)}\t{Name}");
-            builder.AppendLine($"{nameof(ReleaseDate)}\t{ReleaseDate}");
-            builder.AppendLine($"{nameof(Platform)}\t{Platform}");
+            builder.AppendLine($"{nameof(Height)}\t{Height}");
             builder.AppendLine($"{nameof(CreateDate)}\t{CreateDate}");
             builder.AppendLine($"{nameof(VersionNo)}\t{VersionNo}");
             return builder.ToString();

@@ -98,7 +98,12 @@ namespace EasySqlParser.SqlGenerator
 
         public void ResetEntity(object entity)
         {
-            Entity = entity;
+            foreach (var columnInfo in EntityTypeInfo.Columns)
+            {
+                var value = columnInfo.PropertyInfo.GetValue(entity);
+                columnInfo.PropertyInfo.SetValue(Entity, value);
+            }
+            //Entity = entity;
             EntityType = entity.GetType();
         }
 

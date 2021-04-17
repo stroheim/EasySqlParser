@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator.Tests.Oracle
+namespace EasySqlParser.Dapper.Tests.Sqlite
 {
     [Entity]
     [Table("MetalGearCharacters")]
@@ -18,11 +17,10 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
         public int Id { get; set; }
 
         [Column("NAME")]
-        [StringLength(30)]
         public string Name { get; set; }
 
         [Column("HEIGHT")]
-        public decimal? Height { get; set; }
+        public double? Height { get; set; }
 
         [CurrentTimestamp("CURRENT_TIMESTAMP", GenerationStrategy.Insert)]
         [Column("CREATE_DATE")]

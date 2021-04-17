@@ -32,6 +32,13 @@ namespace EasySqlParser.Dapper
             loggerAction)
         {
             _entityAssemblies = entityAssemblies;
+            BuildCache();
+        }
+
+        private void BuildCache()
+        {
+            if (_entityAssemblies == null) return;
+            InternalBuildCache();
         }
 
         protected override void InternalBuildCache()

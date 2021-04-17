@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
 
-namespace EasySqlParser.SqlGenerator.Tests.Db2
+namespace EasySqlParser.Dapper.Tests.Oracle
 {
     [Entity]
     [Table("MetalGearSeries")]
@@ -18,12 +17,14 @@ namespace EasySqlParser.SqlGenerator.Tests.Db2
         public int Id { get; set; }
 
         [Column("NAME")]
+        [StringLength(50)]
         public string Name { get; set; }
 
         [Column("RELEASE_DATE")]
         public DateTime ReleaseDate { get; set; }
 
         [Column("PLATFORM")]
+        [StringLength(60)]
         public string Platform { get; set; }
 
         [CurrentTimestamp("CURRENT_TIMESTAMP", GenerationStrategy.Insert)]

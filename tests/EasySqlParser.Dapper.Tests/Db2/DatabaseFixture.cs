@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.IO;
-using System.Text;
 using IBM.Data.DB2.Core;
 
-namespace EasySqlParser.SqlGenerator.Tests.Db2
+namespace EasySqlParser.Dapper.Tests.Db2
 {
     public class DatabaseFixture : IDisposable
     {

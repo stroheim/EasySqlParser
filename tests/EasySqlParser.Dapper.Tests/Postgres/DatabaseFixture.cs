@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 using Npgsql;
 
-namespace EasySqlParser.SqlGenerator.Tests.Postgres
+namespace EasySqlParser.Dapper.Tests.Postgres
 {
     public class DatabaseFixture : IDisposable
     {

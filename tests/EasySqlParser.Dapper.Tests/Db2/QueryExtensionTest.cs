@@ -1,59 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
-using MySql.Data.MySqlClient;
+using EasySqlParser.SqlGenerator.Tests.Db2;
+using IBM.Data.DB2.Core;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.MySql
+namespace EasySqlParser.Dapper.Tests.Db2
 {
     public class QueryExtensionTest : IClassFixture<DatabaseFixture>
     {
         private readonly DatabaseFixture _fixture;
         private readonly ITestOutputHelper _output;
         private readonly MockConfig _mockConfig;
-
         public QueryExtensionTest(DatabaseFixture fixture, ITestOutputHelper output)
         {
             _fixture = fixture;
             _output = output;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
-
             ConfigContainer.AddDefault(
-                DbConnectionKind.MySql,
-                () => new MySqlParameter()
+                DbConnectionKind.DB2,
+                () => new DB2Parameter()
             );
-
         }
 
         [Fact]
         public void Test_insert_default()
         {
+            //using var connection = Fixture.Connection;
             var employee = new Employee
                            {
                                Id = 11,
                                Name = "Jane Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
-            affected.Is(1);
-            _output.WriteLine(employee.GetDebugString());
-        }
-
-        [Fact]
-        public async Task Test_insert_default_async()
-        {
-            var employee = new Employee
-                           {
-                               Id = 12,
-                               Name = "Scott Rodgers"
-                           };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -67,23 +50,41 @@ namespace EasySqlParser.SqlGenerator.Tests.MySql
                                  Height = 185
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
 
         [Fact]
-        public async Task Test_insert_identity_async()
+        public void Test_insert_sequence()
         {
-            var characters = new Characters
-                             {
-                                 Name = "Naomi Hunter",
-                                 Height = 165
-                             };
-            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var series = new MetalGearSeries
+                         {
+                             Name = "METAL GEAR2 SOLID SNAKE",
+                             ReleaseDate = new DateTime(1990, 7, 20),
+                             Platform = "MSX2"
+                         };
+            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
-            _output.WriteLine(characters.GetDebugString());
+            _output.WriteLine(series.GetDebugString());
+        }
+
+        [Fact]
+        public void Test_multiple_sequence()
+        {
+            var employee = new EmployeeSeq
+                           {
+                               Name = "John Doe"
+                           };
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var affected = _fixture.Connection.Execute(parameter);
+            affected.Is(1);
+            employee.ShortCol.Is((short)1);
+            employee.IntCol.Is(1);
+            employee.LongCol.Is(1L);
+            employee.DecimalCol.Is(1M);
+            employee.StringCol.Is("T000001");
         }
 
     }

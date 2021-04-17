@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.SqlServer
+namespace EasySqlParser.Dapper.Tests.SqlServer
 {
     public class SequenceTest : IClassFixture<SequenceFixture>
     {
@@ -21,7 +21,6 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
             _fixture = fixture;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, output.WriteLine);
-            _mockConfig.WriteIndented = true;
             _output = output;
 
         }
@@ -42,7 +41,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                          };
 
             var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             series.Id.IsNot(0);
             _output.WriteLine($"{series.Id}");
@@ -61,7 +60,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
             };
 
             var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             series.Id.IsNot(0);
             _output.WriteLine($"{series.Id}");
@@ -76,7 +75,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "John Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             employee.ByteCol.Is((byte)1);
             employee.ShortCol.Is((short)1);
@@ -94,7 +93,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                Name = "Jane Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             employee.ByteCol.Is((byte)1);
             employee.ShortCol.Is((short)1);

@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Dapper;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.SqlServer
+namespace EasySqlParser.Dapper.Tests.SqlServer
 {
     public class IdentityTest : IClassFixture<IdentityFixture>
     {
@@ -21,7 +20,6 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
 
             _Fixture = fixture;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, output.WriteLine);
-            _mockConfig.WriteIndented = true;
             _output = output;
 
         }
@@ -40,7 +38,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                  Height = 185
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _Fixture.Connection.Execute(parameter);
             affected.Is(1);
             characters.Id.IsNot(0);
             _output.WriteLine($"{characters.Id}");
@@ -56,9 +54,8 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
                                  Height = 165
                              };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
-            localConfig.WriteIndented = true;
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
-            var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _Fixture.Connection.Execute(parameter);
             affected.Is(1);
             characters.Id.IsNot(0);
             _output.WriteLine($"{characters.Id}");
@@ -68,10 +65,10 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_update_default()
         {
-            var characters = _Fixture.Connection.ExecuteReaderByQueryBuilder<Characters>(x => x.Id == 1, _mockConfig).Single();
+            var characters = _Fixture.Connection.ExecuteReaderSingle<Characters>(_mockConfig, x => x.Id == 1);
             characters.Name = "John Doe";
             var parameter = new QueryBuilderParameter(characters, SqlKind.Update, _mockConfig);
-            var affected = _Fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _Fixture.Connection.Execute(parameter);
             affected.Is(1);
             characters.VersionNo.Is(2L);
             _output.WriteLine($"{characters.Id}");

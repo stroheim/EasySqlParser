@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
-using Npgsql;
+using Oracle.ManagedDataAccess.Client;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.Postgres
+namespace EasySqlParser.Dapper.Tests.Oracle
 {
     public class QueryExtensionTest : IClassFixture<DatabaseFixture>
     {
@@ -21,11 +21,11 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
             _fixture = fixture;
             _output = output;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
             ConfigContainer.AddDefault(
-                DbConnectionKind.PostgreSql,
-                () => new NpgsqlParameter()
+                DbConnectionKind.Oracle,
+                () => new OracleParameter()
             );
+
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                                Name = "Jane Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -49,13 +49,12 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                            {
                                Id = 12,
                                Name = "Scott Rodgers"
-                           };
+            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
-
 
         [Fact]
         public void Test_insert_identity()
@@ -66,7 +65,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                                  Height = 185
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
@@ -80,11 +79,10 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                                  Height = 165
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
-
 
         [Fact]
         public void Test_insert_sequence()
@@ -96,11 +94,10 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                              Platform = "MSX2"
                          };
             var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(series.GetDebugString());
         }
-
 
         [Fact]
         public async Task Test_insert_sequence_async()
@@ -112,7 +109,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                              Platform = "PlayStation"
                          };
             var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(series.GetDebugString());
         }
@@ -125,10 +122,8 @@ namespace EasySqlParser.SqlGenerator.Tests.Postgres
                                Name = "John Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
-            employee.ShortCol.Is((short)1);
-            employee.IntCol.Is(1);
             employee.LongCol.Is(1L);
             employee.StringCol.Is("T000001");
         }

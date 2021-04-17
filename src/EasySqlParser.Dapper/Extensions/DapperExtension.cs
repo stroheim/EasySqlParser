@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dapper;
 using EasySqlParser.SqlGenerator;
+using EasySqlParser.SqlGenerator.Configurations;
 using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Helpers;
 
@@ -30,14 +33,87 @@ namespace EasySqlParser.Dapper.Extensions
             return result;
         }
 
+        public static T ExecuteReaderSingle<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetSelectSql(configuration, predicate);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return connection.QuerySingle<T>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction);
+        }
+
+        public static async Task<T> ExecuteReaderSingleAsync<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetSelectSql(configuration, predicate);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return await connection.QuerySingleAsync<T>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
+        }
+
+        public static IEnumerable<T> ExecuteReader<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetSelectSql(configuration, predicate);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return connection.Query<T>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction);
+        }
+
+        public static async Task<IEnumerable<T>> ExecuteReaderAsync<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetSelectSql(configuration, predicate);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return await connection.QueryAsync<T>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
+        }
+
+        public static int GetCount<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetCountSql(predicate, configuration);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return connection.ExecuteScalar<int>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction);
+        }
+
+        public static async Task<int> GetCountAsync<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            Expression<Func<T, bool>> predicate,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            var builderResult = QueryBuilder.GetCountSql(predicate, configuration);
+            configuration.LoggerAction?.Invoke(builderResult.DebugSql);
+            return await connection.ExecuteScalarAsync<int>(builderResult.ParsedSql,
+                builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
+        }
+
+
         public static async Task<int> ExecuteAsync(this DbConnection connection,
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null)
         {
+            await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
             int affectedCount;
-            await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
             builderParameter.SaveExpectedVersion();
             switch (builderParameter.CommandExecutionType)
             {
@@ -75,11 +151,11 @@ namespace EasySqlParser.Dapper.Extensions
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null)
         {
+            SequenceHelper.Generate(connection, builderParameter);
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
 
             int affectedCount;
-            SequenceHelper.Generate(connection, builderParameter);
             builderParameter.SaveExpectedVersion();
 
             switch (builderParameter.CommandExecutionType)
@@ -128,33 +204,63 @@ namespace EasySqlParser.Dapper.Extensions
 
     internal static class ConsumeHelper
     {
-        internal static int ConsumeNonQuery(IDbConnection connection,
+        private static DbCommand BuildCommand(DbConnection connection,
             QueryBuilderParameter builderParameter,
             QueryBuilderResult builderResult,
             DbTransaction transaction = null)
         {
-            var affectedCount = connection.Execute(
-                builderResult.ParsedSql,
-                builderResult.DbDataParameters.ToDynamicParameters(),
-                transaction,
-                builderParameter.CommandTimeout
-            );
-            //builderParameter.ApplyReturningColumns();
-            return affectedCount;
+            var command = connection.CreateCommand();
+            command.CommandText = builderResult.ParsedSql;
+            command.Parameters.AddRange(builderResult.DbDataParameters.ToArray());
+            if (transaction != null)
+            {
+                command.Transaction = transaction;
+            }
+            command.CommandTimeout = builderParameter.CommandTimeout;
+            return command;
         }
 
-        internal static async Task<int> ConsumeNonQueryAsync(IDbConnection connection,
+        internal static int ConsumeNonQuery(DbConnection connection,
             QueryBuilderParameter builderParameter,
             QueryBuilderResult builderResult,
             DbTransaction transaction = null)
         {
-            var affectedCount = await connection.ExecuteAsync(
-                builderResult.ParsedSql,
-                builderResult.DbDataParameters.ToDynamicParameters(),
-                transaction,
-                builderParameter.CommandTimeout)
-                .ConfigureAwait(false);
-            return affectedCount;
+            // returning value not working in dapper
+            //var affectedCount = connection.Execute(
+            //    builderResult.ParsedSql,
+            //    builderResult.DbDataParameters.ToDynamicParameters(),
+            //    transaction,
+            //    builderParameter.CommandTimeout
+            //);
+            
+            ////builderParameter.ApplyReturningColumns();
+            //return affectedCount;
+            using (var command = BuildCommand(connection, builderParameter, builderResult, transaction))
+            {
+                var affectedCount = command.ExecuteNonQuery();
+                builderParameter.ApplyReturningColumns();
+                return affectedCount;
+            }
+        }
+
+        internal static async Task<int> ConsumeNonQueryAsync(DbConnection connection,
+            QueryBuilderParameter builderParameter,
+            QueryBuilderResult builderResult,
+            DbTransaction transaction = null)
+        {
+            //var affectedCount = await connection.ExecuteAsync(
+            //    builderResult.ParsedSql,
+            //    builderResult.DbDataParameters.ToDynamicParameters(),
+            //    transaction,
+            //    builderParameter.CommandTimeout)
+            //    .ConfigureAwait(false);
+            //return affectedCount;
+            using (var command = BuildCommand(connection, builderParameter, builderResult, transaction))
+            {
+                var affectedCount = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                builderParameter.ApplyReturningColumns();
+                return affectedCount;
+            }
         }
 
         internal static int ConsumeReader(IDbConnection connection,

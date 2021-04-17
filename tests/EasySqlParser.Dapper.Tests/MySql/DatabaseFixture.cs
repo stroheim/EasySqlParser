@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 using MySql.Data.MySqlClient;
 
-namespace EasySqlParser.SqlGenerator.Tests.MySql
+namespace EasySqlParser.Dapper.Tests.MySql
 {
     public class DatabaseFixture : IDisposable
     {

@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using EasySqlParser.Configurations;
+using EasySqlParser.Dapper.Extensions;
+using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Enums;
-using Oracle.ManagedDataAccess.Client;
+using MySql.Data.MySqlClient;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace EasySqlParser.SqlGenerator.Tests.Oracle
+namespace EasySqlParser.Dapper.Tests.MySql
 {
     public class QueryExtensionTest : IClassFixture<DatabaseFixture>
     {
@@ -21,10 +20,10 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
             _fixture = fixture;
             _output = output;
             _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
+
             ConfigContainer.AddDefault(
-                DbConnectionKind.Oracle,
-                () => new OracleParameter()
+                DbConnectionKind.MySql,
+                () => new MySqlParameter()
             );
 
         }
@@ -38,7 +37,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
                                Name = "Jane Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -50,9 +49,9 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
                            {
                                Id = 12,
                                Name = "Scott Rodgers"
-            };
+                           };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -66,7 +65,7 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
                                  Height = 185
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
+            var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
         }
@@ -80,53 +79,9 @@ namespace EasySqlParser.SqlGenerator.Tests.Oracle
                                  Height = 165
                              };
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             _output.WriteLine(characters.GetDebugString());
-        }
-
-        [Fact]
-        public void Test_insert_sequence()
-        {
-            var series = new MetalGearSeries
-                         {
-                             Name = "METAL GEAR2 SOLID SNAKE",
-                             ReleaseDate = new DateTime(1990, 7, 20),
-                             Platform = "MSX2"
-                         };
-            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
-            affected.Is(1);
-            _output.WriteLine(series.GetDebugString());
-        }
-
-        [Fact]
-        public async Task Test_insert_sequence_async()
-        {
-            var series = new MetalGearSeries
-                         {
-                             Name = "METAL GEAR SOLID",
-                             ReleaseDate = new DateTime(1998, 9, 3),
-                             Platform = "PlayStation"
-                         };
-            var parameter = new QueryBuilderParameter(series, SqlKind.Insert, _mockConfig);
-            var affected = await _fixture.Connection.ExecuteNonQueryByQueryBuilderAsync(parameter);
-            affected.Is(1);
-            _output.WriteLine(series.GetDebugString());
-        }
-
-        [Fact]
-        public void Test_multiple_sequence()
-        {
-            var employee = new EmployeeSeq
-                           {
-                               Name = "John Doe"
-                           };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.ExecuteNonQueryByQueryBuilder(parameter);
-            affected.Is(1);
-            employee.LongCol.Is(1L);
-            employee.StringCol.Is("T000001");
         }
 
     }

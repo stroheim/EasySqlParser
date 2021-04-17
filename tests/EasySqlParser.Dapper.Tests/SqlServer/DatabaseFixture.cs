@@ -3,7 +3,7 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
 
-namespace EasySqlParser.SqlGenerator.Tests.SqlServer
+namespace EasySqlParser.Dapper.Tests.SqlServer
 {
     // code base from
     // https://www.jvandertil.nl/posts/2020-04-02_sqlserverintegrationtesting/

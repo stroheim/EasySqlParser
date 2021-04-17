@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 using Oracle.ManagedDataAccess.Client;
 
-namespace EasySqlParser.SqlGenerator.Tests.Oracle
+namespace EasySqlParser.Dapper.Tests.Oracle
 {
     public class DatabaseFixture : IDisposable
     {

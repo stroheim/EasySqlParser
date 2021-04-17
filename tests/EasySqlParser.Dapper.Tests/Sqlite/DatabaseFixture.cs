@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
 
-namespace EasySqlParser.SqlGenerator.Tests.Sqlite
+namespace EasySqlParser.Dapper.Tests.Sqlite
 {
     public class DatabaseFixture : IDisposable
     {
