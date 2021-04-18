@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -12,6 +13,8 @@ using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace EasySqlParser.EntityFrameworkCore
@@ -35,7 +38,7 @@ namespace EasySqlParser.EntityFrameworkCore
             return _hashDictionary.Get(type);
         }
 
-        public void WriteLog(string message)
+        public virtual void WriteLog(string message)
         {
             _logger.LogDebug(message);
         }
@@ -59,8 +62,19 @@ namespace EasySqlParser.EntityFrameworkCore
             _logger = logger;
             LoggerAction = WriteLog;
             _assemblies = additionalAssemblies;
+            BuildCache();
+        }
+
+        private void BuildCache()
+        {
+            if (_dbContext == null)
+            {
+                throw new InvalidOperationException("dbContext is null");
+            }
+            InternalBuildCache();
         }
     }
+
 
     internal static class EfCoreEntityTypeInfoBuilder
     {
@@ -69,18 +83,26 @@ namespace EasySqlParser.EntityFrameworkCore
         {
             var values = Build(dbContext);
             if (assemblies == null) return values;
-            return values.Concat(EntityTypeInfoBuilder.Build(assemblies)).ToArray();
+            var results = new List<KeyValuePair<Type, EntityTypeInfo>>();
+            results.AddRange(values);
+            var additionalList = EntityTypeInfoBuilder.Build(assemblies);
+            foreach (var pair in additionalList)
+            {
+                if (results.Exists(x => x.Key == pair.Key)) continue;
+                results.Add(pair);
+            }
+
+            return results.ToArray();
+            //return values.Concat(EntityTypeInfoBuilder.Build(assemblies)).ToArray();
         }
 
         internal static KeyValuePair<Type, EntityTypeInfo>[] Build(DbContext dbContext)
         {
             return dbContext.Model.GetEntityTypes()
-                .Select(item =>
-                        {
-                            return new KeyValuePair<Type, EntityTypeInfo>(item.ClrType,
-                                EfCoreEntityTypeInfoBuilder.Build(item));
-                        }).ToArray();
+                .Select(item => new KeyValuePair<Type, EntityTypeInfo>(item.ClrType,
+                            Build(item))).ToArray();
         }
+
 
         internal static EntityTypeInfo Build(IEntityType entityType)
         {
@@ -90,6 +112,24 @@ namespace EasySqlParser.EntityFrameworkCore
             var schemaName = entityType.GetSchema();
             entityInfo.TableName = tableName;
             entityInfo.SchemaName = schemaName;
+            var naming = Naming.None;
+            var type = entityType.ClrType;
+            var entityAttr = type.GetCustomAttribute<EntityAttribute>();
+            if (entityAttr != null)
+            {
+                naming = entityAttr.Naming;
+            }
+            var table = type.GetCustomAttribute<TableAttribute>();
+            if (table != null)
+            {
+                entityInfo.TableName = table.Name;
+                entityInfo.SchemaName = table.Schema;
+            }
+            else
+            {
+                entityInfo.TableName = naming.Apply(type.Name);
+            }
+
             var tableId = StoreObjectIdentifier.Table(tableName, schemaName);
             var columns = new List<EntityColumnInfo>();
             var keyColumns = new List<EntityColumnInfo>();
@@ -118,8 +158,23 @@ namespace EasySqlParser.EntityFrameworkCore
                     columnInfo.IsDateTime = true;
                 }
 
+                if (propertyInfo.PropertyType.IsNullable())
+                {
+                    columnInfo.NullableUnderlyingType = Nullable.GetUnderlyingType(propertyInfo.PropertyType);
+                }
 
                 columnInfo.ColumnName = property.GetColumnName(tableId);
+                var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
+                if (column != null)
+                {
+                    columnInfo.ColumnName = column.Name;
+                    columnInfo.TypeName = column.TypeName;
+                }
+                else
+                {
+                    columnInfo.ColumnName = naming.Apply(propertyInfo.Name);
+                }
+
                 //columnInfo.TypeName = property.GetColumnType(tableId);
                 columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
 

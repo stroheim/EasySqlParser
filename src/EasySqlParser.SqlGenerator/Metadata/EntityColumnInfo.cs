@@ -51,6 +51,8 @@ namespace EasySqlParser.SqlGenerator.Metadata
         /// </summary>
         public Func<object, object> ConvertFromProvider { get; set; }
 
+        public Type NullableUnderlyingType { get; set; }
+
 
         public EntityColumnInfo Clone()
         {

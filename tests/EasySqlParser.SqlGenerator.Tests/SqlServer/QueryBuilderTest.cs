@@ -191,7 +191,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         [Fact]
         public void Test_Select()
         {
-            var (builderResult, entityInfo) = QueryBuilder.InternalGetSelectSql<Employee>(x => x.Id == 1);
+            var builderResult = QueryBuilder.GetSelectSql<Employee>(_mockConfig, x => x.Id == 1);
             builderResult.IsNotNull();
             builderResult.ParsedSql.Is("SELECT [ID], [NAME], [SALARY], [VERSION] FROM [dbo].[EMP] WHERE [ID] = @p_Id");
             _output.WriteLine(builderResult.DebugSql);

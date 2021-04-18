@@ -12,7 +12,7 @@ namespace EasySqlParser.SqlGenerator.Attributes
     }
 
 
-    internal static class NamingExtension
+    public static class NamingExtension
     {
         /// <summary>
         /// Applies this convention.
@@ -20,7 +20,7 @@ namespace EasySqlParser.SqlGenerator.Attributes
         /// <param name="naming"></param>
         /// <param name="source"></param>
         /// <returns></returns>
-        internal static string Apply(this Naming naming, string source)
+        public static string Apply(this Naming naming, string source)
         {
             switch (naming)
             {

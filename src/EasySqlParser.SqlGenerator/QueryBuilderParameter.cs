@@ -48,7 +48,7 @@ namespace EasySqlParser.SqlGenerator
             VersionPropertyInfo = EntityTypeInfo.VersionColumn?.PropertyInfo;
         }
 
-        internal EntityTypeInfo EntityTypeInfo { get; }
+        public EntityTypeInfo EntityTypeInfo { get; }
 
 
         public object Entity { get; private set; }

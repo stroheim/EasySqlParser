@@ -48,6 +48,11 @@ namespace EasySqlParser.Extensions
             return false;
         }
 
+        public static bool IsNullable(this Type type)
+        {
+            return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+        }
+
 
         // code from Dapper
         // https://github.com/StackExchange/Dapper/blob/4fb1ea29d490d13251b0135658ecc337aeb60cdb/Dapper/SqlMapper.cs#L169

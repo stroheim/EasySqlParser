@@ -82,6 +82,11 @@ namespace EasySqlParser.SqlGenerator.Metadata
                     columnInfo.IsDateTime = true;
                 }
 
+                if (propertyInfo.PropertyType.IsNullable())
+                {
+                    columnInfo.NullableUnderlyingType = Nullable.GetUnderlyingType(propertyInfo.PropertyType);
+                }
+
 
                 var column = propertyInfo.GetCustomAttribute<ColumnAttribute>();
                 columnInfo.ColumnName = propertyInfo.Name;
