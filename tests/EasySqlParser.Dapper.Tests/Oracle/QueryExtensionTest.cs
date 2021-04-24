@@ -123,14 +123,14 @@ namespace EasySqlParser.Dapper.Tests.Oracle
         }
 
         [Fact]
-        public void Test_multiple_sequence()
+        public async Task Test_multiple_sequence_async()
         {
             var employee = new EmployeeSeq
                            {
                                Name = "John Doe"
                            };
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
-            var affected = _fixture.Connection.Execute(parameter);
+            var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
             employee.LongCol.Is(1L);
             employee.StringCol.Is("T000001");

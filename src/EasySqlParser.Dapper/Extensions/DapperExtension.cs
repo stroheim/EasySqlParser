@@ -138,10 +138,7 @@ namespace EasySqlParser.Dapper.Extensions
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, transaction);
-            if (builderParameter.SqlKind == SqlKind.Update || builderParameter.SqlKind == SqlKind.SoftDelete)
-            {
-                builderParameter.IncrementVersion();
-            }
+            builderParameter.IncrementVersion();
             return affectedCount;
 
 
@@ -178,10 +175,7 @@ namespace EasySqlParser.Dapper.Extensions
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, transaction);
-            if (builderParameter.SqlKind == SqlKind.Update || builderParameter.SqlKind == SqlKind.SoftDelete)
-            {
-                builderParameter.IncrementVersion();
-            }
+            builderParameter.IncrementVersion();
             return affectedCount;
 
         }

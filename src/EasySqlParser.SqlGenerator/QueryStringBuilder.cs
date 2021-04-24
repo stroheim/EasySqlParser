@@ -440,13 +440,6 @@ namespace EasySqlParser.SqlGenerator
             return false;
         }
 
-        private static bool IsDefault<T>(T value)
-        {
-            if (value == null) return true;
-            var defaultValue = default(T);
-            return value.Equals(defaultValue);
-        }
-
         internal QueryBuilderResult GetResult()
         {
             return new QueryBuilderResult

@@ -188,6 +188,7 @@ namespace EasySqlParser.SqlGenerator
         public void IncrementVersion()
         {
             if (VersionPropertyInfo == null) return;
+            if (!(SqlKind == SqlKind.Update || SqlKind == SqlKind.SoftDelete)) return;
             //if (SqlKind == SqlKind.Insert || SqlKind == SqlKind.Update)
             //{
                 if (QueryBehavior == QueryBehavior.AllColumns) return;

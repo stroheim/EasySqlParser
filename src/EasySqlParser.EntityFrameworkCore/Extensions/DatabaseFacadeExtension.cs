@@ -229,12 +229,12 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
                 var rawScalar = command.ExecuteScalar(parameterObject);
-                if (rawScalar is TResult scalar)
+                return rawScalar switch
                 {
-                    return scalar;
-                }
-
-                return (TResult) Convert.ChangeType(rawScalar, typeof(TResult));
+                    TResult scalar => scalar,
+                    DBNull _ => default,
+                    _ => (TResult) Convert.ChangeType(rawScalar, typeof(TResult))
+                };
             }
         }
 
@@ -263,12 +263,12 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
                 var rawScalar = await command.ExecuteScalarAsync(parameterObject, cancellationToken).ConfigureAwait(false);
-                if (rawScalar is TResult scalar)
+                return rawScalar switch
                 {
-                    return scalar;
-                }
-
-                return (TResult)Convert.ChangeType(rawScalar, typeof(TResult));
+                    TResult scalar => scalar,
+                    DBNull _ => default,
+                    _ => (TResult) Convert.ChangeType(rawScalar, typeof(TResult))
+                };
             }
         }
 
@@ -306,12 +306,12 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 );
                 var rawScalar = relationalCommand
                     .ExecuteScalar(parameterObject);
-                if (rawScalar is TResult scalar)
+                return rawScalar switch
                 {
-                    return scalar;
-                }
-
-                return (TResult) Convert.ChangeType(rawScalar, typeof(TResult));
+                    TResult scalar => scalar,
+                    DBNull _ => default,
+                    _ => (TResult)Convert.ChangeType(rawScalar, typeof(TResult))
+                };
             }
 
 
@@ -352,12 +352,12 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var rawScalar = await relationalCommand
                     .ExecuteScalarAsync(parameterObject, cancellationToken)
                     .ConfigureAwait(false);
-                if (rawScalar is TResult scalar)
+                return rawScalar switch
                 {
-                    return scalar;
-                }
-
-                return (TResult)Convert.ChangeType(rawScalar, typeof(TResult));
+                    TResult scalar => scalar,
+                    DBNull _ => default,
+                    _ => (TResult)Convert.ChangeType(rawScalar, typeof(TResult))
+                };
             }
 
         }
@@ -428,10 +428,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     ThrowIfOptimisticLockException(builderParameter, affectedCount, command.CommandText, debugSql,
                         dbContextTransaction);
 
-                    if (builderParameter.SqlKind == SqlKind.Update)
-                    {
-                        builderParameter.IncrementVersion();
-                    }
+                    builderParameter.IncrementVersion();
 
                     if (beganTransaction)
                     {
@@ -518,10 +515,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     await ThrowIfOptimisticLockExceptionAsync(builderParameter, affectedCount, command.CommandText, debugSql,
                         dbContextTransaction, cancellationToken).ConfigureAwait(false);
 
-                    if (builderParameter.SqlKind == SqlKind.Update)
-                    {
-                        builderParameter.IncrementVersion();
-                    }
+                    builderParameter.IncrementVersion();
 
                     if (beganTransaction)
                     {

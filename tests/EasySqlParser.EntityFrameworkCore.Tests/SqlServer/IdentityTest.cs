@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using EasySqlParser.Configurations;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SqlGenerator;
@@ -97,6 +98,31 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             _output.WriteLine($"{characters.Name}");
             _output.WriteLine($"{characters.Height}");
             _output.WriteLine($"{characters.VersionNo}");
+
+        }
+
+        [Fact]
+        public async Task Test_update_default_select_nothing_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var localConfig = new MockConfig(QueryBehavior.None, _output.WriteLine);
+            localConfig.AddCache(context);
+            var characters = new Characters
+                             {
+                                 Name = "Nastasha Romanenko",
+                                 Height = 171
+                             };
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
+            await context.Database.ExecuteNonQueryAsync(parameter);
+            characters =
+                await context.Database.ExecuteReaderFirstAsync<Characters>(localConfig,
+                    x => x.Name == "Nastasha Romanenko");
+            characters.CreateDate = DateTime.Now;
+            parameter = new QueryBuilderParameter(characters, SqlKind.Update, localConfig);
+            var affected = await context.Database.ExecuteNonQueryAsync(parameter);
+            affected.Is(1);
+            characters.VersionNo.Is(2L);
+
 
         }
     }
