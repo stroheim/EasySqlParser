@@ -141,16 +141,21 @@ namespace EasySqlParser.SqlGenerator
         }
 
 
-        internal void AppendParameter(PropertyInfo propertyInfo, object propertyValue)
+        internal void AppendParameter(EntityColumnInfo columnInfo, object propertyValue)
         {
-            var propertyName = _config.Dialect.ParameterPrefix + propertyInfo.Name;
-            var (parameterName, parameter) = CreateDbParameter(propertyName, propertyValue);
+            var propertyName = _config.Dialect.ParameterPrefix + columnInfo.PropertyInfo.Name;
+            var localValue = propertyValue;
+            if (columnInfo.ConvertToProvider != null)
+            {
+                localValue = columnInfo.ConvertToProvider(localValue);
+            }
+            var (parameterName, parameter) = CreateDbParameter(propertyName, localValue);
             if (!_sqlParameters.ContainsKey(propertyName))
             {
                 _sqlParameters.Add(propertyName, parameter);
             }
             _rawSqlBuilder.Append(parameterName);
-            _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(propertyValue));
+            _formattedSqlBuilder.Append(_config.Dialect.ConvertToLogFormat(localValue));
         }
 
         internal void AppendColumn(EntityColumnInfo columnInfo)
@@ -159,6 +164,7 @@ namespace EasySqlParser.SqlGenerator
             AppendSql(columnName);
         }
 
+        // used by PredicateVisitor
         internal void AppendParameter(string name, object value)
         {
             var propertyName = _config.Dialect.ParameterPrefix + name;
@@ -356,7 +362,7 @@ namespace EasySqlParser.SqlGenerator
             AppendComma(counter);
             if (parameter.SqlKind == SqlKind.Insert)
             {
-                AppendParameter(columnInfo.PropertyInfo, parameter.CurrentUser);
+                AppendParameter(columnInfo, parameter.CurrentUser);
                 AppendLine();
                 return;
             }
@@ -365,7 +371,7 @@ namespace EasySqlParser.SqlGenerator
             var columnName = parameter.Config.Dialect.ApplyQuote(columnInfo.ColumnName);
             AppendSql(columnName);
             AppendSql(" = ");
-            AppendParameter(columnInfo.PropertyInfo, parameter.CurrentUser);
+            AppendParameter(columnInfo, parameter.CurrentUser);
             AppendLine();
 
         }

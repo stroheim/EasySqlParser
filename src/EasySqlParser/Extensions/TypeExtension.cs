@@ -100,7 +100,11 @@ namespace EasySqlParser.Extensions
                                                                     };
         public static DbType ResolveDbType(this Type type)
         {
-            return Mappings[type];
+            if (Mappings.ContainsKey(type))
+            {
+                return Mappings[type];
+            }
+            return DbType.Object;
         }
 
     }

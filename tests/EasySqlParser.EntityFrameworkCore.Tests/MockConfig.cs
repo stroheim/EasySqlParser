@@ -20,14 +20,14 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
         public MockConfig(QueryBehavior queryBehavior, Action<string> loggerAction)
         {
             CommandTimeout = 30;
-            WriteIndented = false;
+            WriteIndented = true;
             QueryBehavior = queryBehavior;
             LoggerAction = loggerAction;
-            BuildCache();
+            //BuildCache();
         }
 
         public int CommandTimeout { get; }
-        public bool WriteIndented { get; set; }
+        public bool WriteIndented { get; }
         public QueryBehavior QueryBehavior { get; }
         public ExcludeNullBehavior ExcludeNullBehavior { get; internal set; }
         public Action<string> LoggerAction { get; }
@@ -51,6 +51,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
                         Cache.GetOrAdd(pair.Key, pair.Value);
                     }
                 }
+                
                 continue;
             }
         }

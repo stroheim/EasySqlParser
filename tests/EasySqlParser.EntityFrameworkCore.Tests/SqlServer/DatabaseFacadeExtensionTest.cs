@@ -15,7 +15,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
     public class DatabaseFacadeExtensionForSqlServerTest :
         IClassFixture<FacadeFixture>
     {
-        private readonly MockConfig _mockConfig;
+        private readonly SqlServerConfig _sqlServerConfig;
         public DatabaseFacadeExtensionForSqlServerTest(FacadeFixture fixture, ITestOutputHelper output)
         {
             ConfigContainer.AddDefault(
@@ -24,8 +24,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             );
             Fixture = fixture;
             _output = output;
-            _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
+            _sqlServerConfig = new SqlServerConfig(fixture.CreateContext(), output);
 
         }
         public FacadeFixture Fixture { get; }
@@ -41,7 +40,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                Name = "John Doe"
             };
             //_mockConfig.AddCache(context);
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
         }
@@ -55,7 +54,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                Id = 11,
                                Name = "Jane Doe"
                            };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig, currentUser: "Sariya Harnpadoungsataya");
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
         }
@@ -69,7 +68,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                Salary = 100M
                            };
             using var context = Fixture.CreateContext();
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, excludeNull: true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig, excludeNull: true);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             var instance = context.Employees.Single(x => x.Id == 12);
@@ -85,7 +84,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                Id = 14,
                                Salary = 100M
                            };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, excludeNull: true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig, excludeNull: true);
             var affected = await context.Database.ExecuteNonQueryAsync(parameter);
             affected.Is(1);
         }
@@ -96,7 +95,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 1);
             employee.Salary = 5000M;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);
@@ -109,9 +108,9 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         public void Test_update_with_date_and_user()
         {
             using var context = Fixture.CreateContext();
-            var employee = context.Database.ExecuteReaderFirst<EmployeeWithDateAndUser>(_mockConfig, x => x.Id == 1);
+            var employee = context.Database.ExecuteReaderFirst<EmployeeWithDateAndUser>(_sqlServerConfig, x => x.Id == 1);
             employee.Salary = 5000M;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig, currentUser: "Sariya Harnpadoungsataya");
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);
@@ -124,7 +123,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 2);
             employee.Name = null;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, excludeNull:true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig, excludeNull:true);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             var instance = context.Employees.Single(x => x.Id == 2);
@@ -138,7 +137,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 3);
             employee.VersionNo = 100L;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, ignoreVersion: true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig, ignoreVersion: true);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             var instance = context.Employees.Single(x => x.Id == 3);
@@ -152,7 +151,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 4);
             employee.VersionNo = 100L;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig);
             var ex = Assert.Throws<OptimisticLockException>(
                 () => context.Database.ExecuteNonQuery(parameter));
             ex.IsNotNull();
@@ -164,7 +163,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 5);
             employee.VersionNo = 100L;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, suppressOptimisticLockException: true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig, suppressOptimisticLockException: true);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(0);
 
@@ -175,7 +174,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         {
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 6);
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Delete, _mockConfig);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Delete, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             var cnt = context.Employees.AsNoTracking().Count(x => x.Id == 6);
@@ -189,7 +188,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Employees.AsNoTracking().Single(x => x.Id == 7);
             employee.VersionNo = 100L;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Delete, _mockConfig, ignoreVersion: true);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Delete, _sqlServerConfig, ignoreVersion: true);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
 
@@ -200,8 +199,8 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         {
             await using var context = Fixture.CreateContext();
             var employee =
-                await context.Database.ExecuteReaderFirstAsync<EmployeeWithDateAndUser>(_mockConfig, x => x.Id == 7);
-            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _mockConfig,
+                await context.Database.ExecuteReaderFirstAsync<EmployeeWithDateAndUser>(_sqlServerConfig, x => x.Id == 7);
+            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _sqlServerConfig,
                 currentUser: "Sariya Harnpadoungsataya");
             var affected = await context.Database.ExecuteNonQueryAsync(parameter);
             affected.Is(1);
@@ -212,7 +211,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         public void Test_ExecuteReader()
         {
             using var context = Fixture.CreateContext();
-            var results = context.Database.ExecuteReader<Employee>(_mockConfig, x => x.Id > 0);
+            var results = context.Database.ExecuteReader<Employee>(_sqlServerConfig, x => x.Id > 0);
             results.Count.IsNot(0);
 
         }
@@ -222,7 +221,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         {
             await using var context = Fixture.CreateContext();
 
-            var results = await context.Database.ExecuteReaderAsync<Employee>(_mockConfig, x => x.Id > 0);
+            var results = await context.Database.ExecuteReaderAsync<Employee>(_sqlServerConfig, x => x.Id > 0);
             results.Count.IsNot(0);
         }
     }

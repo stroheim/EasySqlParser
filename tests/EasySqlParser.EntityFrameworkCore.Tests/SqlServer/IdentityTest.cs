@@ -20,12 +20,11 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
 
             Fixture = fixture;
             _output = output;
-            _mockConfig = new MockConfig(QueryBehavior.AllColumns, _output.WriteLine);
-            _mockConfig.WriteIndented = true;
+            _sqlServerConfig = new SqlServerConfig(fixture.CreateContext(), output);
         }
 
         public IdentityFixture Fixture { get; }
-        private readonly MockConfig _mockConfig;
+        private readonly SqlServerConfig _sqlServerConfig;
         private readonly ITestOutputHelper _output;
 
         [Fact]
@@ -37,7 +36,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                  Name = "Roy Cambell",
                                  Height = 185
                              };
-            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             characters.Id.IsNot(0);
@@ -55,6 +54,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                  Height = 165
                              };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.AddCache(context);
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
@@ -74,6 +74,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                  Height = 160
                              };
             var localConfig = new MockConfig(QueryBehavior.IdentityOnly, _output.WriteLine);
+            localConfig.AddCache(context);
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, localConfig);
             var affected = await context.Database.ExecuteNonQueryAsync(parameter);
             affected.Is(1);
@@ -86,9 +87,9 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         public void Test_update_default()
         {
             using var context = Fixture.CreateContext();
-            var characters = context.Database.ExecuteReaderFirst<Characters>(_mockConfig, x => x.Id == 1);
+            var characters = context.Database.ExecuteReaderFirst<Characters>(_sqlServerConfig, x => x.Id == 1);
             characters.Name = "John Doe";
-            var parameter = new QueryBuilderParameter(characters, SqlKind.Update, _mockConfig);
+            var parameter = new QueryBuilderParameter(characters, SqlKind.Update, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             characters.VersionNo.Is(2L);

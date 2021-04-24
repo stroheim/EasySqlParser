@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Common;
 using System.Linq;
@@ -109,26 +110,27 @@ namespace EasySqlParser.EntityFrameworkCore
             var entityInfo = new EntityTypeInfo();
             var properties = entityType.GetProperties().ToList();
             var tableName = entityType.GetTableName();
+            //var tableName = entityType.GetSchemaQualifiedTableName();
             var schemaName = entityType.GetSchema();
             entityInfo.TableName = tableName;
             entityInfo.SchemaName = schemaName;
-            var naming = Naming.None;
             var type = entityType.ClrType;
-            var entityAttr = type.GetCustomAttribute<EntityAttribute>();
-            if (entityAttr != null)
-            {
-                naming = entityAttr.Naming;
-            }
+            //var naming = Naming.None;
+            //var entityAttr = type.GetCustomAttribute<EntityAttribute>();
+            //if (entityAttr != null)
+            //{
+            //    naming = entityAttr.Naming;
+            //}
             var table = type.GetCustomAttribute<TableAttribute>();
             if (table != null)
             {
                 entityInfo.TableName = table.Name;
                 entityInfo.SchemaName = table.Schema;
             }
-            else
-            {
-                entityInfo.TableName = naming.Apply(type.Name);
-            }
+            //else
+            //{
+            //    entityInfo.TableName = naming.Apply(type.Name);
+            //}
 
             var tableId = StoreObjectIdentifier.Table(tableName, schemaName);
             var columns = new List<EntityColumnInfo>();
@@ -144,11 +146,22 @@ namespace EasySqlParser.EntityFrameworkCore
                 {
                     continue;
                 }
+
+                var mapping = property.FindRelationalTypeMapping(tableId);
                 var columnInfo = new EntityColumnInfo
                 {
                     PropertyInfo = propertyInfo
                 };
-                if (!propertyInfo.PropertyType.IsEspKnownType()) continue;
+                var supportedType = false;
+                if (propertyInfo.PropertyType.IsEspKnownType())
+                {
+                    supportedType = true;
+                }else if (propertyInfo.PropertyType.BaseType != null && propertyInfo.PropertyType.BaseType == typeof(Enum))
+                {
+                    supportedType = true;
+                }
+                
+                if (!supportedType) continue;
 
                 if (propertyInfo.PropertyType == typeof(DateTime) ||
                     propertyInfo.PropertyType == typeof(DateTime?) ||
@@ -170,10 +183,10 @@ namespace EasySqlParser.EntityFrameworkCore
                     columnInfo.ColumnName = column.Name;
                     columnInfo.TypeName = column.TypeName;
                 }
-                else
-                {
-                    columnInfo.ColumnName = naming.Apply(propertyInfo.Name);
-                }
+                //else
+                //{
+                //    columnInfo.ColumnName = naming.Apply(propertyInfo.Name);
+                //}
 
                 //columnInfo.TypeName = property.GetColumnType(tableId);
                 columnInfo.DbType = propertyInfo.PropertyType.ResolveDbType();
@@ -189,6 +202,11 @@ namespace EasySqlParser.EntityFrameworkCore
                 {
                     columnInfo.IsIdentity = true;
                 }
+                //var identityAttr = propertyInfo.GetCustomAttribute<DatabaseGeneratedAttribute>();
+                //if (identityAttr != null && identityAttr.DatabaseGeneratedOption == DatabaseGeneratedOption.Identity)
+                //{
+                //    columnInfo.IsIdentity = true;
+                //}
 
                 var versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
                 if (versionAttr != null)
@@ -223,6 +241,13 @@ namespace EasySqlParser.EntityFrameworkCore
                     columnInfo.StringMaxLength = maxLength.Value;
                 }
 
+                var lengthAttr = propertyInfo.GetCustomAttribute<StringLengthAttribute>();
+                if (lengthAttr != null)
+                {
+                    columnInfo.StringMaxLength = lengthAttr.MaximumLength;
+                }
+
+
                 var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
                 if (seqAttr != null)
                 {
@@ -234,6 +259,15 @@ namespace EasySqlParser.EntityFrameworkCore
                 if (property.IsPrimaryKey())
                 {
                     columnInfo.IsPrimaryKey = true;
+                }
+                //var keyAttr = propertyInfo.GetCustomAttribute<KeyAttribute>();
+                //if (keyAttr != null)
+                //{
+                //    columnInfo.IsPrimaryKey = true;
+                //}
+
+                if (columnInfo.IsPrimaryKey)
+                {
                     keyColumns.Add(columnInfo.Clone());
                 }
 

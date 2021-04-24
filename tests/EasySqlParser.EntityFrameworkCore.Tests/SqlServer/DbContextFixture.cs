@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
 {
+
     public class FacadeFixture : FixtureBase
     {
         private static readonly object _lock = new object();

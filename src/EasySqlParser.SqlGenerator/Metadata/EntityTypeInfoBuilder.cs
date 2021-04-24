@@ -72,7 +72,16 @@ namespace EasySqlParser.SqlGenerator.Metadata
                     PropertyInfo = propertyInfo
                 };
 
-                if (!propertyInfo.PropertyType.IsEspKnownType()) continue;
+                var supportedType = false;
+                if (propertyInfo.PropertyType.IsEspKnownType())
+                {
+                    supportedType = true;
+                }
+                else if (propertyInfo.PropertyType.BaseType != null && propertyInfo.PropertyType.BaseType == typeof(Enum))
+                {
+                    supportedType = true;
+                }
+                if (!supportedType) continue;
 
                 if (propertyInfo.PropertyType == typeof(DateTime) ||
                     propertyInfo.PropertyType == typeof(DateTime?) ||

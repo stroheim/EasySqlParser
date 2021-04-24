@@ -277,7 +277,7 @@ namespace EasySqlParser.SqlGenerator
                 {
                     propValue = builder.GetDefaultVersionNo(propValue, columnInfo.PropertyInfo.PropertyType);
                 }
-                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                builder.AppendParameter(columnInfo, propValue);
                 builder.AppendLine();
                 counter++;
             }
@@ -354,7 +354,7 @@ namespace EasySqlParser.SqlGenerator
                     var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                     builder.AppendSql(columnName);
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendParameter(columnInfo, propValue);
                     builder.AppendVersion(parameter, columnInfo);
 
                     builder.AppendLine();
@@ -380,7 +380,7 @@ namespace EasySqlParser.SqlGenerator
                 else
                 {
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendParameter(columnInfo, propValue);
                 }
 
                 if (i < entityInfo.Columns.Count - 1)
@@ -467,7 +467,7 @@ namespace EasySqlParser.SqlGenerator
                 var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                builder.AppendParameter(columnInfo, propValue);
                 builder.AppendVersion(parameter, columnInfo);
 
                 builder.AppendLine();
@@ -492,7 +492,7 @@ namespace EasySqlParser.SqlGenerator
                 else
                 {
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendParameter(columnInfo, propValue);
                 }
 
                 if (i < entityInfo.Columns.Count - 1)
@@ -540,7 +540,7 @@ namespace EasySqlParser.SqlGenerator
                 var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                 builder.AppendSql(columnName);
                 builder.AppendSql(" = ");
-                builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                builder.AppendParameter(columnInfo, propValue);
                 builder.AppendLine();
 
 
@@ -754,7 +754,7 @@ namespace EasySqlParser.SqlGenerator
                     var columnName = config.Dialect.ApplyQuote(columnInfo.ColumnName);
                     builder.AppendSql(columnName);
                     builder.AppendSql(" = ");
-                    builder.AppendParameter(columnInfo.PropertyInfo, propValue);
+                    builder.AppendParameter(columnInfo, propValue);
                     if (i < entityInfo.KeyColumns.Count - 1)
                     {
                         builder.AppendLine();
