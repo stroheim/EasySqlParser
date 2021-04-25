@@ -593,7 +593,7 @@ namespace EasySqlParser.Dialect
 
         }
 
-        internal string GetStartsWithValue(string value, char? escapeChar = null)
+        public string GetStartsWithValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
             {
@@ -603,7 +603,7 @@ namespace EasySqlParser.Dialect
             return StartsWith(value);
         }
 
-        internal string GetContainsValue(string value, char? escapeChar = null)
+        public string GetContainsValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
             {
@@ -613,7 +613,7 @@ namespace EasySqlParser.Dialect
             return Contains(value);
         }
 
-        internal string GetEndsWithValue(string value, char? escapeChar = null)
+        public string GetEndsWithValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
             {

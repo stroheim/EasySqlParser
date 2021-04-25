@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using EasySqlParser.Configurations;
 using EasySqlParser.EntityFrameworkCore.Extensions;
@@ -158,6 +159,18 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         }
 
         [Fact]
+        public async Task Test_update_optimisticLockException_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var employee = context.Employees.AsNoTracking().Single(x => x.Id == 4);
+            employee.VersionNo = 100L;
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig);
+            var ex = await Assert.ThrowsAsync<OptimisticLockException>(
+                async () => await context.Database.ExecuteNonQueryAsync(parameter));
+            ex.IsNotNull();
+        }
+
+        [Fact]
         public void Test_update_suppressOptimisticLockException()
         {
             using var context = Fixture.CreateContext();
@@ -217,6 +230,46 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
         }
 
         [Fact]
+        public void Test_ExecuteReader2()
+        {
+            using var context = Fixture.CreateContext();
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "SelectEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var results = context.Database.ExecuteReader<Employee>(_sqlServerConfig, parserResult);
+            results.Count.IsNot(0);
+        }
+
+        [Fact]
+        public void Test_ExecuteReaderFirst()
+        {
+            using var context = Fixture.CreateContext();
+            var result = context.Database.ExecuteReaderFirst<Employee>(_sqlServerConfig, x => x.Id == 10);
+            result.IsNotNull();
+        }
+
+        [Fact]
+        public void Test_ExecuteReaderFirst2()
+        {
+            using var context = Fixture.CreateContext();
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "SelectEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var result = context.Database.ExecuteReaderFirst<Employee>(_sqlServerConfig, parserResult);
+            result.IsNotNull();
+        }
+
+        [Fact]
         public async Task Test_ExecuteReader_async()
         {
             await using var context = Fixture.CreateContext();
@@ -224,6 +277,100 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             var results = await context.Database.ExecuteReaderAsync<Employee>(_sqlServerConfig, x => x.Id > 0);
             results.Count.IsNot(0);
         }
+
+        [Fact]
+        public async Task Test_ExecuteReader2_async()
+        {
+            await using var context = Fixture.CreateContext();
+
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "SelectEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var results = await context.Database.ExecuteReaderAsync<Employee>(_sqlServerConfig, parserResult);
+            results.Count.IsNot(0);
+        }
+
+
+        [Fact]
+        public async Task Test_ExecuteReaderFirst_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var result = await context.Database.ExecuteReaderFirstAsync<Employee>(_sqlServerConfig, x => x.Id == 10);
+            result.IsNotNull();
+        }
+
+        [Fact]
+        public async Task Test_ExecuteReaderFirst2_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "SelectEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var result = await context.Database.ExecuteReaderFirstAsync<Employee>(_sqlServerConfig, parserResult);
+            result.IsNotNull();
+        }
+
+        [Fact]
+        public void Test_Count()
+        {
+            using var context = Fixture.CreateContext();
+            var result = context.Database.ExecuteScalar<int>($"SELECT COUNT(*) CNT FROM EMP WHERE ID > {0}");
+            result.IsNot(0);
+        }
+
+        [Fact]
+        public void Test_Count2()
+        {
+            using var context = Fixture.CreateContext();
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "CountEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var result = context.Database.ExecuteScalar<int>(parserResult);
+            result.IsNot(0);
+        }
+
+
+        [Fact]
+        public async Task Test_Count_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var result = await context.Database.ExecuteScalarAsync<int>($"SELECT COUNT(*) CNT FROM EMP WHERE ID > {0}");
+            result.IsNot(0);
+
+        }
+
+        [Fact]
+        public async Task Test_Count2_async()
+        {
+            await using var context = Fixture.CreateContext();
+            var condition = new Employee
+                            {
+                                Id = 10
+                            };
+            var sqlPath = Path.Combine("SqlServer", "CountEmployees.sql");
+            var parser = new SqlParser(sqlPath, condition);
+            var parserResult = parser.Parse();
+            _output.WriteLine(parserResult.DebugSql);
+            var result = await context.Database.ExecuteScalarAsync<int>(parserResult);
+            result.IsNot(0);
+
+        }
+
     }
 
 }

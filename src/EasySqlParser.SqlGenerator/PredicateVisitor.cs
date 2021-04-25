@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using EasySqlParser.Configurations;
 using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator.Metadata;
 
@@ -25,14 +23,13 @@ namespace EasySqlParser.SqlGenerator
         private readonly Stack<string> _names;
         private ParameterExpression _lambdaParameterExpression;
         private int _complexityLevel;
-        internal Dictionary<string, object> ParameterObjects { get; }
 
         private const string CompareString = "CompareString";
 
 
-        internal PredicateVisitor(QueryStringBuilder builder, EntityTypeInfo entityInfo)
+        internal PredicateVisitor(QueryStringBuilder builder, 
+            EntityTypeInfo entityInfo)
         {
-            ParameterObjects = new Dictionary<string, object>();
             _builder = builder;
             _entityInfo = entityInfo;
             _builder.AppendLine(" ");
@@ -315,7 +312,7 @@ namespace EasySqlParser.SqlGenerator
                     var operand = isNotType ? " NOT IN (" : " IN (";
                     _names.Push(name);
                     VisitConstantWithName(node.Arguments[0], name, name, operand);
-                    _builder.AppendSql(") ");
+                    _builder.AppendSql(")");
                     return node;
                 }
                 return node;
@@ -329,7 +326,7 @@ namespace EasySqlParser.SqlGenerator
                     var operand = isNotType ? " NOT IN (" : " IN (";
                     _names.Push(name);
                     VisitConstantWithName(node.Object, name, name, operand);
-                    _builder.AppendSql(") ");
+                    _builder.AppendSql(")");
                     return node;
                 }
                 return node;
@@ -359,7 +356,7 @@ namespace EasySqlParser.SqlGenerator
             {
                 var operand = isNotType ? " NOT LIKE " : " LIKE ";
                 _names.Push(name);
-                return VisitConstantWithName(node.Arguments[0], name, name, operand);
+                return VisitConstantWithName(node.Arguments[0], name, name, operand, LikeKind.Contains);
             }
             return node;
         }
@@ -371,7 +368,7 @@ namespace EasySqlParser.SqlGenerator
             {
                 var operand = isNotType ? " NOT LIKE " : " LIKE ";
                 _names.Push(name);
-                return VisitConstantWithName(node.Arguments[0], name, name, operand);
+                return VisitConstantWithName(node.Arguments[0], name, name, operand, LikeKind.StartsWith);
             }
             return node;
         }
@@ -383,7 +380,7 @@ namespace EasySqlParser.SqlGenerator
             {
                 var operand = isNotType ? " NOT LIKE " : " LIKE ";
                 _names.Push(name);
-                return VisitConstantWithName(node.Arguments[0], name, name, operand);
+                return VisitConstantWithName(node.Arguments[0], name, name, operand, LikeKind.EndsWith);
             }
 
             return node;
@@ -524,7 +521,7 @@ namespace EasySqlParser.SqlGenerator
         }
 
         private Expression VisitConstantWithName(Expression node, string innerMemberName, 
-            string outerMemberName, string operand)
+            string outerMemberName, string operand, LikeKind likeKind = LikeKind.None)
         {
             if (node is ConstantExpression constantExpression)
             {
@@ -537,11 +534,11 @@ namespace EasySqlParser.SqlGenerator
                 {
                     if (operand == " = ")
                     {
-                        _builder.AppendSql(" IS NULL ");
+                        _builder.AppendSql(" IS NULL");
                     }
                     else
                     {
-                        _builder.AppendSql(" IS NOT NULL ");
+                        _builder.AppendSql(" IS NOT NULL");
                     }
                     return constantExpression;
                 }
@@ -553,10 +550,11 @@ namespace EasySqlParser.SqlGenerator
                     return constantExpression;
                 }
 
+                var converted = _builder.ConvertToLikeExpression(value, likeKind);
                 var parameterName = "p_" + outerMemberName;
                 if (!_builder.HasSameParameterName(parameterName))
                 {
-                    _builder.AppendParameter(parameterName, value);
+                    _builder.AppendParameter(parameterName, converted);
                     return constantExpression;
                 }
                 //if (!ParameterObjects.ContainsKey(parameterName))
@@ -569,10 +567,10 @@ namespace EasySqlParser.SqlGenerator
                 var localParameterName = $"{parameterName}_{index}";
                 while (_builder.HasSameParameterName(localParameterName))
                 {
-                    localParameterName = $"{parameterName}_{index}";
                     index++;
+                    localParameterName = $"{parameterName}_{index}";
                 }
-                _builder.AppendParameter(localParameterName, value);
+                _builder.AppendParameter(localParameterName, converted);
                 //_builder.AppendSql(parameterName);
                 //ParameterObjects.Add(parameterName, value);
                 return constantExpression;

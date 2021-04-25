@@ -92,13 +92,6 @@ namespace EasySqlParser.SqlGenerator
             _formattedSqlBuilder.AppendLine(sql);
         }
 
-        internal void ForceAppendLine()
-        {
-            _firstWord = true;
-            _rawSqlBuilder.AppendLine();
-            _formattedSqlBuilder.AppendLine();
-        }
-
         internal void ForceAppendLine(string sql)
         {
             if (_firstWord)
@@ -180,7 +173,8 @@ namespace EasySqlParser.SqlGenerator
 
         internal bool HasSameParameterName(string name)
         {
-            return _sqlParameters.ContainsKey(name);
+            var propertyName = _config.Dialect.ParameterPrefix + name;
+            return _sqlParameters.ContainsKey(propertyName);
         }
 
         private (string parameterName, IDbDataParameter parameter) CreateDbParameter(
@@ -440,6 +434,21 @@ namespace EasySqlParser.SqlGenerator
             return false;
         }
 
+        internal object ConvertToLikeExpression(object value, LikeKind likeKind)
+        {
+            switch (likeKind)
+            {
+                case LikeKind.StartsWith:
+                    return _config.Dialect.GetStartsWithValue((string)value);
+                case LikeKind.Contains:
+                    return _config.Dialect.GetContainsValue((string)value);
+                case LikeKind.EndsWith:
+                    return _config.Dialect.GetEndsWithValue((string)value);
+            }
+
+            return value;
+        }
+
         internal QueryBuilderResult GetResult()
         {
             return new QueryBuilderResult
@@ -449,6 +458,17 @@ namespace EasySqlParser.SqlGenerator
                        DbDataParameters = _sqlParameters.Values.ToList().AsReadOnly()
                    };
         }
+
+        
+    }
+
+
+    internal enum LikeKind
+    {
+        None,
+        StartsWith,
+        Contains,
+        EndsWith
     }
 
 

@@ -489,7 +489,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 try
                 {
                     var connection = facadeDependencies.RelationalConnection.DbConnection;
-                    await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
+                    await SequenceHelper.GenerateAsync(connection, builderParameter, cancellationToken).ConfigureAwait(false);
                     var (command, parameterObject, debugSql) = CreateRelationalParameterObject(
                         facadeDependencies, facade, builderParameter);
                     builderParameter.SaveExpectedVersion();
