@@ -78,33 +78,6 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-        //public static QueryBuilderResult GetUpdateSql<T>(
-        //    IQueryBuilderConfiguration configuration,
-        //    T entity, 
-        //    Expression<Func<T, bool>> predicate,
-        //    out QueryBuilderParameter builderParameter,
-        //    bool excludeNull = false,
-        //    bool ignoreVersion = false,
-        //    string configName = null)
-        //    where T : class
-        //{
-        //    builderParameter = new QueryBuilderParameter(entity, SqlKind.Update, configuration,
-        //        excludeNull: excludeNull, ignoreVersion: ignoreVersion, configName: configName);
-        //    return GetUpdateSql(builderParameter, predicate);
-        //}
-
-        //public static QueryBuilderResult GetDeleteSql<T>(
-        //    Expression<Func<T, bool>> predicate,
-        //    IQueryBuilderConfiguration configuration,
-        //    bool excludeNull = false,
-        //    bool ignoreVersion = false,
-        //    string configName = null)
-        //    where T : class
-        //{
-        //    var builderParameter = new QueryBuilderParameter(entity, SqlKind.Delete, configuration,
-        //        excludeNull: excludeNull, ignoreVersion: ignoreVersion, configName: configName);
-        //    return GetDeleteSql(builderParameter, predicate);
-        //}
 
         public static QueryBuilderResult GetDeleteSql<T>(
             IQueryBuilderConfiguration configuration,
