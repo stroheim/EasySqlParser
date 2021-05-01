@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using EasySqlParser.SqlGenerator;
@@ -108,9 +109,10 @@ namespace EasySqlParser.Dapper.Extensions
 
         public static async Task<int> ExecuteAsync(this DbConnection connection,
             QueryBuilderParameter builderParameter,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            CancellationToken cancellationToken = default)
         {
-            await SequenceHelper.GenerateAsync(connection, builderParameter).ConfigureAwait(false);
+            await SequenceHelper.GenerateAsync(connection, builderParameter, cancellationToken).ConfigureAwait(false);
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             builderParameter.WriteLog(builderResult.DebugSql);
             int affectedCount;
@@ -119,7 +121,7 @@ namespace EasySqlParser.Dapper.Extensions
             {
                 case CommandExecutionType.ExecuteNonQuery:
                     affectedCount =
-                        await ConsumeHelper.ConsumeNonQueryAsync(connection, builderParameter, builderResult, transaction)
+                        await ConsumeHelper.ConsumeNonQueryAsync(connection, builderParameter, builderResult, transaction, cancellationToken)
                             .ConfigureAwait(false);
                     break;
                 case CommandExecutionType.ExecuteReader:
@@ -240,7 +242,8 @@ namespace EasySqlParser.Dapper.Extensions
         internal static async Task<int> ConsumeNonQueryAsync(DbConnection connection,
             QueryBuilderParameter builderParameter,
             QueryBuilderResult builderResult,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            CancellationToken cancellationToken = default)
         {
             //var affectedCount = await connection.ExecuteAsync(
             //    builderResult.ParsedSql,
@@ -251,7 +254,7 @@ namespace EasySqlParser.Dapper.Extensions
             //return affectedCount;
             using (var command = BuildCommand(connection, builderParameter, builderResult, transaction))
             {
-                var affectedCount = await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                var affectedCount = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 builderParameter.ApplyReturningColumns();
                 return affectedCount;
             }
