@@ -189,6 +189,15 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         }
 
         [Fact]
+        public void Test_Delete()
+        {
+            var builder = QueryBuilder.GetDeleteSql<Employee>(_mockConfig, x => x.Id == 1);
+            builder.ParsedSql.Is("DELETE FROM [dbo].[EMP] WHERE [ID] = @p_Id");
+            builder.DbDataParameters.Count.Is(1);
+            builder.DbDataParameters[0].Value.Is(1);
+        }
+
+        [Fact]
         public void Test_Select()
         {
             var builderResult = QueryBuilder.GetSelectSql<Employee>(_mockConfig, x => x.Id == 1);
