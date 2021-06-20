@@ -134,7 +134,8 @@ namespace EasySqlParser.SqlGenerator
             if (!type.IsEspKnownType())
             {
                 var name = _names.Pop();
-                var fieldInfo = type.GetField(name);
+                var fieldInfo = type.GetField(name,
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 object value;
                 if (fieldInfo != null)
                 {
