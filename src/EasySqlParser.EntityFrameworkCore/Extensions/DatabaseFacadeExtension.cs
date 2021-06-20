@@ -72,17 +72,19 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         internal static async Task<int> ConsumeScalarAsync(this IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
-            QueryBuilderParameter builderParameter)
+            QueryBuilderParameter builderParameter,
+            CancellationToken cancellationToken = default)
         {
-            var scalarValue = await command.ExecuteScalarAsync(parameterObject).ConfigureAwait(false);
+            var scalarValue = await command.ExecuteScalarAsync(parameterObject, cancellationToken).ConfigureAwait(false);
             return DbCommandHelper.ConsumeScalar(scalarValue, builderParameter);
         }
 
         internal static async Task<int> ConsumeNonQueryAsync(this IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
-            QueryBuilderParameter builderParameter)
+            QueryBuilderParameter builderParameter,
+            CancellationToken cancellationToken = default)
         {
-            var affectedCount = await command.ExecuteNonQueryAsync(parameterObject).ConfigureAwait(false);
+            var affectedCount = await command.ExecuteNonQueryAsync(parameterObject, cancellationToken).ConfigureAwait(false);
             builderParameter.ApplyReturningColumns();
             return affectedCount;
         }
