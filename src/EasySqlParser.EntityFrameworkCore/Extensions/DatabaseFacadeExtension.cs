@@ -498,7 +498,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                     switch (builderParameter.CommandExecutionType)
                     {
                         case CommandExecutionType.ExecuteNonQuery:
-                            affectedCount = await command.ConsumeNonQueryAsync(parameterObject, builderParameter)
+                            affectedCount = await command.ConsumeNonQueryAsync(parameterObject, builderParameter, cancellationToken)
                                 .ConfigureAwait(false);
                             break;
                         case CommandExecutionType.ExecuteReader:
@@ -506,7 +506,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                                 .ConfigureAwait(false);
                             break;
                         case CommandExecutionType.ExecuteScalar:
-                            affectedCount = await command.ConsumeScalarAsync(parameterObject, builderParameter)
+                            affectedCount = await command.ConsumeScalarAsync(parameterObject, builderParameter, cancellationToken)
                                 .ConfigureAwait(false);
                             break;
                         default:
