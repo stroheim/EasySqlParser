@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using EasySqlParser.Configurations;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
 
@@ -57,7 +58,7 @@ namespace EasySqlParser.SqlGenerator.Helpers
             Type expectedType)
         {
             var config = builderParameter.Config;
-            var sql = attribute.GetSequenceGeneratorSql(config);
+            var sql = GetSequenceGeneratorSql(config, attribute);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())
             {
@@ -80,7 +81,7 @@ namespace EasySqlParser.SqlGenerator.Helpers
             CancellationToken cancellationToken = default)
         {
             var config = builderParameter.Config;
-            var sql = attribute.GetSequenceGeneratorSql(config);
+            var sql = GetSequenceGeneratorSql(config, attribute);
             builderParameter.WriteLog(sql);
             using (var command = connection.CreateCommand())
             {
@@ -95,6 +96,15 @@ namespace EasySqlParser.SqlGenerator.Helpers
             }
 
         }
+
+        private static string GetSequenceGeneratorSql(SqlParserConfig config, SequenceGeneratorAttribute attribute)
+        {
+            return attribute.PaddingLength == 0
+                ? config.Dialect.GetNextSequenceSql(attribute.SequenceName, attribute.SchemaName)
+                : config.Dialect.GetNextSequenceSqlZeroPadding(attribute.SequenceName, attribute.SchemaName,
+                    attribute.PaddingLength, attribute.Prefix);
+        }
+
 
     }
 }

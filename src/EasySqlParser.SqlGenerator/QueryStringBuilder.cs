@@ -319,7 +319,7 @@ namespace EasySqlParser.SqlGenerator
         internal bool IncludeCurrentTimestampColumn(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo)
         {
-            return !UseStandardDialect && columnInfo.CurrentTimestampAttribute.IsAvailable(parameter.SqlKind);
+            return !UseStandardDialect && IsAvailable(parameter.SqlKind, columnInfo.CurrentTimestampAttribute.Strategy);
         }
 
 
@@ -345,7 +345,7 @@ namespace EasySqlParser.SqlGenerator
         internal bool IncludeCurrentUserColumn(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo)
         {
-            return columnInfo.CurrentUserAttribute.IsAvailable(parameter.SqlKind);
+            return IsAvailable(parameter.SqlKind, columnInfo.CurrentUserAttribute.Strategy);
         }
 
 
@@ -459,7 +459,46 @@ namespace EasySqlParser.SqlGenerator
                    };
         }
 
-        
+        private static bool IsAvailable(SqlKind sqlKind, GenerationStrategy strategy)
+        {
+            switch (strategy)
+            {
+                case GenerationStrategy.Always:
+                    return true;
+                case GenerationStrategy.Insert:
+                    if (sqlKind == SqlKind.Insert)
+                    {
+                        return true;
+                    }
+                    break;
+                case GenerationStrategy.InsertOrUpdate:
+                    if (sqlKind == SqlKind.Insert ||
+                        sqlKind == SqlKind.Update)
+                    {
+                        return true;
+                    }
+                    break;
+                case GenerationStrategy.Update:
+                    if (sqlKind == SqlKind.Update)
+                    {
+                        return true;
+                    }
+                    break;
+                case GenerationStrategy.SoftDelete:
+                    if (sqlKind == SqlKind.SoftDelete)
+                    {
+                        return true;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+
+            return false;
+        }
+
+
+
     }
 
 

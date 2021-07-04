@@ -1,5 +1,4 @@
 ﻿using System;
-using EasySqlParser.Configurations;
 
 namespace EasySqlParser.SqlGenerator.Attributes
 {
@@ -18,12 +17,12 @@ namespace EasySqlParser.SqlGenerator.Attributes
 
         public int PaddingLength { get; set; }
 
-        internal string GetSequenceGeneratorSql(SqlParserConfig config)
-        {
-            return PaddingLength == 0
-                ? config.Dialect.GetNextSequenceSql(SequenceName, SchemaName)
-                : config.Dialect.GetNextSequenceSqlZeroPadding(SequenceName, SchemaName,
-                    PaddingLength, Prefix);
-        }
+        //internal string GetSequenceGeneratorSql(SqlParserConfig config)
+        //{
+        //    return PaddingLength == 0
+        //        ? config.Dialect.GetNextSequenceSql(SequenceName, SchemaName)
+        //        : config.Dialect.GetNextSequenceSqlZeroPadding(SequenceName, SchemaName,
+        //            PaddingLength, Prefix);
+        //}
     }
 }

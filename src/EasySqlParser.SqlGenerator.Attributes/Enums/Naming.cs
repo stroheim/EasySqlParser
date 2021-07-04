@@ -1,4 +1,5 @@
-﻿namespace EasySqlParser.SqlGenerator.Enums
+﻿// ReSharper disable once CheckNamespace
+namespace EasySqlParser.SqlGenerator.Enums
 {
     public enum Naming
     {
