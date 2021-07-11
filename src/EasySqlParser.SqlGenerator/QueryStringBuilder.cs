@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using EasySqlParser.Configurations;
 using EasySqlParser.Extensions;
@@ -461,37 +460,24 @@ namespace EasySqlParser.SqlGenerator
 
         private static bool IsAvailable(SqlKind sqlKind, GenerationStrategy strategy)
         {
-            switch (strategy)
+            if ((strategy & GenerationStrategy.Always) == GenerationStrategy.Always)
             {
-                case GenerationStrategy.Always:
-                    return true;
-                case GenerationStrategy.Insert:
-                    if (sqlKind == SqlKind.Insert)
-                    {
-                        return true;
-                    }
-                    break;
-                case GenerationStrategy.InsertOrUpdate:
-                    if (sqlKind == SqlKind.Insert ||
-                        sqlKind == SqlKind.Update)
-                    {
-                        return true;
-                    }
-                    break;
-                case GenerationStrategy.Update:
-                    if (sqlKind == SqlKind.Update)
-                    {
-                        return true;
-                    }
-                    break;
-                case GenerationStrategy.SoftDelete:
-                    if (sqlKind == SqlKind.SoftDelete)
-                    {
-                        return true;
-                    }
-                    break;
-                default:
-                    return false;
+                return true;
+            }
+
+            if ((strategy & GenerationStrategy.Insert) == GenerationStrategy.Insert && sqlKind == SqlKind.Insert)
+            {
+                return true;
+            }
+
+            if ((strategy & GenerationStrategy.Update) == GenerationStrategy.Update && sqlKind == SqlKind.Update)
+            {
+                return true;
+            }
+
+            if ((strategy & GenerationStrategy.SoftDelete) == GenerationStrategy.SoftDelete && sqlKind == SqlKind.SoftDelete)
+            {
+                return true;
             }
 
             return false;

@@ -195,7 +195,6 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
     // RelationalDatabaseFacadeExtensions
 
-    // TODO: DOC
     /// <summary>
     /// Extension for <see cref="DatabaseFacade"/>
     /// </summary>
@@ -205,6 +204,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #region ExecuteScalar
 
+        /// <summary>
+        ///     Executes a query with a single scalar result.
+        /// </summary>
+        /// <typeparam name="TResult">The type to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static TResult ExecuteScalar<TResult>(
             this DatabaseFacade database,
             SqlParserResult parserResult,
@@ -240,6 +247,15 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query with a single scalar result.
+        /// </summary>
+        /// <typeparam name="TResult">The type to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public static async Task<TResult> ExecuteScalarAsync<TResult>(
             this DatabaseFacade database,
             SqlParserResult parserResult,
@@ -274,6 +290,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
+        /// <summary>
+        ///     Executes a query with a single scalar result.
+        /// </summary>
+        /// <typeparam name="TResult">The type to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="sqlTemplate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static TResult ExecuteScalar<TResult>(
             this DatabaseFacade database,
             FormattableString sqlTemplate,
@@ -319,6 +343,15 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query with a single scalar result.
+        /// </summary>
+        /// <typeparam name="TResult">The type to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="sqlTemplate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public static async Task<TResult> ExecuteScalarAsync<TResult>(
             this DatabaseFacade database,
             FormattableString sqlTemplate,
@@ -366,7 +399,15 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #endregion
 
-
+        /// <summary>
+        ///     Executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="transaction"></param>
+        /// <returns>
+        ///     The number of rows affected.
+        /// </returns>
         public static int ExecuteNonQuery(
             this DatabaseFacade database,
             QueryBuilderParameter builderParameter,
@@ -398,7 +439,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             if (builderParameter.ThrowableOptimisticLockException() && dbContextTransaction == null)
             {
-                throw new InvalidOperationException("トランザクションが開始されていないため楽観排他制御ができません");
+                throw new InvalidOperationException("Optimistic exclusive control cannot be performed because the transaction has not started.");
             }
 
             using (concurrentDetector.EnterCriticalSection())
@@ -423,8 +464,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                             affectedCount = command.ConsumeScalar(parameterObject, builderParameter);
                             break;
                         default:
-                            // TODO: error
-                            throw new InvalidOperationException("");
+                            throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
                     }
 
                     ThrowIfOptimisticLockException(builderParameter, affectedCount, command.CommandText, debugSql,
@@ -449,7 +489,16 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
-
+        /// <summary>
+        ///     Asynchronously executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the number of rows affected.
+        /// </returns>
         public static async Task<int> ExecuteNonQueryAsync(
             this DatabaseFacade database,
             QueryBuilderParameter builderParameter,
@@ -482,7 +531,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             if (builderParameter.ThrowableOptimisticLockException() && dbContextTransaction == null)
             {
-                throw new InvalidOperationException("トランザクションが開始されていないため楽観排他制御ができません");
+                throw new InvalidOperationException("Optimistic exclusive control cannot be performed because the transaction has not started.");
             }
 
             using (concurrentDetector.EnterCriticalSection())
@@ -510,8 +559,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                                 .ConfigureAwait(false);
                             break;
                         default:
-                            // TODO: error
-                            throw new InvalidOperationException("");
+                            throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
                     }
 
                     await ThrowIfOptimisticLockExceptionAsync(builderParameter, affectedCount, command.CommandText, debugSql,
@@ -538,6 +586,17 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #region ExecuteReader use SqlParserResult
 
+        /// <summary>
+        ///     Executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <returns>
+        ///     If query has no records, returning default of <typeparamref name="T"/>.
+        /// </returns>
         public static T ExecuteReaderFirst<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -570,6 +629,19 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the result of the command.
+        ///     If query has no records, returning default of <typeparamref name="T"/>.
+        /// </returns>
         public static async Task<T> ExecuteReaderFirstAsync<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -605,7 +677,17 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         }
 
-
+        /// <summary>
+        ///     Executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <returns>
+        ///     If query has no records, returning empty list of <typeparamref name="T"/>.
+        /// </returns>
         public static List<T> ExecuteReader<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -639,6 +721,19 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the result of the command.
+        ///     If query has no records, returning empty list of <typeparamref name="T"/>.
+        /// </returns>
         public static async Task<List<T>> ExecuteReaderAsync<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -676,6 +771,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         #region ExecuteReader use Query Expression
 
+        /// <summary>
+        ///     Executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="configName"></param>
+        /// <returns>
+        ///     If query has no records, returning default of <typeparamref name="T"/>.
+        /// </returns>
         public static T ExecuteReaderFirst<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -713,6 +820,20 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="configName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the result of the command.
+        ///     If query has no records, returning default of <typeparamref name="T"/>.
+        /// </returns>
         public static async Task<T> ExecuteReaderFirstAsync<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -750,7 +871,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             }
         }
 
-
+        /// <summary>
+        ///     Executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="configName"></param>
+        /// <returns>
+        ///     If query has no records, returning empty list of <typeparamref name="T"/>.
+        /// </returns>
         public static List<T> ExecuteReader<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -788,6 +920,20 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T">The type of results to return.</typeparam>
+        /// <param name="database"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="configName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the result of the command.
+        ///     If query has no records, returning empty list of <typeparamref name="T"/>.
+        /// </returns>
         public static async Task<List<T>> ExecuteReaderAsync<T>(
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
@@ -828,7 +974,6 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
 
         #region InternalExecuteReader
-
         private static T InternalExecuteReaderFirst<T>(IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             EntityTypeInfo entityInfo)
@@ -947,7 +1092,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             // null check
             if (parserResult == null)
             {
-                throw new InvalidOperationException("");
+                throw new ArgumentNullException(nameof(parserResult));
             }
 
             if (parserResult.DbDataParameters.Count == 0)
@@ -992,7 +1137,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             // null check
             if (localBuilderResult == null)
             {
-                throw new InvalidOperationException("");
+                throw new InvalidOperationException("builder result is null");
             }
 
             if (localBuilderResult.DbDataParameters.Count == 0)

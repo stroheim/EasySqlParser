@@ -1,26 +1,26 @@
 ﻿namespace EasySqlParser.SqlGenerator.Enums
 {
     /// <summary>
-    /// INSERT または UPDATE 時の動作
+    /// Behavior during INSERT or UPDATE.
     /// </summary>
     public enum QueryBehavior
     {
         /// <summary>
-        /// 無し
-        /// エンティティに変更結果は戻されない
+        /// Changes are not returned to the entity.
         /// </summary>
         None,
         /// <summary>
-        /// 自動採番列の値のみエンティティに戻される
+        /// Only the values ​​in the auto-numbered column are returned to the entity.
         /// </summary>
         IdentityOnly,
         /// <summary>
-        /// 全ての値がエンティティに戻される
+        /// All values ​​are returned to the entity.
         /// </summary>
         AllColumns,
         /// <summary>
-        /// 自動採番列があればその値のみを
-        /// そうでない場合はすべての列がエンティティに戻される
+        /// If there is an auto-numbered column,
+        /// only its value is returned,
+        /// otherwise all columns are returned to the entity.
         /// </summary>
         IdentityOrAllColumns
     }

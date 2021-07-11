@@ -4,12 +4,12 @@ namespace EasySqlParser.SqlGenerator.Enums
 {
 
     /// <summary>
-    /// ExcludeNull の動作
+    ///     Behavior during INSERT or UPDATE using 'exclude null'.
     /// </summary>
     public enum ExcludeNullBehavior
     {
         /// <summary>
-        /// nullのみを除外
+        /// null only
         /// </summary>
         NullOnly,
         /// <summary>

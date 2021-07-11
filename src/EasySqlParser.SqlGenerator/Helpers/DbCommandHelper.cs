@@ -2,9 +2,18 @@
 
 namespace EasySqlParser.SqlGenerator.Helpers
 {
+    /// <summary>
+    ///     Helper for query command.
+    /// </summary>
     public static class DbCommandHelper
     {
         // used by dapper and ef
+        /// <summary>
+        ///     Consumes the scalar value.
+        /// </summary>
+        /// <param name="scalarValue"></param>
+        /// <param name="builderParameter"></param>
+        /// <returns></returns>
         public static int ConsumeScalar(object scalarValue, QueryBuilderParameter builderParameter)
         {
             if (scalarValue == null || scalarValue is DBNull)

@@ -12,6 +12,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace EasySqlParser.EntityFrameworkCore
 {
+    /// <summary>
+    ///     <see cref="ISqlContext"/> implementation for EntityFrameworkCore.
+    /// </summary>
     public class EfCoreSqlContext : ISqlContext
     {
         private readonly DbContext _context;
@@ -20,7 +23,10 @@ namespace EasySqlParser.EntityFrameworkCore
         private readonly List<SqlItem> _sqlItems;
         private readonly List<SqlItem> _prioritySqlItems;
 
-
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="EfCoreSqlContext"/> class.
+        /// </summary>
+        /// <param name="context"></param>
         public EfCoreSqlContext(DbContext context)
         {
             _context = context;
@@ -32,8 +38,10 @@ namespace EasySqlParser.EntityFrameworkCore
         }
 
 
+        /// <inheritdoc />
         public SaveChangesBehavior SaveChangesBehavior { get; internal set; }
 
+        /// <inheritdoc />
         public void Add(FormattableString sqlTemplate, bool forceFirst = false)
         {
             IRelationalCommand command;
@@ -68,6 +76,7 @@ namespace EasySqlParser.EntityFrameworkCore
             }
         }
 
+        /// <inheritdoc />
         public void Add(SqlParserResult parserResult, bool merge = false, bool forceFirst = false)
         {
             IRelationalCommand command;
@@ -119,6 +128,7 @@ namespace EasySqlParser.EntityFrameworkCore
 
         }
 
+        /// <inheritdoc />
         public void Add(QueryBuilderParameter builderParameter, bool forceFirst = false)
         {
             var connection = _facadeDependencies.RelationalConnection.DbConnection;
@@ -158,6 +168,7 @@ namespace EasySqlParser.EntityFrameworkCore
             }
         }
 
+        /// <inheritdoc />
         public int SaveChanges()
         {
             var concurrentDetector = _facadeDependencies.ConcurrencyDetector;
@@ -215,6 +226,7 @@ namespace EasySqlParser.EntityFrameworkCore
             }
         }
 
+        /// <inheritdoc />
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             var concurrentDetector = _facadeDependencies.ConcurrencyDetector;
@@ -297,8 +309,7 @@ namespace EasySqlParser.EntityFrameworkCore
                     affectedCount = command.ConsumeScalar(parameterObject, builderParameter);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, sqlItem.BuilderResult);
@@ -330,8 +341,7 @@ namespace EasySqlParser.EntityFrameworkCore
                     affectedCount = await command.ConsumeScalarAsync(parameterObject, builderParameter, cancellationToken).ConfigureAwait(false);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, sqlItem.BuilderResult);

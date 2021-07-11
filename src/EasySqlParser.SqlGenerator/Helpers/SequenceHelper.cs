@@ -8,8 +8,16 @@ using EasySqlParser.SqlGenerator.Enums;
 
 namespace EasySqlParser.SqlGenerator.Helpers
 {
+    /// <summary>
+    ///     Helper for sequence generate.
+    /// </summary>
     public static class SequenceHelper
     {
+        /// <summary>
+        ///     Generate sequence.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="builderParameter"></param>
         public static void Generate(DbConnection connection, QueryBuilderParameter builderParameter)
         {
             if (builderParameter.SqlKind != SqlKind.Insert) return;
@@ -28,6 +36,13 @@ namespace EasySqlParser.SqlGenerator.Helpers
             builderParameter.WriteLog("[End] Sequence Generate");
         }
 
+        /// <summary>
+        ///     Asynchronously generate sequence.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public static async Task GenerateAsync(
             DbConnection connection, 
             QueryBuilderParameter builderParameter,
