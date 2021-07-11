@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using EasySqlParser.SqlGenerator.Configurations;
 using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,15 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.Oracle
             QueryBehavior queryBehavior = QueryBehavior.AllColumns, 
             ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly, 
             IEnumerable<Assembly> additionalAssemblies = null) : base(
-            dbContext, NullLogger<OracleConfig>.Instance, commandTimeout, writeIndented, queryBehavior, excludeNullBehavior, additionalAssemblies)
+            dbContext, NullLogger<OracleConfig>.Instance,
+            new QueryBuilderConfigurationOptions
+            {
+                CommandTimeout = commandTimeout,
+                WriteIndented = writeIndented,
+                QueryBehavior = queryBehavior,
+                ExcludeNullBehavior = excludeNullBehavior,
+                AdditionalAssemblies = additionalAssemblies
+            })
         {
             _output = output;
         }

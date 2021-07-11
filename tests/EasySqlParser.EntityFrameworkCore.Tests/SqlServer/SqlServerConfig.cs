@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
+using EasySqlParser.SqlGenerator.Configurations;
 using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,21 +11,25 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
     public class SqlServerConfig : EfCoreQueryBuilderConfiguration
     {
         private readonly ITestOutputHelper _output;
+
         public SqlServerConfig(
             DbContext dbContext,
             ITestOutputHelper output,
-            int commandTimeout = 30, 
-            bool writeIndented = true, 
-            QueryBehavior queryBehavior = QueryBehavior.AllColumns, 
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly, 
+            int commandTimeout = 30,
+            bool writeIndented = true,
+            QueryBehavior queryBehavior = QueryBehavior.AllColumns,
+            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
             IEnumerable<Assembly> additionalAssemblies = null) : base(
             dbContext,
-            NullLogger<SqlServerConfig>.Instance, 
-            commandTimeout, 
-            writeIndented, 
-            queryBehavior, 
-            excludeNullBehavior, 
-            additionalAssemblies)
+            NullLogger<SqlServerConfig>.Instance,
+            new QueryBuilderConfigurationOptions
+            {
+                CommandTimeout = commandTimeout,
+                WriteIndented = writeIndented,
+                QueryBehavior = queryBehavior,
+                ExcludeNullBehavior = excludeNullBehavior,
+                AdditionalAssemblies = additionalAssemblies
+            })
         {
             _output = output;
         }

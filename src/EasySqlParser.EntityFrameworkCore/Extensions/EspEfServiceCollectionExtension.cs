@@ -1,41 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Configurations;
-using EasySqlParser.SqlGenerator.Enums;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace EasySqlParser.EntityFrameworkCore.Extensions
 {
+    /// <summary>
+    ///     Extension methods for setting up EasySqlParser SqlGenerator related services in an <see cref="IServiceCollection" />.
+    /// </summary>
     public static class EspEfServiceCollectionExtension
     {
+
+        /// <summary>
+        ///     Registers the EasySqlParser services in the <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public static IServiceCollection AddQueryBuilderConfiguration(
+            this IServiceCollection services)
+        {
+            services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
+            services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
+            return services;
+        }
+
+        /// <summary>
+        ///     Registers the EasySqlParser services in the <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public static IServiceCollection AddQueryBuilderConfiguration(
             this IServiceCollection services,
-            int commandTimeout = 30,
-            bool writeIndented = true,
-            QueryBehavior queryBehavior = QueryBehavior.None,
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
-            IEnumerable<Assembly> additionalAssemblies = null)
+            Action<QueryBuilderConfigurationOptions> options)
         {
-            services
-                .AddSingleton<IQueryBuilderConfiguration>(s =>
-                                                          {
-                                                              var dbContext = s.GetRequiredService<DbContext>();
-                                                              var logger =
-                                                                  s.GetRequiredService<
-                                                                      ILogger<EfCoreQueryBuilderConfiguration>>();
-                                                              return new EfCoreQueryBuilderConfiguration(dbContext,
-                                                                  logger,
-                                                                  commandTimeout,
-                                                                  writeIndented,
-                                                                  queryBehavior,
-                                                                  excludeNullBehavior,
-                                                                  additionalAssemblies);
-                                                          });
+            services.Configure(options);
+            services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
+            services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
             return services;
         }
     }

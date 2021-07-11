@@ -2,24 +2,23 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Common;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Configurations;
-using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Query.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EasySqlParser.EntityFrameworkCore
 {
+    /// <summary>
+    ///     <see cref="IQueryBuilderConfiguration"/> implementation for EntityFrameworkCore .
+    /// </summary>
     public class EfCoreQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
         private readonly ILogger<EfCoreQueryBuilderConfiguration> _logger;
@@ -28,41 +27,60 @@ namespace EasySqlParser.EntityFrameworkCore
         private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
 
 
+        /// <inheritdoc />
         protected override void InternalBuildCache()
         {
             var prepare = EfCoreEntityTypeInfoBuilder.Build(_dbContext, _assemblies);
             _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
+        /// <inheritdoc />
         public override EntityTypeInfo GetEntityTypeInfo(Type type)
         {
             return _hashDictionary.Get(type);
         }
 
+        /// <summary>
+        ///     Write log using <see cref="ILogger{TCategoryName}"/> .
+        /// </summary>
+        /// <param name="message"></param>
         public virtual void WriteLog(string message)
         {
             _logger.LogDebug(message);
         }
 
-        public EfCoreQueryBuilderConfiguration(
+        internal EfCoreQueryBuilderConfiguration(
             DbContext dbContext,
             ILogger<EfCoreQueryBuilderConfiguration> logger,
-            int commandTimeout = 30,
-            bool writeIndented = true,
-            QueryBehavior queryBehavior = QueryBehavior.None,
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
+            QueryBuilderConfigurationOptions options,
             IEnumerable<Assembly> additionalAssemblies = null) : base(
             null,
-            commandTimeout,
-            writeIndented,
-            queryBehavior,
-            excludeNullBehavior
-        )
+            options)
         {
             _dbContext = dbContext;
             _logger = logger;
             LoggerAction = WriteLog;
             _assemblies = additionalAssemblies;
+            BuildCache();
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="EfCoreQueryBuilderConfiguration"/> class.
+        /// </summary>
+        /// <param name="dbContext"></param>
+        /// <param name="logger"></param>
+        /// <param name="options"></param>
+        public EfCoreQueryBuilderConfiguration(
+            DbContext dbContext,
+            ILogger<EfCoreQueryBuilderConfiguration> logger,
+            IOptions<QueryBuilderConfigurationOptions> options) : base(
+            null,
+            options?.Value)
+        {
+            _dbContext = dbContext;
+            _logger = logger;
+            LoggerAction = WriteLog;
+            _assemblies = options?.Value.AdditionalAssemblies;
             BuildCache();
         }
 

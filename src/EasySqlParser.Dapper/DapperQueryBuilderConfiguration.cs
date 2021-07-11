@@ -19,16 +19,10 @@ namespace EasySqlParser.Dapper
 
         public DapperQueryBuilderConfiguration(
             IEnumerable<Assembly> entityAssemblies,
-            int commandTimeout = 30,
-            bool writeIndented = true,
-            QueryBehavior queryBehavior = QueryBehavior.None,
-            ExcludeNullBehavior excludeNullBehavior = ExcludeNullBehavior.NullOnly,
+            QueryBuilderConfigurationOptions options,
             Action<string> loggerAction = null) : base(
             null,
-            commandTimeout,
-            writeIndented,
-            queryBehavior,
-            excludeNullBehavior,
+            options,
             loggerAction)
         {
             _entityAssemblies = entityAssemblies;
