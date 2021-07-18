@@ -6,12 +6,21 @@ using System.Linq;
 using System.Reflection;
 using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator.Attributes;
+using EasySqlParser.SqlGenerator.Attributes.Extensions;
 using EasySqlParser.SqlGenerator.Enums;
 
 namespace EasySqlParser.SqlGenerator.Metadata
 {
+    /// <summary>
+    ///     A class for building entity information.
+    /// </summary>
     public static class EntityTypeInfoBuilder
     {
+        /// <summary>
+        ///     Build entity information from assembly.
+        /// </summary>
+        /// <param name="assemblies"></param>
+        /// <returns></returns>
         public static KeyValuePair<Type, EntityTypeInfo>[] Build(IEnumerable<Assembly> assemblies)
         {
             var types = new List<Type>();
@@ -31,6 +40,11 @@ namespace EasySqlParser.SqlGenerator.Metadata
 
         }
 
+        /// <summary>
+        ///     Build entity information from the type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static EntityTypeInfo Build(Type type)
         {
             var entityInfo = new EntityTypeInfo

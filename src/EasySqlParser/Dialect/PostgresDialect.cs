@@ -30,8 +30,7 @@ namespace EasySqlParser.Dialect
         /// <summary>
         /// Initializes a new instance of the <see cref="PostgresDialect"/> class.
         /// </summary>
-        public PostgresDialect() :
-            base()
+        public PostgresDialect()
         {
 
         }

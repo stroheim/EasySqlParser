@@ -12,6 +12,9 @@ using EasySqlParser.SqlGenerator.Helpers;
 
 namespace EasySqlParser.Dapper
 {
+    /// <summary>
+    ///     <see cref="ISqlContext"/> implementation for Dapper.
+    /// </summary>
     public class DapperSqlContext : ISqlContext
     {
         private readonly DbConnection _connection;
@@ -19,6 +22,12 @@ namespace EasySqlParser.Dapper
         private readonly List<SqlItem> _prioritySqlItems;
         private readonly SqlParserConfig _config;
 
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="DapperSqlContext"/> class.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="configName"></param>
         public DapperSqlContext(DbConnection connection, string configName = null)
         {
             _connection = connection;
@@ -29,8 +38,10 @@ namespace EasySqlParser.Dapper
                 : ConfigContainer.AdditionalConfigs[configName];
         }
 
+        /// <inheritdoc />
         public SaveChangesBehavior SaveChangesBehavior { get; } = SaveChangesBehavior.SqlContextOnly;
 
+        /// <inheritdoc />
         public void Add(FormattableString sqlTemplate, bool forceFirst = false)
         {
             SqlItem sqlItem;
@@ -83,6 +94,7 @@ namespace EasySqlParser.Dapper
             }
         }
 
+        /// <inheritdoc />
         public void Add(SqlParserResult parserResult, bool merge = false, bool forceFirst = false)
         {
             var sql = merge ? parserResult.ParsedSql + ";;" : parserResult.ParsedSql;
@@ -100,6 +112,7 @@ namespace EasySqlParser.Dapper
             }
         }
 
+        /// <inheritdoc />
         public void Add(QueryBuilderParameter builderParameter, bool forceFirst = false)
         {
             SequenceHelper.Generate(_connection, builderParameter);
@@ -118,6 +131,7 @@ namespace EasySqlParser.Dapper
             }
         }
 
+        /// <inheritdoc />
         public int SaveChanges()
         {
             DbTransaction transaction = null;
@@ -147,6 +161,7 @@ namespace EasySqlParser.Dapper
             return affectedCount;
         }
 
+        /// <inheritdoc />
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             DbTransaction transaction = null;
@@ -202,8 +217,7 @@ namespace EasySqlParser.Dapper
                         ConsumeHelper.ConsumeScalar(connection, builderParameter, builderResult, transaction);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult);
@@ -239,8 +253,7 @@ namespace EasySqlParser.Dapper
                         await ConsumeHelper.ConsumeScalarAsync(connection, builderParameter, builderResult, transaction);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult);

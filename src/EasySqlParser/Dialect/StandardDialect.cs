@@ -593,6 +593,13 @@ namespace EasySqlParser.Dialect
 
         }
 
+        /// <summary>
+        ///     Escapes the SQL LIKE wild card characters in a target string by using a specified escape character
+        ///     and generate a text to perform a prefix search for the SQL LIKE operator.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="escapeChar"></param>
+        /// <returns></returns>
         public string GetStartsWithValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
@@ -603,6 +610,13 @@ namespace EasySqlParser.Dialect
             return StartsWith(value);
         }
 
+        /// <summary>
+        ///     Escapes the SQL LIKE wild card characters in a target string by using a specified escape character
+        ///     and generate a text to perform a infix search for the SQL LIKE operator.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="escapeChar"></param>
+        /// <returns></returns>
         public string GetContainsValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
@@ -613,6 +627,13 @@ namespace EasySqlParser.Dialect
             return Contains(value);
         }
 
+        /// <summary>
+        ///     Escapes the SQL LIKE wild card characters in a target string by using a specified escape character
+        ///     and generate a text to perform a suffix search for the SQL LIKE operator.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="escapeChar"></param>
+        /// <returns></returns>
         public string GetEndsWithValue(string value, char? escapeChar = null)
         {
             if (escapeChar.HasValue)
@@ -625,7 +646,7 @@ namespace EasySqlParser.Dialect
 
 
         /// <summary>
-        /// Enclose the name with quotation marks.
+        ///     Enclose the name with quotation marks.
         /// </summary>
         /// <param name="name">the name of a database object such as a table, a column, and so on</param>
         /// <returns></returns>
@@ -645,18 +666,18 @@ namespace EasySqlParser.Dialect
         }
 
         /// <summary>
-        /// Gets SEQUENCE generator sql.
+        ///     Gets SEQUENCE generator sql.
         /// </summary>
         /// <param name="name">the SEQUENCE name</param>
         /// <param name="schema">the SEQUENCE's schema name</param>
         /// <returns></returns>
         public virtual string GetNextSequenceSql(string name, string schema)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <summary>
-        /// Gets SEQUENCE generator sql.
+        ///     Gets SEQUENCE generator sql.
         /// The SEQUENCE is zero padded.
         /// </summary>
         /// <param name="name">the SEQUENCE name</param>
@@ -666,7 +687,7 @@ namespace EasySqlParser.Dialect
         /// <returns></returns>
         public virtual string GetNextSequenceSqlZeroPadding(string name, string schema, int length, string prefix = null)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
 

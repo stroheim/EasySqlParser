@@ -22,8 +22,7 @@ namespace EasySqlParser.Dialect
         /// <summary>
         /// Initializes a new instance of the <see cref="SqliteDialect"/> class.
         /// </summary>
-        public SqliteDialect() :
-            base()
+        public SqliteDialect()
         {
 
         }

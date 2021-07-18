@@ -21,7 +21,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this IServiceCollection services)
         {
             services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
-            services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
+            //services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
+            services.TryAddScoped(typeof(ISqlContext<>), typeof(EfCoreSqlContext<>));
             return services;
         }
 
@@ -37,7 +38,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         {
             services.Configure(options);
             services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
-            services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
+            //services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
+            services.TryAddScoped(typeof(ISqlContext<>), typeof(EfCoreSqlContext<>));
             return services;
         }
     }

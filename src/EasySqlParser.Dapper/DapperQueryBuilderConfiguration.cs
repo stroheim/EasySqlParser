@@ -2,21 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Dapper;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Configurations;
-using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.Dapper
 {
+    /// <summary>
+    ///     <see cref="IQueryBuilderConfiguration"/> implementation for Dapper.
+    /// </summary>
     public class DapperQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
         private readonly IEnumerable<Assembly> _entityAssemblies;
         private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
-        
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="DapperQueryBuilderConfiguration"/> class.
+        /// </summary>
+        /// <param name="entityAssemblies"></param>
+        /// <param name="options"></param>
+        /// <param name="loggerAction"></param>
         public DapperQueryBuilderConfiguration(
             IEnumerable<Assembly> entityAssemblies,
             QueryBuilderConfigurationOptions options,
@@ -35,12 +41,14 @@ namespace EasySqlParser.Dapper
             InternalBuildCache();
         }
 
+        /// <inheritdoc />
         protected override void InternalBuildCache()
         {
             var prepare= DapperMapBuilder.CreateMap(_entityAssemblies);
             _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
+        /// <inheritdoc />
         public override EntityTypeInfo GetEntityTypeInfo(Type type)
         {
             return _hashDictionary.Get(type);

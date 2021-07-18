@@ -1,12 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace EasySqlParser.Extensions
 {
+    /// <summary>
+    ///     Extension methods for <see cref="Type"/>.
+    /// </summary>
     public static class TypeExtension
     {
+        /// <summary>
+        ///     Gets a value indicating whether the current type is a known type for EasySqlParser.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static bool IsEspKnownType(this Type type)
         {
             if (type == typeof(string) ||
@@ -48,6 +55,11 @@ namespace EasySqlParser.Extensions
             return false;
         }
 
+        /// <summary>
+        ///     Gets a value indicating whether the current type is a nullable type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static bool IsNullable(this Type type)
         {
             return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
@@ -98,6 +110,12 @@ namespace EasySqlParser.Extensions
                                                                         [typeof(TimeSpan?)] = DbType.Time,
                                                                         [typeof(object)] = DbType.Object
                                                                     };
+
+        /// <summary>
+        ///     Resolve <see cref="DbType"/> from the <see cref="Type"/>.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static DbType ResolveDbType(this Type type)
         {
             if (Mappings.ContainsKey(type))

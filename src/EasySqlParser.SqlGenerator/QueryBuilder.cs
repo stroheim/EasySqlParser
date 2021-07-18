@@ -7,9 +7,17 @@ using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
 {
+    /// <summary>
+    ///     A class for query builder.
+    /// </summary>
 
     public class QueryBuilder
     {
+        /// <summary>
+        ///     Gets the <see cref="QueryBuilderResult"/> from sql file.
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns></returns>
         public static QueryBuilderResult GetQueryBuilderResultFromSqlFile(QueryBuilderParameter parameter)
         {
             var parser = new SqlParser(parameter.SqlFile, parameter.Entity, parameter.Config);
@@ -22,6 +30,11 @@ namespace EasySqlParser.SqlGenerator
                    };
         }
 
+        /// <summary>
+        ///     Gets the <see cref="QueryBuilderResult"/>.
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns></returns>
         public static QueryBuilderResult GetQueryBuilderResult(
             QueryBuilderParameter parameter)
         {
@@ -41,12 +54,19 @@ namespace EasySqlParser.SqlGenerator
                 case SqlKind.Delete:
                     return GetDeleteSql(parameter);
                 default:
-                    // TODO:
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"Unknown sql kind:{parameter.SqlKind}");
             }
 
         }
 
+        /// <summary>
+        ///     Generate count SQL statements.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="predicate"></param>
+        /// <param name="configuration"></param>
+        /// <param name="configName"></param>
+        /// <returns></returns>
         public static QueryBuilderResult GetCountSql<T>(
             Expression<Func<T, bool>> predicate = null,
             IQueryBuilderConfiguration configuration = null,
@@ -78,7 +98,14 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
-
+        /// <summary>
+        ///     Generate delete SQL statements.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="configName"></param>
+        /// <returns></returns>
         public static QueryBuilderResult GetDeleteSql<T>(
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -103,6 +130,14 @@ namespace EasySqlParser.SqlGenerator
         }
 
 
+        /// <summary>
+        ///     Generate select SQL statements.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="configName"></param>
+        /// <returns></returns>
         public static QueryBuilderResult GetSelectSql<T>(
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -628,7 +663,6 @@ namespace EasySqlParser.SqlGenerator
                 }
             }
 
-            // TODO: error
             if (counter == 0)
             {
                 throw new InvalidOperationException("select column not found");
@@ -719,7 +753,7 @@ namespace EasySqlParser.SqlGenerator
             if (parameter.SqlKind == SqlKind.Update || parameter.SqlKind == SqlKind.SoftDelete || !identityAppended)
             {
                 var counter = 0;
-                for (int i = 0; i < entityInfo.KeyColumns.Count; i++)
+                for (var i = 0; i < entityInfo.KeyColumns.Count; i++)
                 {
                     var columnInfo = entityInfo.KeyColumns[i];
                     builder.AppendAnd(counter);

@@ -291,8 +291,7 @@ namespace EasySqlParser.SqlGenerator
                 }
             }
 
-            // TODO:
-            throw new InvalidOperationException("");
+            throw new InvalidOperationException($"unknown version no data type:{propertyType}");
         }
 
         internal void AppendVersion(QueryBuilderParameter parameter, EntityColumnInfo columnInfo)

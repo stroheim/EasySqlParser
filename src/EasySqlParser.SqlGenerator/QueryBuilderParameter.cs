@@ -9,14 +9,30 @@ using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
 {
-
+    /// <summary>
+    ///     A parameter for <see cref="QueryBuilder"/>.
+    /// </summary>
     public class QueryBuilderParameter
     {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="QueryBuilderParameter"/> class.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="sqlKind"></param>
+        /// <param name="builderConfiguration"></param>
+        /// <param name="entityType"></param>
+        /// <param name="excludeNull"></param>
+        /// <param name="ignoreVersion"></param>
+        /// <param name="useVersion"></param>
+        /// <param name="suppressOptimisticLockException"></param>
+        /// <param name="currentUser"></param>
+        /// <param name="sqlFile"></param>
+        /// <param name="configName"></param>
         public QueryBuilderParameter(
             object entity,
             SqlKind sqlKind,
             IQueryBuilderConfiguration builderConfiguration,
-            Type entityType=null,
+            Type entityType = null,
             bool excludeNull = false,
             bool ignoreVersion = false,
             bool useVersion = true,
@@ -48,54 +64,96 @@ namespace EasySqlParser.SqlGenerator
             VersionPropertyInfo = EntityTypeInfo.VersionColumn?.PropertyInfo;
         }
 
+        /// <summary>
+        ///     Gets the <see cref="EntityTypeInfo"/>.
+        /// </summary>
         public EntityTypeInfo EntityTypeInfo { get; }
 
+        /// <summary>
+        ///     Gets the entity instance.
+        /// </summary>
+        public object Entity { get; }
 
-        public object Entity { get; private set; }
-
+        /// <summary>
+        ///     Gets whether SQL NULL columns are excluded from SQL statements.
+        /// </summary>
         public bool ExcludeNull { get; }
 
         /// <summary>
-        /// VersionNoを更新条件に含めない
-        /// VersionNo自体は設定された値で更新される
+        ///     GEts whether the version property is ignored.
         /// </summary>
+        /// <remarks>
+        ///     VersionNo itself is updated with the set value.
+        /// </remarks>
         public bool IgnoreVersion { get; }
 
         /// <summary>
-        /// EfCoreが想定しているRowVersion型など特殊なものではなく、longなど一般的な型を使って楽観排他を行う
-        /// 更新件数が0件の場合は `OptimisticLockException` をスローする
+        ///     Gets whether optimistic exclusion is performed using a general type
+        ///     such as long, rather than a special type such as the RowVersion type that EfCore assumes.
         /// </summary>
+        /// <remarks>
+        ///     OptimisticLockException is thrown if the number of updates is 0
+        /// </remarks>
         public bool UseVersion { get; }
 
         /// <summary>
-        /// VersionNoを更新条件に含める
-        /// 更新件数0件でも `OptimisticLockException` をスローしない
+        ///     Gets whether <see cref="OptimisticLockException"/> is suppressed.
         /// </summary>
+        /// <remarks>
+        ///     Version no is included in the update conditions.
+        ///     OptimisticLockException is not thrown even if the number of updates is 0.
+        /// </remarks>
         public bool SuppressOptimisticLockException { get; }
 
+        /// <summary>
+        ///     Gets the <see cref="SqlKind"/>.
+        /// </summary>
         public SqlKind SqlKind { get; }
 
+        /// <summary>
+        ///     Gets the <see cref="SqlParserConfig"/>.
+        /// </summary>
         public SqlParserConfig Config { get; }
 
+        /// <summary>
+        ///     Gets the command timeout (in seconds).
+        /// </summary>
         public int CommandTimeout { get; }
 
-        //public bool UseDbSet { get; }
-
         /// <summary>
-        /// 改行およびインデントを行うかどうか
+        ///     Gets a value that defines whether SQL should use pretty printing. 
         /// </summary>
         public bool WriteIndented { get; }
 
+        /// <summary>
+        ///     Gets the sql file.
+        /// </summary>
         public string SqlFile { get; }
 
+        /// <summary>
+        ///     Gets the <see cref="Enums.QueryBehavior"/>.
+        /// </summary>
         public QueryBehavior QueryBehavior { get; }
 
+        /// <summary>
+        ///     Gets the <see cref="Enums.ExcludeNullBehavior"/>.
+        /// </summary>
         public ExcludeNullBehavior ExcludeNullBehavior { get; }
 
+        /// <summary>
+        ///     Gets the current user.
+        /// </summary>
         public string CurrentUser { get; }
 
+        /// <summary>
+        ///     Gets the entity type.
+        /// </summary>
         public Type EntityType { get; private set; }
 
+        /// <summary>
+        ///     Rewrites the state of the internally allocated entity in the specified entity.
+        /// </summary>
+        /// <param name="entity"></param>
         public void ResetEntity(object entity)
         {
             foreach (var columnInfo in EntityTypeInfo.Columns)
@@ -129,6 +187,9 @@ namespace EasySqlParser.SqlGenerator
 
         private VersionType _versionType = VersionType.None;
 
+        /// <summary>
+        ///     Save the expected version no.
+        /// </summary>
         public void SaveExpectedVersion()
         {
             if (VersionPropertyInfo == null) return;
@@ -140,6 +201,10 @@ namespace EasySqlParser.SqlGenerator
 
         }
 
+        /// <summary>
+        ///     Determines if the entity's version no matches the expected version no.
+        /// </summary>
+        /// <returns></returns>
         public bool IsSameVersion()
         {
             if (VersionPropertyInfo == null) return true;
@@ -157,8 +222,7 @@ namespace EasySqlParser.SqlGenerator
                 case VersionType.Decimal:
                     return (decimal)currentVersion == (decimal)_expectedVersionNo;
                 default:
-                    // TODO:
-                    throw new InvalidOperationException("unsupported data type");
+                    throw new InvalidOperationException($"unsupported version no data type:{_versionType}");
             }
 
         }
@@ -180,11 +244,13 @@ namespace EasySqlParser.SqlGenerator
                     _versionType = VersionType.Decimal;
                     return decimalValue + 1M;
                 default:
-                    // TODO:
-                    throw new InvalidOperationException("unsupported data type");
+                    throw new InvalidOperationException($"unsupported version no data type:{versionValue.GetType()}");
             }
         }
 
+        /// <summary>
+        ///     Add version no.
+        /// </summary>
         public void IncrementVersion()
         {
             if (VersionPropertyInfo == null) return;
@@ -200,6 +266,9 @@ namespace EasySqlParser.SqlGenerator
             VersionPropertyInfo.SetValue(Entity, AddVersion(versionValue));
         }
 
+        /// <summary>
+        ///     Writes back the value returned by the returning clause to the entity.
+        /// </summary>
         public void ApplyReturningColumns()
         {
             if (ReturningColumns.Count == 0) return;
@@ -213,12 +282,18 @@ namespace EasySqlParser.SqlGenerator
             WriteLog("[END] returning value read");
         }
 
-
+        /// <summary>
+        ///     Write log message.
+        /// </summary>
+        /// <param name="message"></param>
         public void WriteLog(string message)
         {
             _loggerAction?.Invoke(message);
         }
 
+        /// <summary>
+        ///     Gets the <see cref="Enums.CommandExecutionType"/>.
+        /// </summary>
         public CommandExecutionType CommandExecutionType
         {
             get
@@ -255,6 +330,10 @@ namespace EasySqlParser.SqlGenerator
             }
         }
 
+        /// <summary>
+        ///     Gets whether OptimisticLockException can be thrown.
+        /// </summary>
+        /// <returns></returns>
         public bool ThrowableOptimisticLockException()
         {
             return (SqlKind == SqlKind.Update || 
@@ -263,6 +342,11 @@ namespace EasySqlParser.SqlGenerator
                    UseVersion && !SuppressOptimisticLockException;
         }
 
+        /// <summary>
+        ///     Gets whether OptimisticLockException can be thrown.
+        /// </summary>
+        /// <param name="affectedCount"></param>
+        /// <returns></returns>
         public bool ThrowableOptimisticLockException(int affectedCount)
         {
             return (SqlKind == SqlKind.Update || 

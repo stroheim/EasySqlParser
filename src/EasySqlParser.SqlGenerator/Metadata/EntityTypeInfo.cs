@@ -48,7 +48,7 @@ namespace EasySqlParser.SqlGenerator.Metadata
         public Dictionary<string, EntityColumnInfo> ColumnNameKeyDictionary { get; set; }
 
         /// <summary>
-        ///     Gets or sets entity has soft delete flag.
+        ///     Gets or sets entity has soft delete key column.
         /// </summary>
         public bool HasSoftDeleteKey { get; set; }
     }

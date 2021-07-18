@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using EasySqlParser.SqlGenerator.Attributes;
+using EasySqlParser.SqlGenerator.Attributes.Extensions;
 using Xunit;
 
 namespace EasySqlParser.SqlGenerator.Tests

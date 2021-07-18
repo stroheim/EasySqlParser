@@ -10,7 +10,10 @@ namespace EasySqlParser.Dapper.Tests
     internal class MockConfig : DapperQueryBuilderConfiguration
     {
         public MockConfig(QueryBehavior queryBehavior, Action<string> loggerAction)
-            : base(new Assembly[] {typeof(MockConfig).Assembly}, queryBehavior: queryBehavior,
+            : base(new Assembly[] {typeof(MockConfig).Assembly}, new QueryBuilderConfigurationOptions
+                                                                 {
+                                                                     QueryBehavior = queryBehavior
+                                                                 },
                 loggerAction: loggerAction)
         {
             //CommandTimeout = 30;

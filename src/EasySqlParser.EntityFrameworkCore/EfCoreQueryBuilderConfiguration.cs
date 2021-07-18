@@ -17,7 +17,7 @@ using Microsoft.Extensions.Options;
 namespace EasySqlParser.EntityFrameworkCore
 {
     /// <summary>
-    ///     <see cref="IQueryBuilderConfiguration"/> implementation for EntityFrameworkCore .
+    ///     <see cref="IQueryBuilderConfiguration"/> implementation for EntityFrameworkCore.
     /// </summary>
     public class EfCoreQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {

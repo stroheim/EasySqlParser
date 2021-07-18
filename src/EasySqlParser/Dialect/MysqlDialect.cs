@@ -28,8 +28,7 @@ namespace EasySqlParser.Dialect
         /// <summary>
         /// Initializes a new instance of the <see cref="MysqlDialect"/> class.
         /// </summary>
-        public MysqlDialect() :
-            base()
+        public MysqlDialect()
         {
 
         }

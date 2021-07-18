@@ -14,8 +14,16 @@ using EasySqlParser.SqlGenerator.Helpers;
 
 namespace EasySqlParser.Dapper.Extensions
 {
+    /// <summary>
+    ///     Extension methods for Dapper.
+    /// </summary>
     public static class DapperExtension
     {
+        /// <summary>
+        ///     Convert from <see cref="IDbDataParameter"/> to <see cref="DynamicParameters"/>.
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
         public static DynamicParameters ToDynamicParameters(this IReadOnlyList<IDbDataParameter> parameters)
         {
             var result = new DynamicParameters();
@@ -34,6 +42,15 @@ namespace EasySqlParser.Dapper.Extensions
             return result;
         }
 
+        /// <summary>
+        ///     Executes a query, and get the single record.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static T ExecuteReaderSingle<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -46,6 +63,15 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction);
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the single record.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static async Task<T> ExecuteReaderSingleAsync<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -58,6 +84,15 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
         }
 
+        /// <summary>
+        ///     Executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static IEnumerable<T> ExecuteReader<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -70,6 +105,15 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction);
         }
 
+        /// <summary>
+        ///     Asynchronously executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static async Task<IEnumerable<T>> ExecuteReaderAsync<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -82,6 +126,15 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
         }
 
+        /// <summary>
+        ///     Gets a record count.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static int GetCount<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -94,6 +147,15 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction);
         }
 
+        /// <summary>
+        ///     Asynchronously gets a record count.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="predicate"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static async Task<int> GetCountAsync<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
@@ -106,7 +168,14 @@ namespace EasySqlParser.Dapper.Extensions
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction).ConfigureAwait(false);
         }
 
-
+        /// <summary>
+        ///     Asynchronously executes a query with no results.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="transaction"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public static async Task<int> ExecuteAsync(this DbConnection connection,
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null,
@@ -135,8 +204,7 @@ namespace EasySqlParser.Dapper.Extensions
                             .ConfigureAwait(false);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, transaction);
@@ -146,6 +214,13 @@ namespace EasySqlParser.Dapper.Extensions
 
         }
 
+        /// <summary>
+        ///     Executes a query with no results.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
         public static int Execute(this DbConnection connection,
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null)
@@ -172,8 +247,7 @@ namespace EasySqlParser.Dapper.Extensions
                         ConsumeHelper.ConsumeScalar(connection, builderParameter, builderResult, transaction);
                     break;
                 default:
-                    // TODO: error
-                    throw new InvalidOperationException("");
+                    throw new InvalidOperationException($"Unknown CommandExecutionType:{builderParameter.CommandExecutionType}");
             }
 
             ThrowIfOptimisticLockException(builderParameter, affectedCount, builderResult, transaction);
