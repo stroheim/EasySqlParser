@@ -20,8 +20,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.EntityFramewo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGenerator", "src\EasySqlParser.SourceGenerator\EasySqlParser.SourceGenerator.csproj", "{6FE52627-5552-4E9B-9212-E99675229445}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGenerator.Engine", "src\EasySqlParser.SourceGenerator.Engine\EasySqlParser.SourceGenerator.Engine.csproj", "{81CB907D-201E-46AB-B114-74B79AAEB1BA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGeneratorSandbox", "sandbox\EasySqlParser.SourceGeneratorSandbox\EasySqlParser.SourceGeneratorSandbox.csproj", "{30734952-5CC2-4A92-89F2-11D48E4A7119}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SqlGenerator", "src\EasySqlParser.SqlGenerator\EasySqlParser.SqlGenerator.csproj", "{3AFC1909-C744-4538-B3E9-27D8A96F1AAC}"
@@ -42,7 +40,7 @@ Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "EasySqlParser.SqlGeneratorV
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SqlGenerator.Attributes", "src\EasySqlParser.SqlGenerator.Attributes\EasySqlParser.SqlGenerator.Attributes.csproj", "{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasySqlParser.SourceGenerator.Attributes", "src\EasySqlParser.SourceGenerator.Attributes\EasySqlParser.SourceGenerator.Attributes.csproj", "{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SourceGenerator.Attributes", "src\EasySqlParser.SourceGenerator.Attributes\EasySqlParser.SourceGenerator.Attributes.csproj", "{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,10 +68,6 @@ Global
 		{6FE52627-5552-4E9B-9212-E99675229445}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FE52627-5552-4E9B-9212-E99675229445}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FE52627-5552-4E9B-9212-E99675229445}.Release|Any CPU.Build.0 = Release|Any CPU
-		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{81CB907D-201E-46AB-B114-74B79AAEB1BA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30734952-5CC2-4A92-89F2-11D48E4A7119}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -116,7 +110,6 @@ Global
 		{508C1114-B08D-4510-84D2-F425A12043F9} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
 		{23891FB7-1CB1-4AAF-9C73-50E1ED24CB3C} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
 		{6FE52627-5552-4E9B-9212-E99675229445} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
-		{81CB907D-201E-46AB-B114-74B79AAEB1BA} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
 		{30734952-5CC2-4A92-89F2-11D48E4A7119} = {F1D031FD-607C-4E73-BDC9-13BB6C66CA7F}
 		{3AFC1909-C744-4538-B3E9-27D8A96F1AAC} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
 		{DFBE87AB-8AB4-4D6A-BC76-9731151A932C} = {CAEABFF5-AC3C-4F22-86CF-A3D5E4A4E64D}
