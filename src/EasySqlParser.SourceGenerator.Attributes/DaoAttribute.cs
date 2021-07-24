@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EasySqlParser.SourceGenerator
+namespace EasySqlParser.SourceGenerator.Attributes
 {
     // TODO: DOC
     /// <summary>
@@ -11,10 +11,11 @@ namespace EasySqlParser.SourceGenerator
     {
 
         /// <summary>
-        /// コンストラクタ
+        ///     Initializes a new instance of the <see cref="DaoAttribute"/> class.
         /// </summary>
         /// <param name="generationType">the generationType</param>
         /// <param name="loggerType">the loggerType</param>
+        /// <param name="dbContextName"></param>
         /// <param name="sqlFileRootDirectory">SQLファイルが格納されているルートディレクトリ</param>
         /// <param name="configName">EasySqlParserで追加したConfigの名前</param>
         /// <remarks>
@@ -23,12 +24,14 @@ namespace EasySqlParser.SourceGenerator
         /// _sqlFileRootDirectory_/インターフェースの名前空間の[.]を[/]に変換したもの/メソッド名.sql
         /// となります
         /// </remarks>
-        public DaoAttribute(GenerationType generationType = GenerationType.EntityFrameworkCore,
+        public DaoAttribute(
+            GenerationType generationType = GenerationType.EntityFrameworkCore,
             LoggerType loggerType = LoggerType.MicrosoftExtensionsLogging,
+            string dbContextName = null,
             string sqlFileRootDirectory = "SqlResources",
             string configName = null)
         {
-
+            DbContextName = dbContextName;
             SqlFileRootDirectory = sqlFileRootDirectory;
             GenerationType = generationType;
             LoggerType = loggerType;
@@ -45,6 +48,8 @@ namespace EasySqlParser.SourceGenerator
         /// LoggerType
         /// </summary>
         public LoggerType LoggerType { get; }
+
+        public string DbContextName { get; }
 
 
         /// <summary>

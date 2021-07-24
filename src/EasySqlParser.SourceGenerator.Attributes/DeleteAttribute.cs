@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EasySqlParser.SourceGenerator
+﻿namespace EasySqlParser.SourceGenerator.Attributes
 {
     // TODO: DOC
     /// <summary>

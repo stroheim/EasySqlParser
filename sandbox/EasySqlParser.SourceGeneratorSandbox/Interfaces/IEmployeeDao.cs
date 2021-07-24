@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using EasySqlParser.SourceGenerator;
+using EasySqlParser.SourceGenerator.Attributes;
 
 namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 {

@@ -40,7 +40,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.Dapper.Tests"
 EndProject
 Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "EasySqlParser.SqlGeneratorVb.Tests", "tests\EasySqlParser.SqlGeneratorVb.Tests\EasySqlParser.SqlGeneratorVb.Tests.vbproj", "{1B6AE7B8-FF7A-4F58-B41E-835CA34D33AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasySqlParser.SqlGenerator.Attributes", "src\EasySqlParser.SqlGenerator.Attributes\EasySqlParser.SqlGenerator.Attributes.csproj", "{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasySqlParser.SqlGenerator.Attributes", "src\EasySqlParser.SqlGenerator.Attributes\EasySqlParser.SqlGenerator.Attributes.csproj", "{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasySqlParser.SourceGenerator.Attributes", "src\EasySqlParser.SourceGenerator.Attributes\EasySqlParser.SourceGenerator.Attributes.csproj", "{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +102,10 @@ Global
 		{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4FFFDA6-1523-4409-A6DF-0025F374F7F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +124,7 @@ Global
 		{7EA1A366-B758-4E68-9DF4-FC86B260DB97} = {CAEABFF5-AC3C-4F22-86CF-A3D5E4A4E64D}
 		{1B6AE7B8-FF7A-4F58-B41E-835CA34D33AA} = {CAEABFF5-AC3C-4F22-86CF-A3D5E4A4E64D}
 		{B5C086E9-A555-4D6B-9D9A-BD75C0AA5F1F} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
+		{C4FFFDA6-1523-4409-A6DF-0025F374F7F8} = {4B4BAA0C-73AB-4BEF-B4AF-9F005327BBBF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E57359C9-12CF-4740-A3CB-FCBC031728BF}

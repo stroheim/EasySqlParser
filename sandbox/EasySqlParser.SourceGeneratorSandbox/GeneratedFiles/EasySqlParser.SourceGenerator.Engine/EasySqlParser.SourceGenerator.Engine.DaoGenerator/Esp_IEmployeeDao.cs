@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using EasySqlParser;
+using EasySqlParser.EntityFrameworkCore;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGenerator;
 using EasySqlParser.SqlGenerator;
@@ -18,23 +19,21 @@ using SqlKind = EasySqlParser.SqlGenerator.Enums.SqlKind;
 // ReSharper disable once CheckNamespace
 namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 {
-    public interface IEmployeeDaoFuga
+    public interface IEmployeeDaoFuga : ISqlContext<EfContext>
     {
         List<Employee> GetEmployees(SqlCondition condition);
 
         Employee GetEmployee(int id);
 
-        void Foo(Employee employee, DbTransaction transaction);
+
     }
 
-    public class EmployeeDaoFuga:IEmployeeDaoFuga
+    public class EmployeeDaoFuga:EfCoreSqlContext<EfContext>,IEmployeeDaoFuga
     {
-        private readonly DbContext _context;
         private readonly IQueryBuilderConfiguration _configuration;
         private readonly ILogger<EmployeeDaoFuga> _logger;
-        public EmployeeDaoFuga(DbContext context, IQueryBuilderConfiguration configuration, ILogger<EmployeeDaoFuga> logger)
+        public EmployeeDaoFuga(EfContext context, IQueryBuilderConfiguration configuration, ILogger<EmployeeDaoFuga> logger):base(context)
         {
-            _context = context;
             _configuration = configuration;
             _logger = logger;
         }
@@ -44,7 +43,7 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
             var parser = new SqlParser(@"SqlResources\EasySqlParser\SourceGeneratorSandbox\Interfaces\GetEmployees.sql", condition);
             var parserResult = parser.Parse();
             _logger.LogDebug(parserResult.DebugSql);
-            return _context.Set<Employee>().FromSqlRaw(
+            return Context.Set<Employee>().FromSqlRaw(
                 parserResult.ParsedSql,
                 parserResult.DbDataParameters.Cast<object>().ToArray()
             )
@@ -55,16 +54,20 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
             var parser = new SqlParser(@"aaaa.sql", "id", id);
             var parserResult = parser.Parse();
             _logger.LogDebug(parserResult.DebugSql);
-            return _context.Set<Employee>().FromSqlRaw(
+            return Context.Set<Employee>().FromSqlRaw(
                 parserResult.ParsedSql,
                 parserResult.DbDataParameters.Cast<object>().ToArray()
             )
             .SingleOrDefault();
         }
 
-        public void Foo(Employee employee, DbTransaction transaction)
+        private void InsertEmployee(Employee employee)
         {
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _configuration);
+            Add(parameter);
 
         }
+
+
     }
 }

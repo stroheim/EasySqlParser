@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasySqlParser.EntityFrameworkCore\EasySqlParser.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator.Engine\EasySqlParser.SourceGenerator.Engine.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator.Attributes\EasySqlParser.SourceGenerator.Attributes.csproj" />
     <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator\EasySqlParser.SourceGenerator.csproj" />
     <ProjectReference Include="..\..\src\EasySqlParser\EasySqlParser.csproj" />
   </ItemGroup>

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EasySqlParser.SourceGenerator
+﻿namespace EasySqlParser.SourceGenerator.Attributes
 {
     // TODO: DOC
     /// <summary>
-    /// Attribute for INSERT,UPDATE,DELETE sql
+    ///     Attribute for INSERT,UPDATE,DELETE SQL statements.
     /// </summary>
     public abstract class NonQueryAttribute : MethodAttributeBase
     {
