@@ -29,7 +29,7 @@ namespace EasySqlParser.SqlGenerator.Attributes
         public GenerationStrategy Strategy { get; }
 
         /// <summary>
-        ///     Gets the the current timestamp as an SQL statement.
+        ///     Gets the current timestamp as an SQL statement.
         /// </summary>
         public string Sql { get; }
 

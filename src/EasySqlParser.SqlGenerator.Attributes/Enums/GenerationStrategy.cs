@@ -4,7 +4,7 @@
 namespace EasySqlParser.SqlGenerator.Enums
 {
     /// <summary>
-    ///     Strategy for generating current timestamp and current user.
+    ///     Strategy for generating current timestamp.
     /// </summary>
     [Flags]
     public enum GenerationStrategy
