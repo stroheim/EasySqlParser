@@ -25,7 +25,6 @@ namespace EasySqlParser.SqlGenerator
         /// <param name="ignoreVersion"></param>
         /// <param name="useVersion"></param>
         /// <param name="suppressOptimisticLockException"></param>
-        /// <param name="currentUser"></param>
         /// <param name="sqlFile"></param>
         /// <param name="configName"></param>
         public QueryBuilderParameter(
@@ -37,8 +36,6 @@ namespace EasySqlParser.SqlGenerator
             bool ignoreVersion = false,
             bool useVersion = true,
             bool suppressOptimisticLockException = false,
-            //bool useDbSet = true,
-            string currentUser = null,
             string sqlFile = null,
             string configName = null)
         {
@@ -55,7 +52,6 @@ namespace EasySqlParser.SqlGenerator
             QueryBehavior = builderConfiguration.QueryBehavior;
             ExcludeNullBehavior = builderConfiguration.ExcludeNullBehavior;
             _loggerAction = builderConfiguration.LoggerAction;
-            CurrentUser = currentUser;
             Config = configName == null
                 ? ConfigContainer.DefaultConfig
                 : ConfigContainer.AdditionalConfigs[configName];
@@ -139,11 +135,6 @@ namespace EasySqlParser.SqlGenerator
         ///     Gets the <see cref="Enums.ExcludeNullBehavior"/>.
         /// </summary>
         public ExcludeNullBehavior ExcludeNullBehavior { get; }
-
-        /// <summary>
-        ///     Gets the current user.
-        /// </summary>
-        public string CurrentUser { get; }
 
         /// <summary>
         ///     Gets the entity type.

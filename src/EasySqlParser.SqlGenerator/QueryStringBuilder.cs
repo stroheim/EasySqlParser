@@ -339,36 +339,6 @@ namespace EasySqlParser.SqlGenerator
             AppendLine();
         }
 
-
-        internal bool IncludeCurrentUserColumn(QueryBuilderParameter parameter,
-            EntityColumnInfo columnInfo)
-        {
-            return IsAvailable(parameter.SqlKind, columnInfo.CurrentUserAttribute.Strategy);
-        }
-
-
-        internal void AppendCurrentUser(QueryBuilderParameter parameter,
-            EntityColumnInfo columnInfo,
-            int counter)
-        {
-            AppendComma(counter);
-            if (parameter.SqlKind == SqlKind.Insert)
-            {
-                AppendParameter(columnInfo, parameter.CurrentUser);
-                AppendLine();
-                return;
-            }
-
-            // update
-            var columnName = parameter.Config.Dialect.ApplyQuote(columnInfo.ColumnName);
-            AppendSql(columnName);
-            AppendSql(" = ");
-            AppendParameter(columnInfo, parameter.CurrentUser);
-            AppendLine();
-
-        }
-
-
         internal void AppendSoftDeleteKey(QueryBuilderParameter parameter,
             EntityColumnInfo columnInfo,
             int counter)

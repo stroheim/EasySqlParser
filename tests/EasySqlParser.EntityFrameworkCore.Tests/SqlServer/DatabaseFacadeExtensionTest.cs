@@ -55,7 +55,8 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
                                Id = 11,
                                Name = "Jane Doe"
                            };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig, currentUser: "Sariya Harnpadoungsataya");
+            employee.CreateUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
         }
@@ -111,7 +112,8 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             using var context = Fixture.CreateContext();
             var employee = context.Database.ExecuteReaderFirst<EmployeeWithDateAndUser>(_sqlServerConfig, x => x.Id == 1);
             employee.Salary = 5000M;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig, currentUser: "Sariya Harnpadoungsataya");
+            employee.UpdateUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _sqlServerConfig);
             var affected = context.Database.ExecuteNonQuery(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);
@@ -213,8 +215,8 @@ namespace EasySqlParser.EntityFrameworkCore.Tests.SqlServer
             await using var context = Fixture.CreateContext();
             var employee =
                 await context.Database.ExecuteReaderFirstAsync<EmployeeWithDateAndUser>(_sqlServerConfig, x => x.Id == 7);
-            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _sqlServerConfig,
-                currentUser: "Sariya Harnpadoungsataya");
+            employee.DeleteUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _sqlServerConfig);
             var affected = await context.Database.ExecuteNonQueryAsync(parameter);
             affected.Is(1);
 

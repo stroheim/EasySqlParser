@@ -150,13 +150,6 @@ namespace EasySqlParser.SqlGenerator.Metadata
                     hasSoftDeleteKey = true;
                 }
 
-                var currentUserAttr = propertyInfo.GetCustomAttribute<CurrentUserAttribute>();
-                if (currentUserAttr != null)
-                {
-                    columnInfo.CurrentUserAttribute = currentUserAttr;
-                    columnInfo.IsCurrentUser = true;
-                }
-
                 var lengthAttr = propertyInfo.GetCustomAttribute<StringLengthAttribute>();
                 if (lengthAttr != null)
                 {

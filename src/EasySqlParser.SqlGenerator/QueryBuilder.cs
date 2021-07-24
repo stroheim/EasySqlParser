@@ -223,13 +223,6 @@ namespace EasySqlParser.SqlGenerator
                     }
                 }
 
-                if (columnInfo.IsCurrentUser)
-                {
-                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
-                    {
-                        continue;
-                    }
-                }
                 builder.AppendComma(counter);
 
                 builder.AppendLine(config.Dialect.ApplyQuote(columnInfo.ColumnName));
@@ -265,16 +258,6 @@ namespace EasySqlParser.SqlGenerator
 
                 }
 
-                if (columnInfo.IsCurrentUser)
-                {
-                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
-                    {
-                        continue;
-                    }
-                    builder.AppendCurrentUser(parameter, columnInfo, counter);
-                    counter++;
-                    continue;
-                }
                 var propValue = columnInfo.PropertyInfo.GetValue(parameter.Entity);
                 if (builder.IsNull(parameter, propValue))
                 {
@@ -339,17 +322,6 @@ namespace EasySqlParser.SqlGenerator
                     }
 
                     builder.AppendCurrentTimestamp(parameter, columnInfo, counter);
-                    counter++;
-                    continue;
-                }
-
-                if (columnInfo.IsCurrentUser)
-                {
-                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
-                    {
-                        continue;
-                    }
-                    builder.AppendCurrentUser(parameter, columnInfo, counter);
                     counter++;
                     continue;
                 }
@@ -455,17 +427,6 @@ namespace EasySqlParser.SqlGenerator
                     }
 
                     builder.AppendCurrentTimestamp(parameter, columnInfo, counter);
-                    counter++;
-                    continue;
-                }
-
-                if (columnInfo.IsCurrentUser)
-                {
-                    if (!builder.IncludeCurrentUserColumn(parameter, columnInfo))
-                    {
-                        continue;
-                    }
-                    builder.AppendCurrentUser(parameter, columnInfo, counter);
                     counter++;
                     continue;
                 }

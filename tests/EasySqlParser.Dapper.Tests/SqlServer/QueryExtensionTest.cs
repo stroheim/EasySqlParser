@@ -48,7 +48,8 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
                                Id = 11,
                                Name = "Jane Doe"
                            };
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
+            employee.CreateUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
 
@@ -125,7 +126,8 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
             var employee =
                 _fixture.Connection.ExecuteReaderSingle<EmployeeWithDateAndUser>(_mockConfig, x => x.Id == 1);
             employee.Salary = 5000M;
-            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig, currentUser: "Sariya Harnpadoungsataya");
+            employee.UpdateUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _mockConfig);
             var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);
@@ -217,8 +219,8 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
         {
             var employee =
                 _fixture.Connection.ExecuteReaderSingle<EmployeeWithDateAndUser>(_mockConfig, x => x.Id == 7);
-            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _mockConfig,
-                currentUser: "Sariya Harnpadoungsataya");
+            employee.DeleteUser = "Sariya Harnpadoungsataya";
+            var parameter = new QueryBuilderParameter(employee, SqlKind.SoftDelete, _mockConfig);
             var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
             employee.VersionNo.Is(2L);

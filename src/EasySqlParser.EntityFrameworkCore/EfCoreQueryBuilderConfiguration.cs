@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
+using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Attributes;
@@ -226,31 +227,51 @@ namespace EasySqlParser.EntityFrameworkCore
                 //    columnInfo.IsIdentity = true;
                 //}
 
-                var versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
+                var versionAttr = property.GetVersionAttribute();
                 if (versionAttr != null)
                 {
                     columnInfo.IsVersion = true;
                 }
+                else
+                {
+                    versionAttr = propertyInfo.GetCustomAttribute<VersionAttribute>();
+                    if (versionAttr != null)
+                    {
+                        columnInfo.IsVersion = true;
+                    }
+                }
 
-                var currentTimestampAttr = propertyInfo.GetCustomAttribute<CurrentTimestampAttribute>();
+
+                var currentTimestampAttr = property.GetCurrentTimestampAttribute();
                 if (currentTimestampAttr != null)
                 {
                     columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
                     columnInfo.IsCurrentTimestamp = true;
                 }
+                else
+                {
+                    currentTimestampAttr = propertyInfo.GetCustomAttribute<CurrentTimestampAttribute>();
+                    if (currentTimestampAttr != null)
+                    {
+                        columnInfo.CurrentTimestampAttribute = currentTimestampAttr;
+                        columnInfo.IsCurrentTimestamp = true;
+                    }
+                }
 
-                var softDeleteKeyAttr = propertyInfo.GetCustomAttribute<SoftDeleteKeyAttribute>();
+                var softDeleteKeyAttr = property.GetSoftDeleteKeyAttribute();
                 if (softDeleteKeyAttr != null)
                 {
                     columnInfo.IsSoftDeleteKey = true;
                     hasSoftDeleteKey = true;
                 }
-
-                var currentUserAttr = propertyInfo.GetCustomAttribute<CurrentUserAttribute>();
-                if (currentUserAttr != null)
+                else
                 {
-                    columnInfo.CurrentUserAttribute = currentUserAttr;
-                    columnInfo.IsCurrentUser = true;
+                    softDeleteKeyAttr = propertyInfo.GetCustomAttribute<SoftDeleteKeyAttribute>();
+                    if (softDeleteKeyAttr != null)
+                    {
+                        columnInfo.IsSoftDeleteKey = true;
+                        hasSoftDeleteKey = true;
+                    }
                 }
 
                 var maxLength = property.GetMaxLength(tableId);
@@ -265,14 +286,24 @@ namespace EasySqlParser.EntityFrameworkCore
                     columnInfo.StringMaxLength = lengthAttr.MaximumLength;
                 }
 
-
-                var seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
+                var seqAttr = property.GetSequenceGeneratorAttribute();
                 if (seqAttr != null)
                 {
                     columnInfo.IsSequence = true;
                     columnInfo.SequenceGeneratorAttribute = seqAttr;
                     sequenceColumns.Add(columnInfo.Clone());
                 }
+                else
+                {
+                    seqAttr = propertyInfo.GetCustomAttribute<SequenceGeneratorAttribute>();
+                    if (seqAttr != null)
+                    {
+                        columnInfo.IsSequence = true;
+                        columnInfo.SequenceGeneratorAttribute = seqAttr;
+                        sequenceColumns.Add(columnInfo.Clone());
+                    }
+                }
+
 
                 if (property.IsPrimaryKey())
                 {

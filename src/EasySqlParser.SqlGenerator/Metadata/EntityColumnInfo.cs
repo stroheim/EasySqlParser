@@ -61,16 +61,6 @@ namespace EasySqlParser.SqlGenerator.Metadata
         public bool IsSoftDeleteKey { get; set; }
 
         /// <summary>
-        ///     Gets or sets whether current user column.
-        /// </summary>
-        public bool IsCurrentUser { get; set; }
-
-        /// <summary>
-        ///     Gets or sets <see cref="CurrentUserAttribute"/>.
-        /// </summary>
-        public CurrentUserAttribute CurrentUserAttribute { get;  set; }
-
-        /// <summary>
         ///     Gets or sets column data type name.
         /// </summary>
         public string TypeName { get; set; }

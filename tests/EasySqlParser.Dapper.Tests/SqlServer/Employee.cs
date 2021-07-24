@@ -86,7 +86,6 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
         public DateTime CreateDateTime { get; set; }
 
         [Column("CREATE_USER")]
-        [CurrentUser(GenerationStrategy.Insert)]
         public string CreateUser { get; set; }
 
         [Column("UPDATE_DATETIME")]
@@ -94,7 +93,6 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
         public DateTime? UpdateDateTime { get; set; }
 
         [Column("UPDATE_USER")]
-        [CurrentUser(GenerationStrategy.Update)]
         public string UpdateUser { get; set; }
 
 
@@ -103,7 +101,6 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
         public DateTime? DeleteDateTime { get; set; }
 
         [Column("DELETE_USER")]
-        [CurrentUser(GenerationStrategy.SoftDelete)]
         public string DeleteUser { get; set; }
 
 
