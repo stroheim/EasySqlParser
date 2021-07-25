@@ -20,12 +20,12 @@ namespace EasySqlParser.SqlGenerator.Configurations
         public bool WriteIndented { get; set; }
 
         /// <summary>
-        ///     Gets or sets the <see cref="QueryBehavior"/> .
+        ///     Gets or sets the <see cref="Enums.QueryBehavior"/> .
         /// </summary>
         public QueryBehavior QueryBehavior { get; set; }
 
         /// <summary>
-        ///     Gets or sets the <see cref="ExcludeNullBehavior"/> .
+        ///     Gets or sets the <see cref="Enums.ExcludeNullBehavior"/> .
         /// </summary>
         public ExcludeNullBehavior ExcludeNullBehavior { get; set; }
 

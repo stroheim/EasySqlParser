@@ -43,7 +43,7 @@ namespace EasySqlParser.SqlGenerator.Metadata
         public IReadOnlyList<EntityColumnInfo> SequenceColumns { get; set; }
 
         /// <summary>
-        ///     Gets or sets primary key name and column pairs
+        ///     Gets or sets column name and <see cref="EntityColumnInfo"/> pairs.
         /// </summary>
         public Dictionary<string, EntityColumnInfo> ColumnNameKeyDictionary { get; set; }
 
