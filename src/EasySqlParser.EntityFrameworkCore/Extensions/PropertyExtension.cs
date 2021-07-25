@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using EasySqlParser.SqlGenerator.Attributes;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using EasySqlParser.SqlGenerator.Attributes;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace EasySqlParser.EntityFrameworkCore.Extensions
@@ -20,7 +16,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static CurrentTimestampAttribute GetCurrentTimestampAttribute(
             this IProperty property)
         {
-            var annotation = property.GetAnnotation(EspAnnotationNames.CurrentTimestamp);
+            var annotation = property.FindAnnotation(EspAnnotationNames.CurrentTimestamp);
             return (CurrentTimestampAttribute) annotation?.Value;
         }
 
@@ -32,7 +28,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static SoftDeleteKeyAttribute GetSoftDeleteKeyAttribute(
             this IProperty property)
         {
-            var annotation = property.GetAnnotation(EspAnnotationNames.SoftDeleteKey);
+            var annotation = property.FindAnnotation(EspAnnotationNames.SoftDeleteKey);
             return (SoftDeleteKeyAttribute) annotation?.Value;
         }
 
@@ -44,7 +40,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static VersionAttribute GetVersionAttribute(
             this IProperty property)
         {
-            var annotation = property.GetAnnotation(EspAnnotationNames.Version);
+            var annotation = property.FindAnnotation(EspAnnotationNames.Version);
             return (VersionAttribute) annotation?.Value;
         }
 
@@ -56,8 +52,9 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static SequenceGeneratorAttribute GetSequenceGeneratorAttribute(
             this IProperty property)
         {
-            var annotation = property.GetAnnotation(EspAnnotationNames.SequenceGenerator);
+            var annotation = property.FindAnnotation(EspAnnotationNames.SequenceGenerator);
             return (SequenceGeneratorAttribute) annotation?.Value;
         }
+
     }
 }

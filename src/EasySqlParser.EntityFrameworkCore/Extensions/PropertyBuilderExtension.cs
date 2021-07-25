@@ -1,5 +1,6 @@
 ﻿using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EasySqlParser.EntityFrameworkCore.Extensions
@@ -21,7 +22,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string sql,
             GenerationStrategy strategy = GenerationStrategy.Always)
         {
-            propertyBuilder.Metadata.AddAnnotation(EspAnnotationNames.CurrentTimestamp,
+            propertyBuilder.Metadata.SetOrRemoveAnnotation(EspAnnotationNames.CurrentTimestamp,
                 new CurrentTimestampAttribute(sql, strategy));
             return propertyBuilder;
         }
@@ -46,10 +47,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="propertyBuilder"></param>
         /// <returns></returns>
-        public static PropertyBuilder HasSoftDeleteKey(
+        public static PropertyBuilder IsSoftDeleteKey(
             this PropertyBuilder propertyBuilder)
         {
-            propertyBuilder.Metadata.AddAnnotation(EspAnnotationNames.SoftDeleteKey,
+            propertyBuilder.Metadata.SetOrRemoveAnnotation(EspAnnotationNames.SoftDeleteKey,
                 new SoftDeleteKeyAttribute());
             return propertyBuilder;
         }
@@ -60,9 +61,9 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <typeparam name="TProperty"></typeparam>
         /// <param name="propertyBuilder"></param>
         /// <returns></returns>
-        public static PropertyBuilder<TProperty> HasSoftDeleteKey<TProperty>(
+        public static PropertyBuilder<TProperty> IsSoftDeleteKey<TProperty>(
             this PropertyBuilder<TProperty> propertyBuilder)
-            => (PropertyBuilder<TProperty>) HasSoftDeleteKey((PropertyBuilder) propertyBuilder);
+            => (PropertyBuilder<TProperty>) IsSoftDeleteKey((PropertyBuilder) propertyBuilder);
 
 
         /// <summary>
@@ -70,11 +71,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="propertyBuilder"></param>
         /// <returns></returns>
-        public static PropertyBuilder HasVersion(
+        public static PropertyBuilder IsVersion(
             this PropertyBuilder propertyBuilder)
         {
-            propertyBuilder.Metadata.AddAnnotation(EspAnnotationNames.Version,
-                new VersionAttribute());
+            propertyBuilder.Metadata.SetOrRemoveAnnotation(EspAnnotationNames.Version, true);
             return propertyBuilder;
         }
 
@@ -84,9 +84,9 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <typeparam name="TProperty"></typeparam>
         /// <param name="propertyBuilder"></param>
         /// <returns></returns>
-        public static PropertyBuilder<TProperty> HasVersion<TProperty>(
+        public static PropertyBuilder<TProperty> IsVersion<TProperty>(
             this PropertyBuilder<TProperty> propertyBuilder)
-            => (PropertyBuilder<TProperty>) HasVersion((PropertyBuilder) propertyBuilder);
+            => (PropertyBuilder<TProperty>) IsVersion((PropertyBuilder) propertyBuilder);
 
         /// <summary>
         ///     Configures the property to generate a value using a sequence.
@@ -104,7 +104,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             string prefix = null,
             int paddingLength = 0)
         {
-            propertyBuilder.Metadata.AddAnnotation(EspAnnotationNames.SequenceGenerator,
+            propertyBuilder.Metadata.SetOrRemoveAnnotation(EspAnnotationNames.SequenceGenerator,
                 new SequenceGeneratorAttribute(sequenceName)
                 {
                     SchemaName = schemaName,

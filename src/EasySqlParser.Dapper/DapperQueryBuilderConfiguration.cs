@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Dapper;
 using EasySqlParser.SqlGenerator;
@@ -64,11 +63,7 @@ namespace EasySqlParser.Dapper
             {
                 var map = new CustomPropertyTypeMap(
                     pair.Key,
-                    (type, columnName) =>
-                    {
-                        var columnInfo = pair.Value.Columns.SingleOrDefault(x => x.ColumnName == columnName);
-                        return columnInfo?.PropertyInfo;
-                    });
+                    (type, columnName) => pair.Value.ColumnNameKeyDictionary[columnName].PropertyInfo);
                 SqlMapper.SetTypeMap(pair.Key, map);
             }
 
