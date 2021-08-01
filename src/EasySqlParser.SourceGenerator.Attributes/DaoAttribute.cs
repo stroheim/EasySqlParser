@@ -2,9 +2,8 @@
 
 namespace EasySqlParser.SourceGenerator.Attributes
 {
-    // TODO: DOC
     /// <summary>
-    /// インターフェースから実装を自動生成する際に付加する属性
+    ///     Attributes to be added when the implementation is automatically generated from the interface.
     /// </summary>
     [AttributeUsage(AttributeTargets.Interface)]
     public class DaoAttribute : Attribute
@@ -15,23 +14,23 @@ namespace EasySqlParser.SourceGenerator.Attributes
         /// </summary>
         /// <param name="generationType">the generationType</param>
         /// <param name="loggerType">the loggerType</param>
-        /// <param name="dbContextName"></param>
-        /// <param name="sqlFileRootDirectory">SQLファイルが格納されているルートディレクトリ</param>
-        /// <param name="configName">EasySqlParserで追加したConfigの名前</param>
+        /// <param name="sqlFileRootDirectory">Root directory where SQL files are stored </param>
+        /// <param name="configName">The name of the Config added with EasySqlParser</param>
         /// <remarks>
-        /// sqlFileRootDirectoryが設定されている場合はSQLファイルパスは自動的に推定されます<br/>
-        /// その際のSQLファイルパスは
-        /// _sqlFileRootDirectory_/インターフェースの名前空間の[.]を[/]に変換したもの/メソッド名.sql
-        /// となります
+        /// SQL file path is estimated automatically.<br/>
+        /// SQL file path is
+        /// _sqlFileRootDirectory_/The interface namespace [.] Converted to [/]/methodName.sql<br/>
+        /// e.g.)
+        ///   1. The interface namespace is [aaa.bbb.EmployeeDao]
+        ///   2. Method name is [selectById]
+        ///   result: _sqlFileRootDirectory_/aaa/bbb/EmployeeDao/selectById.sql
         /// </remarks>
         public DaoAttribute(
             GenerationType generationType = GenerationType.EntityFrameworkCore,
             LoggerType loggerType = LoggerType.MicrosoftExtensionsLogging,
-            string dbContextName = null,
             string sqlFileRootDirectory = "SqlResources",
             string configName = null)
         {
-            DbContextName = dbContextName;
             SqlFileRootDirectory = sqlFileRootDirectory;
             GenerationType = generationType;
             LoggerType = loggerType;
@@ -40,31 +39,28 @@ namespace EasySqlParser.SourceGenerator.Attributes
 
 
         /// <summary>
-        /// GenerationType
+        ///     Gets the <see cref="Attributes.GenerationType"/>.
         /// </summary>
         public GenerationType GenerationType { get; }
 
         /// <summary>
-        /// LoggerType
+        ///     Gets the <see cref="Attributes.LoggerType"/>.
         /// </summary>
         public LoggerType LoggerType { get; }
 
-        public string DbContextName { get; }
-
-
         /// <summary>
-        /// SqlFileRootDirectory
+        ///     Gets sql file root directory.
         /// </summary>
         public string SqlFileRootDirectory { get; }
 
         /// <summary>
-        /// EasySqlParser additional configuration name
+        ///     Gets EasySqlParser additional configuration name.
         /// </summary>
         public string ConfigName { get; }
     }
 
     /// <summary>
-    /// 自動生成する実装方式
+    ///     Implementation method to be automatically generated.
     /// </summary>
     public enum GenerationType
     {
@@ -75,7 +71,7 @@ namespace EasySqlParser.SourceGenerator.Attributes
     }
 
     /// <summary>
-    /// 自動生成されるクラスで利用されるロガー
+    ///     Logger used in automatically generated classes.
     /// </summary>
     public enum LoggerType
     {

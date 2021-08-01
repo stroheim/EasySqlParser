@@ -10,13 +10,13 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
     public interface IEmployeeDao
     {
 
-        [Query]
+        [Select]
         List<Employee> GetEmployees(SqlCondition condition);
 
-        [Query(FilePath = "aaaa.sql")]
+        [Select(FilePath = "aaaa.sql")]
         Employee GetEmployee(int id);
 
-        [Update(AutoGenerate = true)]
+        [Update()]
         int UpdateEmployee(Employee entity);
     }
 }

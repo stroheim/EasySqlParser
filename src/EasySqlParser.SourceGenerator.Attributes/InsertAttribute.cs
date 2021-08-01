@@ -1,16 +1,13 @@
 ﻿namespace EasySqlParser.SourceGenerator.Attributes
 {
-    // TODO: DOC
     /// <summary>
-    /// Attribute for INSERT sql
+    ///     Attribute for INSERT sql.
     /// </summary>
-    public class InsertAttribute : NonQueryAttribute
+    public class InsertAttribute : MethodAttributeBase
     {
-        //public InsertAttribute(bool excludeNull = false)
-        //{
-        //    ExcludeNull = excludeNull;
-        //}
-
+        /// <summary>
+        ///     Gets or sets whether SQL NULL columns are excluded from SQL INSERT statements.
+        /// </summary>
         public bool ExcludeNull { get; set; } = false;
     }
 }
