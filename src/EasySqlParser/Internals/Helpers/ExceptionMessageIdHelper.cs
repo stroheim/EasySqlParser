@@ -128,6 +128,8 @@ namespace EasySqlParser.Internals.Helpers
                     return string.Format(MessageFormat.EspD003);
                 case ExceptionMessageId.EspD004:
                     return string.Format(MessageFormat.EspD004);
+                case ExceptionMessageId.EspE001:
+                    return string.Format(MessageFormat.EspE001, args);
                 default:
                     throw new InvalidOperationException($"Unknown message id:{messageId}");
             }
@@ -351,7 +353,7 @@ namespace EasySqlParser.Internals.Helpers
             internal const string EspD002 = "DbConnectionKind is not specified";
             internal const string EspD003 = "DataParameterCreator is not set";
             internal const string EspD004 = "Configuration name is not set";
-
+            internal const string EspE001 = "Primary key not found. Table=[{0}]";
         }
     }
 }

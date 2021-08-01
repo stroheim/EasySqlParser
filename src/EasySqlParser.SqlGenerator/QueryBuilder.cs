@@ -290,8 +290,7 @@ namespace EasySqlParser.SqlGenerator
             var config = parameter.Config;
             if (entityInfo.KeyColumns.Count == 0)
             {
-                // pkがなければupdateできない
-                throw new InvalidOperationException("");
+                throw new PrimaryKeyNotFoundException(entityInfo.TableName);
             }
             var builder = new QueryStringBuilder(config, parameter.WriteIndented);
             AppendFinalTableSelectCommandHeader(builder, entityInfo, parameter);
@@ -387,8 +386,7 @@ namespace EasySqlParser.SqlGenerator
             var config = parameter.Config;
             if (entityInfo.KeyColumns.Count == 0)
             {
-                // pkがなければupdateできない
-                throw new InvalidOperationException("");
+                throw new PrimaryKeyNotFoundException(entityInfo.TableName);
             }
 
             var builder = new QueryStringBuilder(config, parameter.WriteIndented);
@@ -485,8 +483,7 @@ namespace EasySqlParser.SqlGenerator
             var config = parameter.Config;
             if (entityInfo.KeyColumns.Count == 0)
             {
-                // pkがなければupdateできない
-                throw new InvalidOperationException("");
+                throw new PrimaryKeyNotFoundException(entityInfo.TableName);
             }
 
             var builder = new QueryStringBuilder(config, parameter.WriteIndented);

@@ -312,6 +312,11 @@
         /// </summary>
         EspD004,
 
+        /// <summary>
+        /// Primary key not found. Table=[{0}]
+        /// </summary>
+        EspE001,
+
     }
 
 }
