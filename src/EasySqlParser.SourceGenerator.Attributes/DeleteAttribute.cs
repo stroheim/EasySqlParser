@@ -28,5 +28,10 @@
         ///     Do not throw OptimisticLockException even if the number of updates is 0.
         /// </remarks>
         public bool SuppressOptimisticLockException { get; set; } = false;
+
+        /// <summary>
+        ///     Gets or sets whether to automatically generate SQL statements. 
+        /// </summary>
+        public bool AutoGenerateSql { get; set; } = true;
     }
 }
