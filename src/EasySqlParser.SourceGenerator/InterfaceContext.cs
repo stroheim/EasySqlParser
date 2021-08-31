@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace EasySqlParser.SourceGenerator
 {
@@ -32,6 +33,28 @@ namespace EasySqlParser.SourceGenerator
         MicrosoftExtensionsLogging,
     }
 
+    internal enum SqlKind
+    {
+        /// <summary>
+        ///     insert.
+        /// </summary>
+        Insert,
+        /// <summary>
+        ///     update.
+        /// </summary>
+        Update,
+        /// <summary>
+        ///     delete.
+        /// </summary>
+        Delete,
+        /// <summary>
+        ///     soft delete.
+        /// </summary>
+        SoftDelete,
+        Select,
+        Merge
+    }
+
 
     internal class InterfaceContext
     {
@@ -39,7 +62,7 @@ namespace EasySqlParser.SourceGenerator
 
         internal LoggerType LoggerType { get; set; }
 
-        internal string ConfigName { get; set; }
+        internal string? ConfigName { get; set; }
 
         /// <summary>
         /// interface using directives
@@ -49,22 +72,22 @@ namespace EasySqlParser.SourceGenerator
         /// <summary>
         /// interface namespace
         /// </summary>
-        internal string TypeNamespace { get; set; }
+        internal string? TypeNamespace { get; set; }
 
         /// <summary>
         /// interface type name
         /// </summary>
-        internal string TypeName { get; set; }
+        internal string? TypeName { get; set; }
 
         /// <summary>
         /// interface's source file full path
         /// </summary>
-        internal string FilePath { get; set; }
+        internal string? FilePath { get; set; }
 
         internal string HintPath => $"Esp_{TypeName}.cs";
 
 
-        internal string SqlFileRootDirectory { get; set; }
+        internal string? SqlFileRootDirectory { get; set; }
 
         internal List<MethodContext> MethodContexts { get; set; } = new List<MethodContext>();
     }
@@ -74,11 +97,21 @@ namespace EasySqlParser.SourceGenerator
         /// <summary>
         /// Method name
         /// </summary>
-        internal string Name { get; set; }
+        internal string Name { get; set; } = null!;
 
-        internal string ReturnTypeName { get; set; }
+        //internal string ReturnTypeName { get; set; } = null!;
 
-        internal string ReturnTypeGenericArgumentName { get; set; }
+        //internal string ReturnTypeGenericArgumentName { get; set; } = null!;
+
+        //internal string ReturnTypeNamespace { get; set; } = null!;
+
+        //internal string ReturnTypeTaskTypeName { get; set; } = null!;
+
+        //internal string ReturnTypeGenericTypeName { get; set; } = null!;
+
+        internal ReturnTypeContext ReturnTypeContext { get; set; } = null!;
+
+
 
         internal bool IsScalarResult { get; set; }
 
@@ -86,16 +119,11 @@ namespace EasySqlParser.SourceGenerator
 
         internal bool IsAsync { get; set; }
 
-        internal bool IsStoredProcedure { get; set; }
+        internal string SqlFilePath { get; set; } = null!;
 
-        internal bool IsStoredFunction { get; set; }
+        internal List<ParameterContext> ParameterContexts { get; set; } = new List<ParameterContext>();
 
-        internal string SqlFilePath { get; set; }
-
-        //internal List<ParameterContext> ParameterContexts { get; set; } = new List<ParameterContext>();
-        internal ParameterContext ParameterContext { get; set; }
-
-        internal bool IsSelectQuery { get; set; }
+        internal ParameterContext? ParameterContext { get; set; }
 
         internal bool UseDbSet { get; set; }
 
@@ -107,9 +135,42 @@ namespace EasySqlParser.SourceGenerator
 
         internal bool IgnoreVersion { get; set; }
 
+        [Obsolete]
         internal bool UseVersion { get; set; }
 
         internal bool SuppressOptimisticLockException { get; set; }
+
+        internal SqlKind SqlKind { get; set; }
+
+        internal bool UseSqlServer { get; set; }
+    }
+
+    internal class ReturnTypeContext
+    {
+        /// <summary>
+        ///     Gets or sets return type name.
+        /// </summary>
+        internal string Name { get; set; } = null!;
+
+        /// <summary>
+        ///     Gets or sets generic type argument name.
+        /// </summary>
+        internal string? GenericArgumentName { get; set; }
+
+        /// <summary>
+        ///     Gets or sets namespace.
+        /// </summary>
+        internal string TypeNamespace { get; set; } = null!;
+
+        /// <summary>
+        ///     Gets or sets generic type name.
+        /// </summary>
+        internal string? GenericTypeName { get; set; }
+
+        /// <summary>
+        ///     Gets or sets nested generic type name.
+        /// </summary>
+        internal string? NestedGenericTypeName { get; set; }
     }
 
     internal class ParameterContext
@@ -117,9 +178,9 @@ namespace EasySqlParser.SourceGenerator
         /// <summary>
         /// ParameterName
         /// </summary>
-        internal string Name { get; set; }
+        internal string Name { get; set; } = null!;
 
-        internal string TypeName { get; set; }
+        internal string TypeName { get; set; } = null!;
 
         internal bool IsKnownType { get; set; }
     }

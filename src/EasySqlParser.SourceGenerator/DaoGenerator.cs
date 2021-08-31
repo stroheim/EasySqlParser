@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -70,6 +71,7 @@ namespace EasySqlParser.SourceGenerator
                             daoAttrValue.sqlFileRootDirectory,
                             namespaceDirectory);
                         ifContext.MethodContexts.Add(methodContext);
+                        context.CancellationToken.ThrowIfCancellationRequested();
                     }
                     ifContexts.Add(ifContext);
                 }
@@ -151,7 +153,7 @@ namespace EasySqlParser.SourceGenerator
             return context.TypeNamespace.Replace(".", @"\");
         }
 
-        private static string GetSqlFileRootDirectory(string sourcePath, string sqlFileRootDirectory)
+        private static string? GetSqlFileRootDirectory(string sourcePath, string sqlFileRootDirectory)
         {
             if (string.IsNullOrEmpty(sqlFileRootDirectory))
             {
@@ -159,11 +161,15 @@ namespace EasySqlParser.SourceGenerator
             }
 
             var sourceDir = Path.GetDirectoryName(sourcePath);
+            if (sourceDir == null)
+            {
+                return null;
+            }
             var realPath = CompareDirectory(sourceDir, sqlFileRootDirectory);
             return realPath;
         }
 
-        private static string CompareDirectory(string sourceDir, string configRoot)
+        private static string? CompareDirectory(string sourceDir, string configRoot)
         {
             var dir = Path.Combine(sourceDir, configRoot);
             if (Directory.Exists(dir))
@@ -173,6 +179,10 @@ namespace EasySqlParser.SourceGenerator
 
             var parent = Directory.GetParent(sourceDir);
             var root = Directory.GetDirectoryRoot(sourceDir);
+            if (parent == null)
+            {
+                return null;
+            }
             while (root != parent.FullName)
             {
                 var d = CompareDirectory(parent.FullName, configRoot);
@@ -186,13 +196,13 @@ namespace EasySqlParser.SourceGenerator
 
         }
 
-        private static (GenerationType generationType, LoggerType loggerType, string sqlFileRootDirectory, string configName) ProcessDaoAttribute(
+        private static (GenerationType generationType, LoggerType loggerType, string? sqlFileRootDirectory, string? configName) ProcessDaoAttribute(
             AttributeArgumentListSyntax argumentList, SemanticModel model)
         {
             var generationType = GenerationType.EntityFrameworkCore;
             var loggerType = LoggerType.MicrosoftExtensionsLogging;
             var sqlFileRootDirectory = "SqlResources";
-            string configName = null;
+            string? configName = null;
             var attrCount = argumentList.Arguments.Count;
             if (attrCount == 0)
             {
@@ -213,10 +223,10 @@ namespace EasySqlParser.SourceGenerator
                     {
                         // 名前付き引数優先→順番無視
                         case "configName":
-                            configName = (string) model.GetConstantValue(expr).Value;
+                            configName = (string?) model.GetConstantValue(expr).Value;
                             continue;
                         case "sqlFileRootDirectory":
-                            sqlFileRootDirectory = (string) model.GetConstantValue(expr).Value;
+                            sqlFileRootDirectory = (string?) model.GetConstantValue(expr).Value;
                             continue;
                         case "generationType" when TryGetGenerationType(expr, out generationType):
                         case "loggerType" when TryGetLoggerType(expr, out loggerType):
@@ -235,7 +245,7 @@ namespace EasySqlParser.SourceGenerator
                         continue;
                     case 3:
                         // string only
-                        configName = (string) model.GetConstantValue(expr).Value;
+                        configName = (string?) model.GetConstantValue(expr).Value;
                         break;
                 }
             }
@@ -271,11 +281,11 @@ namespace EasySqlParser.SourceGenerator
             return false;
         }
 
-        private static bool TryGetString(ExpressionSyntax expr,SemanticModel model, out string value)
+        private static bool TryGetString(ExpressionSyntax expr,SemanticModel model, out string? value)
         {
             if (expr is InvocationExpressionSyntax || expr is LiteralExpressionSyntax)
             {
-                value = (string) model.GetConstantValue(expr).Value;
+                value = (string?) model.GetConstantValue(expr).Value;
                 return true;
             }
 
@@ -318,50 +328,35 @@ namespace EasySqlParser.SourceGenerator
             //// method name
             //Debug.WriteLine(methodType.Identifier.Text);
             context.Name = methodType.Identifier.Text;
-            var paramCount = methodType.ParameterList.Parameters.Count;
-            if (paramCount > 1)
-            {
-                throw new Exception("method parameter count overflow.");
-            }
-
-            if (paramCount == 0)
-            {
-                throw new Exception("require method parameter");
-            }
-            var paramContext = new ParameterContext();
-            var param = methodType.ParameterList.Parameters[0];
-            // method argument name
-            //Debug.WriteLine(param.Identifier.Text);
-            paramContext.Name = param.Identifier.Text;
-            if (param.Type is IdentifierNameSyntax syntax)
-            {
-                // user definition type
-                // method argument type name
-                //Debug.WriteLine(syntax.Identifier.Text);
-                paramContext.TypeName = syntax.Identifier.Text;
-            }
-
-            if (param.Type is PredefinedTypeSyntax definedSyntax)
-            {
-                // known clr type
-                paramContext.IsKnownType = true;
-                //Debug.WriteLine(definedSyntax.Keyword.Text);
-                paramContext.TypeName = definedSyntax.Keyword.Text;
-            }
-
-            //context.ParameterContexts.Add(paramContext);
-            context.ParameterContext = paramContext;
+            ProcessMethodParameters(methodType.ParameterList.Parameters, context);
             // method return type
             var typeSyntax = methodType.ReturnType;
-            context.ReturnTypeName = typeSyntax.ToString();
+            var returnTypeContext = new ReturnTypeContext();
+            returnTypeContext.Name = typeSyntax.ToString();
             if (typeSyntax is GenericNameSyntax generic)
             {
-                //Debug.WriteLine(generic.Identifier.Value);
+
+                Debug.WriteLine(generic.Identifier.Value);
                 //Debug.WriteLine(generic.Identifier.ValueText);
                 var typeArg = generic.TypeArgumentList.Arguments.FirstOrDefault();
                 if (typeArg != null)
                 {
-                    context.ReturnTypeGenericArgumentName = typeArg.ToString();
+                    if (typeArg is GenericNameSyntax nestedGeneric)
+                    {
+                        Debug.WriteLine(nestedGeneric.Identifier.Text);
+                        var nestedTypeArg = nestedGeneric.TypeArgumentList.Arguments.FirstOrDefault();
+                        if (nestedTypeArg != null)
+                        {
+                            returnTypeContext.GenericArgumentName = nestedTypeArg.ToString();
+                            returnTypeContext.NestedGenericTypeName = nestedGeneric.Identifier.Text;
+                        }
+                    }
+                    else
+                    {
+                        returnTypeContext.GenericArgumentName = typeArg.ToString();
+                    }
+
+                    returnTypeContext.GenericTypeName = generic.Identifier.Text;
                 }
                 //Debug.WriteLine(generic.Identifier.Text);
                 //var typeArgs = generic.TypeArgumentList.Arguments;
@@ -395,50 +390,152 @@ namespace EasySqlParser.SourceGenerator
                 return;
             }
 
-            context.IsAsync = methodSymbol.IsAsync;
-            var attributeData = methodSymbol.GetAttributes().FirstOrDefault();
-            if (attributeData == null)
+            returnTypeContext.TypeNamespace = methodSymbol.ReturnType.ContainingNamespace.ToDisplayString();
+            if (returnTypeContext.TypeNamespace == "System.Threading.Tasks" &&
+                returnTypeContext.GenericTypeName is "Task" or "ValueTask")
             {
-                Debug.WriteLine("ありえなす");
-                return;
+                //! IsAsyncはasyncキーワードにしか反応しない。。
+                //context.IsAsync = methodSymbol.IsAsync;
+                context.IsAsync = true;
             }
-            ProcessMethodAttribute(attributeData, methodAttribute, model, context);
+
+            context.ReturnTypeContext = returnTypeContext;
+
+
+            var attributeDataList = methodSymbol.GetAttributes();
+            ProcessMethodAttribute(attributeDataList, methodAttribute, model, context);
 
 
         }
 
+        private static void ProcessMethodParameters(SeparatedSyntaxList<ParameterSyntax> parameterSyntaxList, MethodContext context)
+        {
+            // パラメータが無い場合があるのか？
+            // select allの場合にはありうる
+            // select以外でパラメータ無しはエラー
+            //  パラメータが複数の場合はあるのか？？
+            // パラメータチェック
+            //  select
+            //      TCondition
+            //      Expression<Func<TEntity, bool>> 
+            //  select以外
+            //      TEntity → classならOK
+            //      FormattableString
+            //      priority
+            foreach (var parameterSyntax in parameterSyntaxList)
+            {
+                var parameterName = parameterSyntax.Identifier.Text;
+                var isKnownType = false;
+                string? parameterTypeName = null;
+                if (parameterSyntax.Type is IdentifierNameSyntax syntax)
+                {
+                    // user definition type
+                    // method argument type name
+                    //Debug.WriteLine(syntax.Identifier.Text);
+                    parameterTypeName = syntax.Identifier.Text;
+                }
+
+                if (parameterSyntax.Type is PredefinedTypeSyntax definedSyntax)
+                {
+                    // known clr type
+                    isKnownType = true;
+                    //Debug.WriteLine(definedSyntax.Keyword.Text);
+                    parameterTypeName = definedSyntax.Keyword.Text;
+                }
+
+                if (parameterTypeName == null)
+                {
+                    // error
+                    continue;
+                }
+
+                
+                context.ParameterContexts.Add(new ParameterContext
+                            {
+                                TypeName = parameterTypeName,
+                                Name = parameterName,
+                                IsKnownType = isKnownType
+                            });
+            }
+            
+        }
+
         private static void ProcessMethodAttribute(
-            AttributeData attributeData,
+            ImmutableArray<AttributeData> attributeDataList,
             AttributeSyntax methodAttribute,
             SemanticModel model,
             MethodContext context)
         {
             var attributeName = methodAttribute.Name.ToString();
-            if (attributeName == "Query" || attributeName == "QueryAttribute")
+            // TODO: 戻り値チェックを行う
+            // select
+            //  TEntity
+            //  List<TEntity>
+            //  Task<TEntity>
+            //  Task<List<TEntity>>
+            //      TEntity のチェックは？？
+            //      classくらいしかない
+            // select以外
+            //  int
+            //  Task<int>
+            //  void
+            //  Task
+            // attributeDataList中からmethodAttributeに一致するモノを取得する
+            if (attributeName is "Select" or "SelectAttribute")
             {
-                // process query
-                ProcessQueryAttribute(attributeData, methodAttribute, model, context);
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "SelectAttribute");
+                if (attributeData == null) return;
+                // process select
+                ProcessSelectAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.Select;
                 return;
             }
 
-            if (attributeName == "Insert" || attributeName == "InsertAttribute")
+            if (attributeName is "Insert" or "InsertAttribute")
             {
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "InsertAttribute");
+                if (attributeData == null) return;
                 // process insert
                 ProcessInsertAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.Insert;
                 return;
             }
 
-            if (attributeName == "Update" || attributeName == "UpdateAttribute")
+            if (attributeName is "Update" or "UpdateAttribute")
             {
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "UpdateAttribute");
+                if (attributeData == null) return;
                 // process update
                 ProcessUpdateAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.Update;
                 return;
             }
 
-            if (attributeName == "Delete" || attributeName == "DeleteAttribute")
+            if (attributeName is "Delete" or "DeleteAttribute")
             {
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "DeleteAttribute");
+                if (attributeData == null) return;
                 // process delete
                 ProcessDeleteAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.Delete;
+                return;
+            }
+
+            if (attributeName is "SoftDelete" or "SoftDeleteAttribute")
+            {
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "SoftDeleteAttribute");
+                if (attributeData == null) return;
+                ProcessUpdateAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.SoftDelete;
+                return;
+            }
+
+            if (attributeName is "Merge" or "MergeAttribute")
+            {
+                var attributeData = attributeDataList.FirstOrDefault(x => x.AttributeClass?.Name == "MergeAttribute");
+                if (attributeData == null) return;
+                ProcessMergeAttribute(attributeData, methodAttribute, model, context);
+                context.SqlKind = SqlKind.Merge;
                 return;
             }
 
@@ -472,7 +569,7 @@ namespace EasySqlParser.SourceGenerator
 
         }
 
-        private static void ProcessQueryAttribute(
+        private static void ProcessSelectAttribute(
             AttributeData attributeData,
             AttributeSyntax methodAttribute,
             SemanticModel model,
@@ -481,13 +578,10 @@ namespace EasySqlParser.SourceGenerator
             // several property default value
             // from base
             // FilePath         :null
-            // UseDbSet         :true
-            // CommandTimeout   :30
-            context.IsSelectQuery = true;
+            // CommandTimeout   :-1
 
             // set default value
-            context.UseDbSet = true;
-            context.CommandTimeout = 30;
+            context.CommandTimeout = -1;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
             {
@@ -500,13 +594,18 @@ namespace EasySqlParser.SourceGenerator
                 switch (attributeDataNamedArgument.Key)
                 {
                     case "FilePath":
-                        context.SqlFilePath = (string)value;
+                        context.SqlFilePath = (string) value;
                         continue;
-                    //case "UseDbSet":
-                    //    context.UseDbSet = (bool) value;
-                    //    break;
                     case "CommandTimeout":
                         context.CommandTimeout = (int) value;
+                        break;
+                    case "UseDbSet":
+                        context.UseDbSet = (bool) value;
+                        if (!context.UseDbSet)
+                        {
+                            //TODO: 戻り値の型(T)がEntityAttributeで就職されている必要がある
+
+                        }
                         break;
                 }
             }
@@ -552,14 +651,11 @@ namespace EasySqlParser.SourceGenerator
             // from base
             // AutoGenerate     :true
             // FilePath         :null
-            // UseDbSet         :true
-            // CommandTimeout   :30
+            // CommandTimeout   :-1
 
             // ExcludeNull      :false
-
             context.AutoGenerate = true;
-            context.UseDbSet = true;
-            context.CommandTimeout = 30;
+            context.CommandTimeout = -1;
             context.ExcludeNull = false;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
@@ -577,9 +673,6 @@ namespace EasySqlParser.SourceGenerator
                         break;
                     case "FilePath":
                         context.SqlFilePath = (string) value;
-                        break;
-                    case "UseDbSet":
-                        context.UseDbSet = (bool) value;
                         break;
                     case "CommandTimeout":
                         context.CommandTimeout = (int) value;
@@ -601,20 +694,16 @@ namespace EasySqlParser.SourceGenerator
             // from base
             // AutoGenerate     :true
             // FilePath         :null
-            // UseDbSet         :true
-            // CommandTimeout   :30
+            // CommandTimeout   :-1
 
             // ExcludeNull      :false
             // IgnoreVersion    :false
-            // UseVersion       :false
             // SuppressOptimisticLockException :false
 
             context.AutoGenerate = true;
-            context.UseDbSet = true;
-            context.CommandTimeout = 30;
+            context.CommandTimeout = -1;
             context.ExcludeNull = false;
             context.IgnoreVersion = false;
-            context.UseVersion = false;
             context.SuppressOptimisticLockException = false;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
@@ -634,20 +723,14 @@ namespace EasySqlParser.SourceGenerator
                     case "FilePath":
                         context.SqlFilePath = (string) value;
                         break;
-                    case "UseDbSet":
-                        context.UseDbSet = (bool)value;
-                        break;
                     case "CommandTimeout":
-                        context.CommandTimeout = (int)value;
+                        context.CommandTimeout = (int) value;
                         break;
                     case "ExcludeNull":
-                        context.ExcludeNull = (bool)value;
+                        context.ExcludeNull = (bool) value;
                         break;
                     case "IgnoreVersion":
                         context.IgnoreVersion = (bool) value;
-                        break;
-                    case "UseVersion":
-                        context.UseVersion = (bool) value;
                         break;
                     case "SuppressOptimisticLockException":
                         context.SuppressOptimisticLockException = (bool) value;
@@ -668,17 +751,15 @@ namespace EasySqlParser.SourceGenerator
             // from base
             // AutoGenerate     :true
             // FilePath         :null
-            // UseDbSet         :true
-            // CommandTimeout   :30
+            // CommandTimeout   :-1
 
             // IgnoreVersion    :false
-            // UseVersion       :true
             // SuppressOptimisticLockException :false
+
+            //TODO: AutoGenerate : false かつ FilePath 無しはエラー
             context.AutoGenerate = true;
-            context.UseDbSet = true;
-            context.CommandTimeout = 30;
+            context.CommandTimeout = -1;
             context.IgnoreVersion = false;
-            context.UseVersion = false;
             context.SuppressOptimisticLockException = false;
 
             foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
@@ -692,30 +773,66 @@ namespace EasySqlParser.SourceGenerator
                 switch (attributeDataNamedArgument.Key)
                 {
                     case "AutoGenerate":
-                        context.AutoGenerate = (bool)value;
+                        context.AutoGenerate = (bool) value;
                         break;
                     case "FilePath":
-                        context.SqlFilePath = (string)value;
-                        break;
-                    case "UseDbSet":
-                        context.UseDbSet = (bool)value;
+                        context.SqlFilePath = (string) value;
                         break;
                     case "CommandTimeout":
-                        context.CommandTimeout = (int)value;
+                        context.CommandTimeout = (int) value;
                         break;
                     case "IgnoreVersion":
-                        context.IgnoreVersion = (bool)value;
-                        break;
-                    case "UseVersion":
-                        context.UseVersion = (bool)value;
+                        context.IgnoreVersion = (bool) value;
                         break;
                     case "SuppressOptimisticLockException":
-                        context.SuppressOptimisticLockException = (bool)value;
+                        context.SuppressOptimisticLockException = (bool) value;
                         break;
                 }
 
             }
 
+        }
+
+        private static void ProcessMergeAttribute(
+            AttributeData attributeData,
+            AttributeSyntax methodAttribute,
+            SemanticModel model,
+            MethodContext context)
+        {
+            // several property default value
+            // from base
+            // FilePath         :null
+            // CommandTimeout   :-1
+
+            // UseSqlServer    :false
+            context.AutoGenerate = false;
+            context.CommandTimeout = -1;
+            context.IgnoreVersion = true;
+            context.SuppressOptimisticLockException = false;
+
+            foreach (var attributeDataNamedArgument in attributeData.NamedArguments)
+            {
+                var value = attributeDataNamedArgument.Value.Value;
+                if (value == null)
+                {
+                    // TODO: error
+                    continue;
+                }
+                switch (attributeDataNamedArgument.Key)
+                {
+                    case "FilePath":
+                        context.SqlFilePath = (string)value;
+                        //null ならエラー
+                        break;
+                    case "CommandTimeout":
+                        context.CommandTimeout = (int)value;
+                        break;
+                    case "UseSqlServer":
+                        context.UseSqlServer = (bool)value;
+                        break;
+                }
+
+            }
         }
 
 
@@ -726,14 +843,18 @@ namespace EasySqlParser.SourceGenerator
     internal class SyntaxReceiver : ISyntaxReceiver
     {
         private static readonly string[] AcceptableMethodAttributes = {
-                                                                          "Query",
-                                                                          "QueryAttribute",
+                                                                          "Select",
+                                                                          "SelectAttribute",
                                                                           "Insert",
                                                                           "InsertAttribute",
                                                                           "Update",
                                                                           "UpdateAttribute",
                                                                           "Delete",
                                                                           "DeleteAttribute",
+                                                                          "SoftDelete",
+                                                                          "SoftDeleteAttribute",
+                                                                          "Merge",
+                                                                          "MergeAttribute",
                                                                       };
 
         internal Dictionary<(InterfaceDeclarationSyntax type, AttributeSyntax attr),
@@ -758,7 +879,7 @@ namespace EasySqlParser.SourceGenerator
 
                     if (m.AttributeLists.Count == 0)
                     {
-                        methodList.Add((m, null, false));
+                        //methodList.Add((m, null, false));
                         continue;
                     }
                     var methodAttribute = m.AttributeLists
@@ -767,7 +888,7 @@ namespace EasySqlParser.SourceGenerator
                             x => AcceptableMethodAttributes.Contains(x.Name.ToString()));
                     if (methodAttribute == null)
                     {
-                        methodList.Add((m, null, false));
+                        //methodList.Add((m, null, false));
                         continue;
                     }
                     methodList.Add((m, methodAttribute, true));

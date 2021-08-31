@@ -175,7 +175,7 @@ namespace EasySqlParser.SourceGenerator
 
         private void WriteMethod(InterfaceContext context, MethodContext methodContext)
         {
-            _builder.Append($"public {methodContext.ReturnTypeName} {methodContext.Name}(");
+            _builder.Append($"public {methodContext.ReturnTypeContext.Name} {methodContext.Name}(");
             // TODO: EasySqlParserがパラメータ1つであることを求めているので
             // Daoメソッドのパラメータも1つでよい
             //foreach (var parameterContext in methodContext.ParameterContexts)
@@ -191,14 +191,18 @@ namespace EasySqlParser.SourceGenerator
 
             using (_builder.Indent())
             {
+                //! SQL自動生成かどうかの判定が必要
+
                 // TODO: error
-                if (string.IsNullOrEmpty(methodContext.SqlFilePath))
-                {
-                    _builder.AppendLine("throw new NotImplementedException(\"\");");
-                    //_builder.AppendLine("}");
-                    //return;
-                    goto LBL;
-                }
+                // ここでやることではない
+                // Diagnostic Reportに送る
+                //if (string.IsNullOrEmpty(methodContext.SqlFilePath))
+                //{
+                //    _builder.AppendLine("throw new NotImplementedException(\"\");");
+                //    //_builder.AppendLine("}");
+                //    //return;
+                //    goto LBL;
+                //}
                 // create sqlparser instance.
                 _builder.Append("var parser = new SqlParser(");
                 _builder.Append($"@\"{methodContext.SqlFilePath}\"");
@@ -254,17 +258,17 @@ namespace EasySqlParser.SourceGenerator
         private void WriteDapperQuery(InterfaceContext context, MethodContext methodContext)
         {
             if (context.GenerationType != GenerationType.Dapper) return;
-            if (!methodContext.IsSelectQuery) return;
+            if (methodContext.SqlKind != SqlKind.Select) return;
             if (methodContext.IsAsync) return;
             _builder.Append("return _connection.");
-            var queryTypeName = methodContext.ReturnTypeName;
-            if (string.IsNullOrEmpty(methodContext.ReturnTypeGenericArgumentName))
+            var queryTypeName = methodContext.ReturnTypeContext.Name;
+            if (string.IsNullOrEmpty(methodContext.ReturnTypeContext.GenericArgumentName))
             {
                 _builder.Append("QuerySingleOrDefault");
             }
             else
             {
-                queryTypeName = methodContext.ReturnTypeGenericArgumentName;
+                queryTypeName = methodContext.ReturnTypeContext.GenericArgumentName;
                 _builder.Append("Query");
             }
 
@@ -282,7 +286,7 @@ namespace EasySqlParser.SourceGenerator
         private void WriteDapperNonQuery(InterfaceContext context, MethodContext methodContext)
         {
             if (context.GenerationType != GenerationType.Dapper) return;
-            if (methodContext.IsSelectQuery) return;
+            if (methodContext.SqlKind == SqlKind.Select) return;
             if (methodContext.IsAsync)
             {
                 _builder.Append("return await _connection.ExecuteAsync(");
@@ -303,13 +307,18 @@ namespace EasySqlParser.SourceGenerator
         private void WriteEfCoreQuery(InterfaceContext context, MethodContext methodContext)
         {
             if (context.GenerationType != GenerationType.EntityFrameworkCore) return;
-            if (!methodContext.IsSelectQuery) return;
-            _builder.Append("return _context.Set");
-            var queryTypeName = methodContext.ReturnTypeName;
+            if (methodContext.SqlKind != SqlKind.Select) return;
+            _builder.Append("return _context");
+            _builder.Append(".Set");
+            //if (methodContext.UseDbSet)
+            //{
+            //    _builder.Append(".Set");
+            //}
+            var queryTypeName = methodContext.ReturnTypeContext.Name;
             var terminateMethod = ".SingleOrDefault()";
-            if (!string.IsNullOrEmpty(methodContext.ReturnTypeGenericArgumentName))
+            if (!string.IsNullOrEmpty(methodContext.ReturnTypeContext.GenericArgumentName))
             {
-                queryTypeName = methodContext.ReturnTypeGenericArgumentName;
+                queryTypeName = methodContext.ReturnTypeContext.GenericArgumentName;
                 terminateMethod = ".ToList()";
             }
 
@@ -327,7 +336,7 @@ namespace EasySqlParser.SourceGenerator
         private void WriteEfCoreNonQuery(InterfaceContext context, MethodContext methodContext)
         {
             if (context.GenerationType != GenerationType.EntityFrameworkCore) return;
-            if (methodContext.IsSelectQuery) return;
+            if (methodContext.SqlKind == SqlKind.Select) return;
 
         }
     }
