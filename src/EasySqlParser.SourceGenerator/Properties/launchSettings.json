@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EasySqlParser.SourceGenerator": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\sandbox\\EasySqlParser.SourceGeneratorSandbox\\EasySqlParser.SourceGeneratorSandbox.csproj"
+    }
+  }
+}
