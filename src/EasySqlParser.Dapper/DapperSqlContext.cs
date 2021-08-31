@@ -118,7 +118,7 @@ namespace EasySqlParser.Dapper
             SequenceHelper.Generate(_connection, builderParameter);
             var builderResult = QueryBuilder.GetQueryBuilderResult(builderParameter);
             var sqlItem = new SqlItem(builderResult.ParsedSql,
-                builderResult.DbDataParameters.ToDynamicParameters(),
+                null,
                 builderParameter,
                 builderResult);
             if (forceFirst)

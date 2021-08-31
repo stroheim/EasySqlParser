@@ -16,6 +16,13 @@ namespace EasySqlParser.SourceGeneratorSandbox
 
         }
 
+        public EfContext(DbContextOptions<EfContext> options) : base(options)
+        {
+
+        }
+
+
+
         //public EfContext(string connectionString)
         //{
         //    _connectionString = connectionString;

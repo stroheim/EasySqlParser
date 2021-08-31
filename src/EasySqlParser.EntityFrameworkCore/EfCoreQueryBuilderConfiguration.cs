@@ -79,6 +79,10 @@ namespace EasySqlParser.EntityFrameworkCore
             options?.Value)
         {
             _dbContext = dbContext;
+            if (options != null && options.Value.CommandTimeout > -1)
+            {
+                _dbContext.Database.SetCommandTimeout(options.Value.CommandTimeout);
+            }
             _logger = logger;
             LoggerAction = WriteLog;
             _assemblies = options?.Value.AdditionalAssemblies;

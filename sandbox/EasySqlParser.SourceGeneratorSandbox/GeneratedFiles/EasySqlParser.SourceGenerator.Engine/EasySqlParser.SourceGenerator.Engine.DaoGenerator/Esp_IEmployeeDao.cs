@@ -7,6 +7,7 @@ using EasySqlParser;
 using EasySqlParser.EntityFrameworkCore;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGenerator;
+using EasySqlParser.SourceGenerator.Attributes;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -25,14 +26,13 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
 
         Employee GetEmployee(int id);
 
-
     }
 
     public class EmployeeDaoFuga:EfCoreSqlContext<EfContext>,IEmployeeDaoFuga
     {
         private readonly IQueryBuilderConfiguration _configuration;
         private readonly ILogger<EmployeeDaoFuga> _logger;
-        public EmployeeDaoFuga(EfContext context, IQueryBuilderConfiguration configuration, ILogger<EmployeeDaoFuga> logger):base(context)
+        public EmployeeDaoFuga(EfContext context, IQueryBuilderConfiguration configuration, ILogger<EmployeeDaoFuga> logger):base(context, configuration)
         {
             _configuration = configuration;
             _logger = logger;
@@ -43,6 +43,7 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
             var parser = new SqlParser(@"SqlResources\EasySqlParser\SourceGeneratorSandbox\Interfaces\GetEmployees.sql", condition);
             var parserResult = parser.Parse();
             _logger.LogDebug(parserResult.DebugSql);
+            var results = Context.Database.ExecuteReader<Employee>(_configuration, parserResult);
             return Context.Set<Employee>().FromSqlRaw(
                 parserResult.ParsedSql,
                 parserResult.DbDataParameters.Cast<object>().ToArray()
@@ -65,9 +66,19 @@ namespace EasySqlParser.SourceGeneratorSandbox.Interfaces
         {
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _configuration);
             Add(parameter);
-
         }
 
+        private void UpdateEmployee(Employee employee)
+        {
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _configuration);
+            Add(parameter);
+        }
+
+        private int Update(Employee employee)
+        {
+            var parameter = new QueryBuilderParameter(employee, SqlKind.Update, _configuration);
+            return Context.Database.ExecuteNonQuery(parameter);
+        }
 
     }
 }

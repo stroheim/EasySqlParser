@@ -1,4 +1,5 @@
-﻿using EasySqlParser.SqlGenerator.Attributes;
+﻿#nullable enable
+using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -100,8 +101,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static PropertyBuilder HasSequenceGenerator(
             this PropertyBuilder propertyBuilder,
             string sequenceName,
-            string schemaName = null,
-            string prefix = null,
+            string? schemaName = null,
+            string? prefix = null,
             int paddingLength = 0)
         {
             propertyBuilder.Metadata.SetOrRemoveAnnotation(EspAnnotationNames.SequenceGenerator,
@@ -127,8 +128,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         public static PropertyBuilder<TProperty> HasSequenceGenerator<TProperty>(
             this PropertyBuilder<TProperty> propertyBuilder,
             string sequenceName,
-            string schemaName = null,
-            string prefix = null,
+            string? schemaName = null,
+            string? prefix = null,
             int paddingLength = 0)
             => (PropertyBuilder<TProperty>) HasSequenceGenerator((PropertyBuilder) propertyBuilder, sequenceName,
                 schemaName, prefix, paddingLength);

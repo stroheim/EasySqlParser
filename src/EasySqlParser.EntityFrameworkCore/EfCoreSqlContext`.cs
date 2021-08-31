@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EasySqlParser.SqlGenerator.Configurations;
+using Microsoft.EntityFrameworkCore;
 
 namespace EasySqlParser.EntityFrameworkCore
 {
@@ -16,7 +17,9 @@ namespace EasySqlParser.EntityFrameworkCore
         ///     Initializes a new instance of the <see cref="EfCoreSqlContext"/> class.
         /// </summary>
         /// <param name="context"></param>
-        public EfCoreSqlContext(TDbContext context) : base(context)
+        /// <param name="configuration"></param>
+        public EfCoreSqlContext(TDbContext context, IQueryBuilderConfiguration configuration) 
+            : base(context, configuration)
         {
             Context = context;
         }

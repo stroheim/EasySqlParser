@@ -1,4 +1,5 @@
-﻿using EasySqlParser.SqlGenerator.Attributes;
+﻿#nullable enable
+using EasySqlParser.SqlGenerator.Attributes;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace EasySqlParser.EntityFrameworkCore.Extensions
@@ -13,11 +14,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public static CurrentTimestampAttribute GetCurrentTimestampAttribute(
+        public static CurrentTimestampAttribute? GetCurrentTimestampAttribute(
             this IProperty property)
         {
             var annotation = property.FindAnnotation(EspAnnotationNames.CurrentTimestamp);
-            return (CurrentTimestampAttribute) annotation?.Value;
+            return (CurrentTimestampAttribute?) annotation?.Value;
         }
 
         /// <summary>
@@ -25,11 +26,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public static SoftDeleteKeyAttribute GetSoftDeleteKeyAttribute(
+        public static SoftDeleteKeyAttribute? GetSoftDeleteKeyAttribute(
             this IProperty property)
         {
             var annotation = property.FindAnnotation(EspAnnotationNames.SoftDeleteKey);
-            return (SoftDeleteKeyAttribute) annotation?.Value;
+            return (SoftDeleteKeyAttribute?) annotation?.Value;
         }
 
         /// <summary>
@@ -37,11 +38,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public static VersionAttribute GetVersionAttribute(
+        public static VersionAttribute? GetVersionAttribute(
             this IProperty property)
         {
             var annotation = property.FindAnnotation(EspAnnotationNames.Version);
-            return (VersionAttribute) annotation?.Value;
+            return (VersionAttribute?) annotation?.Value;
         }
 
         /// <summary>
@@ -49,11 +50,11 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public static SequenceGeneratorAttribute GetSequenceGeneratorAttribute(
+        public static SequenceGeneratorAttribute? GetSequenceGeneratorAttribute(
             this IProperty property)
         {
             var annotation = property.FindAnnotation(EspAnnotationNames.SequenceGenerator);
-            return (SequenceGeneratorAttribute) annotation?.Value;
+            return (SequenceGeneratorAttribute?) annotation?.Value;
         }
 
     }

@@ -3,6 +3,7 @@ using System.IO;
 using EasySqlParser.Configurations;
 using EasySqlParser.EntityFrameworkCore.Extensions;
 using EasySqlParser.SourceGeneratorSandbox.Interfaces;
+using EasySqlParser.SqlGenerator.Enums;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -51,9 +52,17 @@ namespace EasySqlParser.SourceGeneratorSandbox
                                    {
                                        services.AddDbContext<EfContext>(options =>
                                                                         {
-                                                                            options.UseSqlServer("");
+                                                                            options.UseSqlServer(@"Data Source=localhost\SQLEXPRESS;Initial Catalog=AdventureWorks2012;Integrated Security=True");
                                                                         });
-                                       services.AddQueryBuilderConfiguration();
+                                       services.AddQueryBuilderConfiguration(options =>
+                                                                             {
+                                                                                 options.QueryBehavior =
+                                                                                     QueryBehavior.AllColumns;
+                                                                                 options.WriteIndented = true;
+                                                                                 options.ExcludeNullBehavior =
+                                                                                     ExcludeNullBehavior
+                                                                                         .NullOrEmptyOrDefaultValue;
+                                                                             });
                                    })
                 .ConfigureLogging((context, b) =>
                                   {

@@ -8,6 +8,8 @@
     <!--<CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>-->
     <!--<CompilerGeneratedFilesOutputPath>$(ProjectDir)..\GeneratedFiles</CompilerGeneratedFilesOutputPath>-->
     <!--<CompilerGeneratedFilesOutputPath>$(ProjectDir)GeneratedFiles</CompilerGeneratedFilesOutputPath>-->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EasySqlParser.EntityFrameworkCore\EasySqlParser.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator.Attributes\EasySqlParser.SourceGenerator.Attributes.csproj" />
-    <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator\EasySqlParser.SourceGenerator.csproj" />
+    <ProjectReference Include="..\..\src\EasySqlParser.SourceGenerator\EasySqlParser.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     <ProjectReference Include="..\..\src\EasySqlParser\EasySqlParser.csproj" />
   </ItemGroup>
 

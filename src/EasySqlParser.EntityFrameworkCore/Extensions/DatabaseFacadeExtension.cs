@@ -73,7 +73,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         internal static async Task<int> ConsumeScalarAsync(this IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             QueryBuilderParameter builderParameter,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             var scalarValue = await command.ExecuteScalarAsync(parameterObject, cancellationToken).ConfigureAwait(false);
             return DbCommandHelper.ConsumeScalar(scalarValue, builderParameter);
@@ -82,7 +82,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         internal static async Task<int> ConsumeNonQueryAsync(this IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             QueryBuilderParameter builderParameter,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             var affectedCount = await command.ExecuteNonQueryAsync(parameterObject, cancellationToken).ConfigureAwait(false);
             builderParameter.ApplyReturningColumns();
@@ -92,7 +92,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         internal static async Task<int> ConsumeReaderAsync(this IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             QueryBuilderParameter builderParameter,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             await using var relationalDataReader = await command.ExecuteReaderAsync(parameterObject, cancellationToken).ConfigureAwait(false);
             var reader = relationalDataReader.DbDataReader;
@@ -101,7 +101,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         private static async Task<int> ConsumeReaderAsync(DbDataReader reader, 
             QueryBuilderParameter builderParameter,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
             if (!reader.HasRows)
             {
@@ -131,7 +131,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
     {
         internal static void ReadRow<T>(T instance, DbDataReader reader,
             EntityTypeInfo entityInfo,
-            Action<string> loggerAction = null)
+            Action<string> loggerAction)
             where T : class
         {
             for (var i = 0; i < reader.FieldCount; i++)
@@ -144,8 +144,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         internal static async Task ReadRowAsync<T>(T instance, DbDataReader reader, 
             EntityTypeInfo entityInfo,
-            Action<string> loggerAction = null,
-            CancellationToken cancellationToken = default)
+            Action<string> loggerAction,
+            CancellationToken cancellationToken)
             where T : class
         {
             for (var i = 0; i < reader.FieldCount; i++)
@@ -211,12 +211,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="database"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         public static TResult ExecuteScalar<TResult>(
             this DatabaseFacade database,
             SqlParserResult parserResult,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
         {
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -224,6 +230,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -254,19 +264,30 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="database"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public static async Task<TResult> ExecuteScalarAsync<TResult>(
             this DatabaseFacade database,
             SqlParserResult parserResult,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             CancellationToken cancellationToken = default)
         {
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
             {
                 return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
             }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
@@ -297,12 +318,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="database"></param>
         /// <param name="sqlTemplate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         public static TResult ExecuteScalar<TResult>(
             this DatabaseFacade database,
             FormattableString sqlTemplate,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
         {
+            if (sqlTemplate == null)
+            {
+                throw new ArgumentNullException(nameof(sqlTemplate));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -310,6 +337,10 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -350,19 +381,30 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="database"></param>
         /// <param name="sqlTemplate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public static async Task<TResult> ExecuteScalarAsync<TResult>(
             this DatabaseFacade database,
             FormattableString sqlTemplate,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             CancellationToken cancellationToken = default)
         {
+            if (sqlTemplate == null)
+            {
+                throw new ArgumentNullException(nameof(sqlTemplate));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
             {
                 return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
             }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
@@ -403,16 +445,22 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         ///     Executes a query with no results.
         /// </summary>
         /// <param name="database"></param>
-        /// <param name="builderParameter"></param>
+        /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns>
         ///     The number of rows affected.
         /// </returns>
         public static int ExecuteNonQuery(
             this DatabaseFacade database,
-            QueryBuilderParameter builderParameter,
-            DbTransaction transaction = null)
+            SqlParserResult parserResult,
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
         {
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -420,7 +468,327 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(builderParameter.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+
+            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            if (transaction != null)
+            {
+                database.UseTransaction(transaction);
+            }
+
+            var dbContextTransaction = database.CurrentTransaction;
+            var beganTransaction = false;
+            if (dbContextTransaction == null)
+            {
+                dbContextTransaction = database.BeginTransaction();
+                beganTransaction = true;
+            }
+
+            using (concurrentDetector.EnterCriticalSection())
+            {
+                int affectedCount;
+                try
+                {
+                    var (command, parameterObject) = CreateRelationalParameterObject(
+                        facadeDependencies, facade, parserResult);
+                    affectedCount = command.ExecuteNonQuery(parameterObject);
+                    if (beganTransaction)
+                    {
+                        dbContextTransaction.Commit();
+                    }
+
+                }
+                finally
+                {
+                    if (beganTransaction)
+                    {
+                        dbContextTransaction.Dispose();
+                    }
+                }
+
+                return affectedCount;
+            }
+        }
+
+        /// <summary>
+        ///     Asynchronously executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the number of rows affected.
+        /// </returns>
+        public static async Task<int> ExecuteNonQueryAsync(
+            this DatabaseFacade database,
+            SqlParserResult parserResult,
+            DbTransaction transaction = null,
+            int commandTimeout = -1,
+            CancellationToken cancellationToken = default)
+        {
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
+            var facade = database as IDatabaseFacadeDependenciesAccessor;
+            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+            if (facadeDependencies == null)
+            {
+                return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+
+            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            if (transaction != null)
+            {
+                await database.UseTransactionAsync(transaction, cancellationToken).ConfigureAwait(false);
+            }
+
+            var dbContextTransaction = database.CurrentTransaction;
+            var beganTransaction = false;
+            if (dbContextTransaction == null)
+            {
+                dbContextTransaction = await database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                beganTransaction = true;
+            }
+
+            using (concurrentDetector.EnterCriticalSection())
+            {
+                int affectedCount;
+                try
+                {
+                    var (command, parameterObject) = CreateRelationalParameterObject(
+                        facadeDependencies, facade, parserResult);
+                    affectedCount = await command.ExecuteNonQueryAsync(parameterObject, cancellationToken).ConfigureAwait(false);
+                    if (beganTransaction)
+                    {
+                        await dbContextTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
+                }
+                finally
+                {
+                    if (beganTransaction)
+                    {
+                        await dbContextTransaction.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
+                return affectedCount;
+            }
+
+        }
+
+        /// <summary>
+        ///     Executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="sqlTemplate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>
+        ///     The number of rows affected.
+        /// </returns>
+        public static int ExecuteNonQuery(
+            this DatabaseFacade database,
+            FormattableString sqlTemplate,
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
+        {
+            if (sqlTemplate == null)
+            {
+                throw new ArgumentNullException(nameof(sqlTemplate));
+            }
+            var facade = database as IDatabaseFacadeDependenciesAccessor;
+            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+            if (facadeDependencies == null)
+            {
+                return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+
+            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            if (transaction != null)
+            {
+                database.UseTransaction(transaction);
+            }
+
+            var dbContextTransaction = database.CurrentTransaction;
+            var beganTransaction = false;
+            if (dbContextTransaction == null)
+            {
+                dbContextTransaction = database.BeginTransaction();
+                beganTransaction = true;
+            }
+
+            using (concurrentDetector.EnterCriticalSection())
+            {
+                int affectedCount;
+                try
+                {
+                    var command = facadeDependencies.RawSqlCommandBuilder
+                        .Build(sqlTemplate.Format, sqlTemplate.GetArguments());
+                    var relationalCommand = command.RelationalCommand;
+                    var parameterObject = new RelationalCommandParameterObject(
+                        facadeDependencies.RelationalConnection,
+                        command.ParameterValues,
+                        null,
+                        facade.Context,
+                        facadeDependencies.CommandLogger
+                    );
+                    affectedCount = relationalCommand.ExecuteNonQuery(parameterObject);
+
+                    if (beganTransaction)
+                    {
+                        dbContextTransaction.Commit();
+                    }
+                }
+                finally
+                {
+                    if (beganTransaction)
+                    {
+                        dbContextTransaction.Dispose();
+                    }
+                }
+
+                return affectedCount;
+            }
+        }
+
+        /// <summary>
+        ///     Asynchronously executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="sqlTemplate"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        ///     A task that represents the asynchronous operation. The task result contains the number of rows affected.
+        /// </returns>
+        public static async Task<int> ExecuteNonQueryAsync(
+            this DatabaseFacade database,
+            FormattableString sqlTemplate,
+            DbTransaction transaction = null,
+            int commandTimeout = -1,
+            CancellationToken cancellationToken = default)
+        {
+            if (sqlTemplate == null)
+            {
+                throw new ArgumentNullException(nameof(sqlTemplate));
+            }
+            var facade = database as IDatabaseFacadeDependenciesAccessor;
+            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+            if (facadeDependencies == null)
+            {
+                return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+
+            var concurrentDetector = facadeDependencies.ConcurrencyDetector;
+
+            if (transaction != null)
+            {
+                await database.UseTransactionAsync(transaction, cancellationToken).ConfigureAwait(false);
+            }
+
+            var dbContextTransaction = database.CurrentTransaction;
+            var beganTransaction = false;
+            if (dbContextTransaction == null)
+            {
+                dbContextTransaction = await database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                beganTransaction = true;
+            }
+
+            using (concurrentDetector.EnterCriticalSection())
+            {
+                int affectedCount;
+                try
+                {
+                    var command = facadeDependencies.RawSqlCommandBuilder
+                        .Build(sqlTemplate.Format, sqlTemplate.GetArguments());
+                    var relationalCommand = command.RelationalCommand;
+                    var parameterObject = new RelationalCommandParameterObject(
+                        facadeDependencies.RelationalConnection,
+                        command.ParameterValues,
+                        null,
+                        facade.Context,
+                        facadeDependencies.CommandLogger
+                    );
+                    affectedCount = await relationalCommand.ExecuteNonQueryAsync(parameterObject, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (beganTransaction)
+                    {
+                        await dbContextTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+
+                }
+                finally
+                {
+                    if (beganTransaction)
+                    {
+                        await dbContextTransaction.DisposeAsync().ConfigureAwait(false);
+                    }
+                }
+                return affectedCount;
+            }
+        }
+
+        /// <summary>
+        ///     Executes a query with no results.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="builderParameter"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns>
+        ///     The number of rows affected.
+        /// </returns>
+        public static int ExecuteNonQuery(
+            this DatabaseFacade database,
+            QueryBuilderParameter builderParameter,
+            int commandTimeout = -1,
+            DbTransaction transaction = null)
+        {
+            if (builderParameter == null)
+            {
+                throw new ArgumentNullException(nameof(builderParameter));
+            }
+            var facade = database as IDatabaseFacadeDependenciesAccessor;
+            var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
+            if (facadeDependencies == null)
+            {
+                return default;
+            }
+
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (builderParameter.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(builderParameter.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -495,6 +863,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="database"></param>
         /// <param name="builderParameter"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>
         ///     A task that represents the asynchronous operation. The task result contains the number of rows affected.
@@ -503,8 +872,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this DatabaseFacade database,
             QueryBuilderParameter builderParameter,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             CancellationToken cancellationToken = default)
         {
+            if (builderParameter == null)
+            {
+                throw new ArgumentNullException(nameof(builderParameter));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -512,7 +886,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(builderParameter.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (builderParameter.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(builderParameter.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -594,6 +975,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns>
         ///     If query has no records, returning default of <typeparamref name="T"/>.
         /// </returns>
@@ -601,9 +983,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
             SqlParserResult parserResult,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -611,7 +1002,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -625,7 +1023,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
-                return InternalExecuteReaderFirst<T>(command, parameterObject, entityInfo);
+                return InternalExecuteReaderFirst<T>(command, parameterObject, entityInfo, configuration.LoggerAction);
             }
         }
 
@@ -637,6 +1035,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>
         ///     A task that represents the asynchronous operation. The task result contains the result of the command.
@@ -647,9 +1046,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             SqlParserResult parserResult,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             CancellationToken cancellationToken = default)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -657,7 +1065,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -671,8 +1086,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
-                return await InternalExecuteReaderFirstAsync<T>(command, parameterObject, entityInfo,
-                    cancellationToken);
+                return await InternalExecuteReaderFirstAsync<T>(command, parameterObject, 
+                    entityInfo, configuration.LoggerAction, cancellationToken);
             }
 
         }
@@ -685,6 +1100,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns>
         ///     If query has no records, returning empty list of <typeparamref name="T"/>.
         /// </returns>
@@ -692,9 +1108,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this DatabaseFacade database,
             IQueryBuilderConfiguration configuration,
             SqlParserResult parserResult,
-            DbTransaction transaction = null)
+            DbTransaction transaction = null,
+            int commandTimeout = -1)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -702,7 +1127,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return new List<T>();
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -717,7 +1149,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
-                return InternalExecuteReader<T>(command, parameterObject, entityInfo);
+                return InternalExecuteReader<T>(command, parameterObject, entityInfo, configuration.LoggerAction);
             }
         }
 
@@ -729,6 +1161,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="parserResult"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>
         ///     A task that represents the asynchronous operation. The task result contains the result of the command.
@@ -739,9 +1172,18 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             SqlParserResult parserResult,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             CancellationToken cancellationToken = default)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            if (parserResult == null)
+            {
+                throw new ArgumentNullException(nameof(parserResult));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -749,7 +1191,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return new List<T>();
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -764,7 +1213,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject) = CreateRelationalParameterObject(
                     facadeDependencies, facade, parserResult);
-                return await InternalExecuteReaderAsync<T>(command, parameterObject, entityInfo, cancellationToken);
+                return await InternalExecuteReaderAsync<T>(command, parameterObject, entityInfo, configuration.LoggerAction, cancellationToken);
             }
         }
         #endregion
@@ -779,6 +1228,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="predicate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="configName"></param>
         /// <returns>
         ///     If query has no records, returning default of <typeparamref name="T"/>.
@@ -788,9 +1238,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             string configName = null)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -798,7 +1253,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -815,7 +1277,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject, _) = CreateRelationalParameterObject(
                     facadeDependencies, facade, null, builderResult, configuration.LoggerAction);
-                return InternalExecuteReaderFirst<T>(command, parameterObject, entityInfo);
+                return InternalExecuteReaderFirst<T>(command, parameterObject, entityInfo, configuration.LoggerAction);
             }
 
         }
@@ -828,6 +1290,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="predicate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="configName"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>
@@ -839,10 +1302,15 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             string configName = null,
             CancellationToken cancellationToken = default)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -850,7 +1318,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return default;
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -866,8 +1341,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject, _) = CreateRelationalParameterObject(
                     facadeDependencies, facade, null, builderResult, configuration.LoggerAction);
-                return await InternalExecuteReaderFirstAsync<T>(command, parameterObject, entityInfo,
-                    cancellationToken);
+                return await InternalExecuteReaderFirstAsync<T>(command, parameterObject,
+                    entityInfo, configuration.LoggerAction, cancellationToken);
             }
         }
 
@@ -879,6 +1354,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="predicate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="configName"></param>
         /// <returns>
         ///     If query has no records, returning empty list of <typeparamref name="T"/>.
@@ -888,9 +1364,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             string configName = null)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -898,7 +1379,14 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return new List<T>();
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }
+            else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -915,7 +1403,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject, _) = CreateRelationalParameterObject(
                     facadeDependencies, facade, null, builderResult, configuration.LoggerAction);
-                return InternalExecuteReader<T>(command, parameterObject, entityInfo);
+                return InternalExecuteReader<T>(command, parameterObject, entityInfo, configuration.LoggerAction);
             }
 
         }
@@ -928,6 +1416,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         /// <param name="configuration"></param>
         /// <param name="predicate"></param>
         /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
         /// <param name="configName"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>
@@ -939,10 +1428,15 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             DbTransaction transaction = null,
+            int commandTimeout = -1,
             string configName = null,
             CancellationToken cancellationToken = default)
             where T : class
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
             var facade = database as IDatabaseFacadeDependenciesAccessor;
             var facadeDependencies = facade.Dependencies as IRelationalDatabaseFacadeDependencies;
             if (facadeDependencies == null)
@@ -950,7 +1444,13 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 return new List<T>();
             }
 
-            database.SetCommandTimeout(configuration.CommandTimeout);
+            if (commandTimeout > -1)
+            {
+                database.SetCommandTimeout(commandTimeout);
+            }else if (configuration.CommandTimeout > -1)
+            {
+                database.SetCommandTimeout(configuration.CommandTimeout);
+            }
 
             var concurrentDetector = facadeDependencies.ConcurrencyDetector;
 
@@ -967,7 +1467,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
                 var entityInfo = configuration.GetEntityTypeInfo(typeof(T));
                 var (command, parameterObject, _) = CreateRelationalParameterObject(
                     facadeDependencies, facade, null, builderResult, configuration.LoggerAction);
-                return await InternalExecuteReaderAsync<T>(command, parameterObject, entityInfo, cancellationToken);
+                return await InternalExecuteReaderAsync<T>(command, parameterObject, entityInfo, configuration.LoggerAction, cancellationToken);
             }
         }
         #endregion
@@ -976,7 +1476,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         #region InternalExecuteReader
         private static T InternalExecuteReaderFirst<T>(IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
-            EntityTypeInfo entityInfo)
+            EntityTypeInfo entityInfo,
+            Action<string> loggerAction)
             where T : class
         {
             var relationalDataReader = command.ExecuteReader(parameterObject);
@@ -990,7 +1491,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             reader.Read();
             var instance = Activator.CreateInstance<T>();
-            DataReaderHelper.ReadRow(instance, reader, entityInfo);
+            DataReaderHelper.ReadRow(instance, reader, entityInfo, loggerAction);
             reader.Close();
             reader.Dispose();
             return instance;
@@ -999,7 +1500,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         private static async Task<T> InternalExecuteReaderFirstAsync<T>(IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             EntityTypeInfo entityInfo,
-            CancellationToken cancellationToken = default)
+            Action<string> loggerAction,
+            CancellationToken cancellationToken)
             where T : class
         {
             var relationalDataReader = await command.ExecuteReaderAsync(parameterObject, cancellationToken).ConfigureAwait(false);
@@ -1013,7 +1515,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
             await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             var instance = Activator.CreateInstance<T>();
-            await DataReaderHelper.ReadRowAsync(instance, reader, entityInfo, null, cancellationToken);
+            await DataReaderHelper.ReadRowAsync(instance, reader, entityInfo, loggerAction, cancellationToken);
             await reader.CloseAsync().ConfigureAwait(false);
             await reader.DisposeAsync().ConfigureAwait(false);
             return instance;
@@ -1021,7 +1523,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
 
         private static List<T> InternalExecuteReader<T>(IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
-            EntityTypeInfo entityInfo)
+            EntityTypeInfo entityInfo,
+            Action<string> loggerAction)
             where T : class
         {
             var results = new List<T>();
@@ -1037,7 +1540,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             while (reader.Read())
             {
                 var instance = Activator.CreateInstance<T>();
-                DataReaderHelper.ReadRow(instance, reader, entityInfo);
+                DataReaderHelper.ReadRow(instance, reader, entityInfo, loggerAction);
                 results.Add(instance);
             }
 
@@ -1050,7 +1553,8 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         private static async Task<List<T>> InternalExecuteReaderAsync<T>(IRelationalCommand command,
             RelationalCommandParameterObject parameterObject,
             EntityTypeInfo entityInfo,
-            CancellationToken cancellationToken = default)
+            Action<string> loggerAction,
+            CancellationToken cancellationToken)
             where T : class
         {
             var results = new List<T>();
@@ -1066,7 +1570,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var instance = Activator.CreateInstance<T>();
-                await DataReaderHelper.ReadRowAsync(instance, reader, entityInfo, null, cancellationToken);
+                await DataReaderHelper.ReadRowAsync(instance, reader, entityInfo, loggerAction, cancellationToken);
                 results.Add(instance);
             }
 
