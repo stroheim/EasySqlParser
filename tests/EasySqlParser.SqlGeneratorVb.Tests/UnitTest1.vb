@@ -2,6 +2,7 @@ Imports System
 Imports System.Linq.Expressions
 Imports EasySqlParser.Configurations
 Imports EasySqlParser.SqlGenerator
+Imports EasySqlParser.SqlGenerator.Helpers
 Imports EasySqlParser.SqlGenerator.Metadata
 Imports EasySqlParser.SqlGenerator.Tests
 Imports Microsoft.Data.SqlClient
@@ -26,7 +27,7 @@ Namespace EasySqlParser.SqlGeneratorVb.Tests
             Dim filter As Expression(Of Func(Of Person, Boolean)) =
                     Function(x) x.Name = "John Doe"
             Dim builder = New QueryStringBuilder(ConfigContainer.DefaultConfig, False)
-            Dim entityInfo = EntityTypeInfoBuilder.Build(GetType(Person))
+            Dim entityInfo = EntityTypeInfoBuilderHelper.Build(GetType(Person))
             Dim visitor = New PredicateVisitor(builder, entityInfo)
             visitor.BuildPredicate(filter)
             Dim result = builder.GetResult()

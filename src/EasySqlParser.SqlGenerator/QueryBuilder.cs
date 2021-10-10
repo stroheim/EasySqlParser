@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using EasySqlParser.Configurations;
 using EasySqlParser.SqlGenerator.Configurations;
 using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator
@@ -74,7 +75,7 @@ namespace EasySqlParser.SqlGenerator
             where T : class
         {
             var entityInfo = configuration == null
-                ? EntityTypeInfoBuilder.Build(typeof(T))
+                ? EntityTypeInfoBuilderHelper.Build(typeof(T))
                 : configuration.GetEntityTypeInfo(typeof(T));
             var config = configName == null
                 ? ConfigContainer.DefaultConfig

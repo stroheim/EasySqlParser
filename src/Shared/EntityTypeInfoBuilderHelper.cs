@@ -8,13 +8,14 @@ using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Attributes.Extensions;
 using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Metadata;
 
-namespace EasySqlParser.SqlGenerator.Metadata
+namespace EasySqlParser.SqlGenerator.Helpers
 {
     /// <summary>
     ///     A class for building entity information.
     /// </summary>
-    public static class EntityTypeInfoBuilder
+    internal static class EntityTypeInfoBuilderHelper
     {
         /// <summary>
         ///     Build entity information from assembly.

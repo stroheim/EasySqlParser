@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using EasySqlParser.Configurations;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 using Microsoft.Data.SqlClient;
 using Xunit;
@@ -28,7 +29,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_Equal()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id == 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -43,7 +44,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotEqual()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id != 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -58,7 +59,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_GreaterThan()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -74,7 +75,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_GreaterThanOrEqual()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id >= 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -90,7 +91,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_LessThan()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id < 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -106,7 +107,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_LessThanOrEqual()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id <= 1;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -122,7 +123,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_Null()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name == null;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -135,7 +136,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotNull()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name != null;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -149,7 +150,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_And()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 && x.Name == "John Doe";
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -167,7 +168,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_Or()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 || x.Name == "John Doe";
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -185,7 +186,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_AndOr1()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 && x.Name == "John Doe" || x.Age <= 30;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -206,7 +207,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_AndOr2()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 && (x.Name == "John Doe" || x.Age <= 30);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -226,7 +227,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_AndOr3()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 || x.Name == "John Doe" && x.Age <= 30;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -246,7 +247,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_AndOr4()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => (x.Id > 1 || x.Name == "John Doe") && x.Age <= 30;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -267,7 +268,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         {
             var ids = new[] {2, 3, 4};
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => (x.Id > 1 || x.Name == "John Doe") && x.Age <= 30 && ids.Contains(x.Id);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -294,7 +295,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_AndOr6()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter =
                 x => x.Name == "John Doe" || x.Name == "Jane Doe" || x.Name == "Zero";
             var visitor = new PredicateVisitor(builder, entityInfo);
@@ -317,7 +318,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         {
             var names = new[] {"A", "B", "C"};
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => names.Contains(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -338,7 +339,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         {
             var names = new[] { "A"};
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => names.Contains(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -355,7 +356,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         {
             var names = new List<string>(new[] { "A", "B" });
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Id > 1 && names.Contains(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -376,7 +377,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         {
             var names = Enumerable.Empty<string>();
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => names.Contains(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             var ex = Assert.Throws<InvalidOperationException>(
@@ -390,7 +391,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_StringStartsWith()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name.StartsWith("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -407,7 +408,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotStringStartsWith()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !x.Name.StartsWith("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -425,7 +426,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_StringContains()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name.Contains("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -441,7 +442,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotStringContains()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !x.Name.Contains("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -458,7 +459,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_StringEndsWith()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name.EndsWith("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -474,7 +475,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotStringEndsWith()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !x.Name.EndsWith("J");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -490,7 +491,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_StringIsNullOrEmpty()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => string.IsNullOrEmpty(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -504,7 +505,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotStringIsNullOrEmpty()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !string.IsNullOrEmpty(x.Name);
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -518,7 +519,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_Equals()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.Name.Equals("John Doe");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -535,7 +536,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_NotEquals()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !x.Name.Equals("John Doe");
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -552,7 +553,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_True()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => x.HasChildren;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);
@@ -569,7 +570,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void Test_False()
         {
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, false);
-            var entityInfo = EntityTypeInfoBuilder.Build(typeof(Person));
+            var entityInfo = EntityTypeInfoBuilderHelper.Build(typeof(Person));
             Expression<Func<Person, bool>> filter = x => !x.HasChildren;
             var visitor = new PredicateVisitor(builder, entityInfo);
             visitor.BuildPredicate(filter);

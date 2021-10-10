@@ -1,6 +1,7 @@
 ﻿using System;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -21,6 +22,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
             this IServiceCollection services)
         {
             services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
+            services.TryAddSingleton<IEntityTYpeInfoBuilder, EfCoreEntityTypeInfoBuilder>();
             //services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
             services.TryAddScoped(typeof(ISqlContext<>), typeof(EfCoreSqlContext<>));
             return services;
@@ -38,6 +40,7 @@ namespace EasySqlParser.EntityFrameworkCore.Extensions
         {
             services.Configure(options);
             services.TryAddSingleton<IQueryBuilderConfiguration, EfCoreQueryBuilderConfiguration>();
+            services.TryAddSingleton<IEntityTYpeInfoBuilder, EfCoreEntityTypeInfoBuilder>();
             //services.TryAddScoped<ISqlContext, EfCoreSqlContext>();
             services.TryAddScoped(typeof(ISqlContext<>), typeof(EfCoreSqlContext<>));
             return services;

@@ -45,7 +45,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
                         .UseInMemoryDatabase(databaseName: "EfContext_BuildCache")
                         .Options;
                     using var dbContext = new EfContext(options);
-                    var values = EfCoreEntityTypeInfoBuilder.Build(dbContext);
+                    var values = InternalEfCoreEntityTypeInfoBuilder.Build(dbContext);
                     foreach (var pair in values)
                     {
                         Cache.GetOrAdd(pair.Key, pair.Value);
@@ -61,7 +61,7 @@ namespace EasySqlParser.EntityFrameworkCore.Tests
 
         internal void AddCache(DbContext dbContext)
         {
-            var values = EfCoreEntityTypeInfoBuilder.Build(dbContext);
+            var values = InternalEfCoreEntityTypeInfoBuilder.Build(dbContext);
             foreach (var pair in values)
             {
                 Cache.GetOrAdd(pair.Key, pair.Value);

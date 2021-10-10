@@ -9,6 +9,7 @@ using EasySqlParser.Extensions;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Attributes;
 using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -23,17 +24,7 @@ namespace EasySqlParser.EntityFrameworkCore
     public class EfCoreQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
         private readonly ILogger<EfCoreQueryBuilderConfiguration> _logger;
-        private readonly DbContext _dbContext;
-        private readonly IEnumerable<Assembly> _assemblies;
         private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
-
-
-        /// <inheritdoc />
-        protected override void InternalBuildCache()
-        {
-            var prepare = EfCoreEntityTypeInfoBuilder.Build(_dbContext, _assemblies);
-            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
-        }
 
         /// <inheritdoc />
         public override EntityTypeInfo GetEntityTypeInfo(Type type)
@@ -54,53 +45,44 @@ namespace EasySqlParser.EntityFrameworkCore
             DbContext dbContext,
             ILogger<EfCoreQueryBuilderConfiguration> logger,
             QueryBuilderConfigurationOptions options,
-            IEnumerable<Assembly> additionalAssemblies = null) : base(
-            null,
-            options)
+            IEnumerable<Assembly> additionalAssemblies = null) 
+            : base(options)
         {
-            _dbContext = dbContext;
             _logger = logger;
             LoggerAction = WriteLog;
-            _assemblies = additionalAssemblies;
-            BuildCache();
+            var builder = new EfCoreEntityTypeInfoBuilder(dbContext);
+            var prepare = builder.Build(additionalAssemblies);
+            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="EfCoreQueryBuilderConfiguration"/> class.
         /// </summary>
         /// <param name="dbContext"></param>
+        /// <param name="builder"></param>
         /// <param name="logger"></param>
         /// <param name="options"></param>
         public EfCoreQueryBuilderConfiguration(
             DbContext dbContext,
+            IEntityTYpeInfoBuilder builder,
             ILogger<EfCoreQueryBuilderConfiguration> logger,
-            IOptions<QueryBuilderConfigurationOptions> options) : base(
-            null,
-            options?.Value)
+            IOptions<QueryBuilderConfigurationOptions> options) 
+            : base(options?.Value)
         {
-            _dbContext = dbContext;
             if (options != null && options.Value.CommandTimeout > -1)
             {
-                _dbContext.Database.SetCommandTimeout(options.Value.CommandTimeout);
+                dbContext.Database.SetCommandTimeout(options.Value.CommandTimeout);
             }
             _logger = logger;
             LoggerAction = WriteLog;
-            _assemblies = options?.Value.AdditionalAssemblies;
-            BuildCache();
+            var prepare = builder.Build(options?.Value.AdditionalAssemblies);
+            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
-        private void BuildCache()
-        {
-            if (_dbContext == null)
-            {
-                throw new InvalidOperationException("dbContext is null");
-            }
-            InternalBuildCache();
-        }
     }
 
 
-    internal static class EfCoreEntityTypeInfoBuilder
+    internal static class InternalEfCoreEntityTypeInfoBuilder
     {
         internal static KeyValuePair<Type, EntityTypeInfo>[] Build(DbContext dbContext,
             IEnumerable<Assembly> assemblies)
@@ -109,7 +91,7 @@ namespace EasySqlParser.EntityFrameworkCore
             if (assemblies == null) return values;
             var results = new List<KeyValuePair<Type, EntityTypeInfo>>();
             results.AddRange(values);
-            var additionalList = EntityTypeInfoBuilder.Build(assemblies);
+            var additionalList = EntityTypeInfoBuilderHelper.Build(assemblies);
             foreach (var pair in additionalList)
             {
                 if (results.Exists(x => x.Key == pair.Key)) continue;

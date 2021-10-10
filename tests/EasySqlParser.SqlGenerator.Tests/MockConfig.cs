@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using EasySqlParser.SqlGenerator.Configurations;
 using EasySqlParser.SqlGenerator.Enums;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.SqlGenerator.Tests
@@ -34,7 +35,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         public void BuildCache()
         {
             var assembly = typeof(MockConfig).Assembly;
-            var values = EntityTypeInfoBuilder.Build(new[] {assembly});
+            var values = EntityTypeInfoBuilderHelper.Build(new[] {assembly});
             foreach (var pair in values)
             {
                 Cache.GetOrAdd(pair.Key, pair.Value);

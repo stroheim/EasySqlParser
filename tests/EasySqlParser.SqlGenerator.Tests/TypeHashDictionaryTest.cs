@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 using EasySqlParser.SqlGenerator.Tests.SqlServer;
 using Xunit;
@@ -12,7 +13,7 @@ namespace EasySqlParser.SqlGenerator.Tests
         [Fact]
         public void Test1()
         {
-            var values = EntityTypeInfoBuilder.Build(typeof(Employee));
+            var values = EntityTypeInfoBuilderHelper.Build(typeof(Employee));
             var dic = TypeHashDictionary<EntityTypeInfo>.Create(new KeyValuePair<Type, EntityTypeInfo>[]
                                                                 {
                                                                     new KeyValuePair<Type, EntityTypeInfo>(

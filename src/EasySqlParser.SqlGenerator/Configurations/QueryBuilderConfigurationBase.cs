@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
 using EasySqlParser.SqlGenerator.Enums;
 using EasySqlParser.SqlGenerator.Metadata;
 
@@ -12,48 +10,38 @@ namespace EasySqlParser.SqlGenerator.Configurations
     public abstract class QueryBuilderConfigurationBase : IQueryBuilderConfiguration
     {
         /// <inheritdoc />
-        public int CommandTimeout { get; }
+        public int CommandTimeout { get; protected set; }
 
         /// <inheritdoc />
-        public bool WriteIndented { get; }
+        public bool WriteIndented { get; protected set; }
 
         /// <inheritdoc />
-        public QueryBehavior QueryBehavior { get; }
+        public QueryBehavior QueryBehavior { get; protected set; }
 
         /// <inheritdoc />
-        public ExcludeNullBehavior ExcludeNullBehavior { get; }
+        public ExcludeNullBehavior ExcludeNullBehavior { get; protected set; }
 
         /// <inheritdoc />
-        public Action<string> LoggerAction { get; set; }
+        public Action<string> LoggerAction { get; protected set; }
 
         /// <inheritdoc />
-        public virtual EntityTypeInfo GetEntityTypeInfo(Type type)
-        {
-            return _hashDictionary.Get(type);
-        }
-
-        private readonly IEnumerable<Assembly> _assemblies;
-        private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
+        public abstract EntityTypeInfo GetEntityTypeInfo(Type type);
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="QueryBuilderConfigurationBase"/> class.
         /// </summary>
-        /// <param name="entityAssemblies">Assemblies containing an entity.</param>
         /// <param name="options">The <see cref="QueryBuilderConfigurationOptions"/></param>
         /// <param name="loggerAction">Action delegate for logging.</param>
         protected QueryBuilderConfigurationBase(
-            IEnumerable<Assembly> entityAssemblies,
             QueryBuilderConfigurationOptions options = null,
             Action<string> loggerAction = null
         )
         {
-            _assemblies = entityAssemblies;
             CommandTimeout = options?.CommandTimeout ?? 30;
             WriteIndented = options?.WriteIndented ?? true;
             QueryBehavior = options?.QueryBehavior ?? QueryBehavior.None;
             ExcludeNullBehavior = options?.ExcludeNullBehavior ?? ExcludeNullBehavior.NullOnly;
             LoggerAction = loggerAction;
-            BuildCache();
         }
 
         //protected QueryBuilderConfigurationBase(
@@ -73,22 +61,5 @@ namespace EasySqlParser.SqlGenerator.Configurations
         //    LoggerAction = loggerAction;
         //    BuildCache();
         //}
-
-
-        private void BuildCache()
-        {
-            if (_assemblies == null) return;
-            InternalBuildCache();
-        }
-
-        /// <summary>
-        ///     Build caches for <see cref="EntityTypeInfo"/>.
-        /// </summary>
-        protected virtual void InternalBuildCache()
-        {
-            var prepare = EntityTypeInfoBuilder.Build(_assemblies);
-            _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
-        }
-
     }
 }

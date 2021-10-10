@@ -4,6 +4,7 @@ using System.Reflection;
 using Dapper;
 using EasySqlParser.SqlGenerator;
 using EasySqlParser.SqlGenerator.Configurations;
+using EasySqlParser.SqlGenerator.Helpers;
 using EasySqlParser.SqlGenerator.Metadata;
 
 namespace EasySqlParser.Dapper
@@ -13,7 +14,6 @@ namespace EasySqlParser.Dapper
     /// </summary>
     public class DapperQueryBuilderConfiguration : QueryBuilderConfigurationBase
     {
-        private readonly IEnumerable<Assembly> _entityAssemblies;
         private static TypeHashDictionary<EntityTypeInfo> _hashDictionary;
 
         /// <summary>
@@ -25,25 +25,13 @@ namespace EasySqlParser.Dapper
         public DapperQueryBuilderConfiguration(
             IEnumerable<Assembly> entityAssemblies,
             QueryBuilderConfigurationOptions options,
-            Action<string> loggerAction = null) : base(
-            null,
+            Action<string> loggerAction = null) 
+            : base(
             options,
             loggerAction)
         {
-            _entityAssemblies = entityAssemblies;
-            BuildCache();
-        }
-
-        private void BuildCache()
-        {
-            if (_entityAssemblies == null) return;
-            InternalBuildCache();
-        }
-
-        /// <inheritdoc />
-        protected override void InternalBuildCache()
-        {
-            var prepare= DapperMapBuilder.CreateMap(_entityAssemblies);
+            var builder = new DapperEntityTYpeInfoBuilder();
+            var prepare = builder.Build(entityAssemblies);
             _hashDictionary = TypeHashDictionary<EntityTypeInfo>.Create(prepare);
         }
 
@@ -58,7 +46,7 @@ namespace EasySqlParser.Dapper
     {
         internal static KeyValuePair<Type, EntityTypeInfo>[] CreateMap(IEnumerable<Assembly> assemblies)
         {
-            var keyValuePairs = EntityTypeInfoBuilder.Build(assemblies);
+            var keyValuePairs = EntityTypeInfoBuilderHelper.Build(assemblies);
             foreach (var pair in keyValuePairs)
             {
                 var map = new CustomPropertyTypeMap(
