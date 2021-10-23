@@ -90,8 +90,157 @@ namespace EasySqlParser.Dapper.Extensions
             return result;
         }
 
+        #region ExecuteReader use SqlParserResult
+
         /// <summary>
-        ///     Executes a query, and get the single record.
+        ///     Executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        public static T ExecuteReaderFirst<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            SqlParserResult parserResult,
+            int commandTimeout = -1,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            configuration.LoggerAction?.Invoke(parserResult.DebugSql);
+            int? localCommandTimeout = null;
+            if (configuration.CommandTimeout > -1)
+            {
+                localCommandTimeout = configuration.CommandTimeout;
+            }
+            if (commandTimeout > -1)
+            {
+                localCommandTimeout = commandTimeout;
+            }
+
+            return connection.QueryFirst<T>(parserResult.ParsedSql,
+                parserResult.DbDataParameters.ToDynamicParameters(), transaction, localCommandTimeout);
+
+        }
+
+        /// <summary>
+        ///     Asynchronously executes a query, and get the first record.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        public static Task<T> ExecuteReaderFirstAsync<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            SqlParserResult parserResult,
+            int commandTimeout = -1,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            configuration.LoggerAction?.Invoke(parserResult.DebugSql);
+            int? localCommandTimeout = null;
+            if (configuration.CommandTimeout > -1)
+            {
+                localCommandTimeout = configuration.CommandTimeout;
+            }
+            if (commandTimeout > -1)
+            {
+                localCommandTimeout = commandTimeout;
+            }
+
+            return connection.QueryFirstAsync<T>(parserResult.ParsedSql,
+                parserResult.DbDataParameters.ToDynamicParameters(), transaction, localCommandTimeout);
+        }
+
+        /// <summary>
+        ///     Executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> ExecuteReader<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            SqlParserResult parserResult,
+            int commandTimeout = -1,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            configuration.LoggerAction?.Invoke(parserResult.DebugSql);
+            int? localCommandTimeout = null;
+            if (configuration.CommandTimeout > -1)
+            {
+                localCommandTimeout = configuration.CommandTimeout;
+            }
+            if (commandTimeout > -1)
+            {
+                localCommandTimeout = commandTimeout;
+            }
+
+            return connection.Query<T>(parserResult.ParsedSql, parserResult.DbDataParameters.ToDynamicParameters(),
+                transaction, commandTimeout: localCommandTimeout);
+        }
+
+        /// <summary>
+        ///     Asynchronously executes a query, and get the all records.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="configuration"></param>
+        /// <param name="parserResult"></param>
+        /// <param name="commandTimeout"></param>
+        /// <param name="transaction"></param>
+        /// <returns></returns>
+        public static Task<IEnumerable<T>> ExecuteReaderAsync<T>(this DbConnection connection,
+            IQueryBuilderConfiguration configuration,
+            SqlParserResult parserResult,
+            int commandTimeout = -1,
+            DbTransaction transaction = null)
+            where T : class
+        {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+            configuration.LoggerAction?.Invoke(parserResult.DebugSql);
+            int? localCommandTimeout = null;
+            if (configuration.CommandTimeout > -1)
+            {
+                localCommandTimeout = configuration.CommandTimeout;
+            }
+            if (commandTimeout > -1)
+            {
+                localCommandTimeout = commandTimeout;
+            }
+
+            return connection.QueryAsync<T>(parserResult.ParsedSql, parserResult.DbDataParameters.ToDynamicParameters(),
+                transaction, commandTimeout: localCommandTimeout);
+        }
+        #endregion
+
+        #region ExecuteReader use Query Expression
+        /// <summary>
+        ///     Executes a query, and get the first record.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
@@ -100,7 +249,7 @@ namespace EasySqlParser.Dapper.Extensions
         /// <param name="commandTimeout"></param>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        public static T ExecuteReaderSingle<T>(this DbConnection connection,
+        public static T ExecuteReaderFirst<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             int commandTimeout = -1,
@@ -125,12 +274,12 @@ namespace EasySqlParser.Dapper.Extensions
             }
 
 
-            return connection.QuerySingle<T>(builderResult.ParsedSql,
+            return connection.QueryFirst<T>(builderResult.ParsedSql,
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction, localCommandTimeout);
         }
 
         /// <summary>
-        ///     Asynchronously executes a query, and get the single record.
+        ///     Asynchronously executes a query, and get the first record.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
@@ -139,7 +288,7 @@ namespace EasySqlParser.Dapper.Extensions
         /// <param name="commandTimeout"></param>
         /// <param name="transaction"></param>
         /// <returns></returns>
-        public static Task<T> ExecuteReaderSingleAsync<T>(this DbConnection connection,
+        public static Task<T> ExecuteReaderFirstAsync<T>(this DbConnection connection,
             IQueryBuilderConfiguration configuration,
             Expression<Func<T, bool>> predicate,
             int commandTimeout = -1,
@@ -162,7 +311,7 @@ namespace EasySqlParser.Dapper.Extensions
             {
                 localCommandTimeout = commandTimeout;
             }
-            return connection.QuerySingleAsync<T>(builderResult.ParsedSql,
+            return connection.QueryFirstAsync<T>(builderResult.ParsedSql,
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction, localCommandTimeout);
         }
 
@@ -239,6 +388,7 @@ namespace EasySqlParser.Dapper.Extensions
             return connection.QueryAsync<T>(builderResult.ParsedSql,
                 builderResult.DbDataParameters.ToDynamicParameters(), transaction, localCommandTimeout);
         }
+        #endregion
 
         /// <summary>
         ///     Gets a record count.
@@ -342,7 +492,7 @@ namespace EasySqlParser.Dapper.Extensions
             try
             {
                 using var command =
-                    CommandHelper.BuildCommand(connection, parserResult, 
+                    CommandHelper.BuildCommand(connection, parserResult,
                         merge, commandTimeout, localTransaction);
                 affectedCount = command.ExecuteNonQuery();
                 if (beganTransaction)
@@ -722,7 +872,7 @@ namespace EasySqlParser.Dapper.Extensions
             //    transaction,
             //    builderParameter.CommandTimeout
             //);
-            
+
             ////builderParameter.ApplyReturningColumns();
             //return affectedCount;
             using var command = CommandHelper.BuildCommand(connection, builderParameter, builderResult, transaction);

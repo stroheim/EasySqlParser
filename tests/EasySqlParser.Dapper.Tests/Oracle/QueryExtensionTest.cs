@@ -39,7 +39,7 @@ namespace EasySqlParser.Dapper.Tests.Oracle
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
-            var instance = _fixture.Connection.ExecuteReaderSingle<Employee>(_mockConfig, x => x.Id == 11);
+            var instance = _fixture.Connection.ExecuteReaderFirst<Employee>(_mockConfig, x => x.Id == 11);
             instance.VersionNo.Is(1L);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -55,7 +55,7 @@ namespace EasySqlParser.Dapper.Tests.Oracle
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig);
             var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
-            var instance = await _fixture.Connection.ExecuteReaderSingleAsync<Employee>(_mockConfig, x => x.Id == 12);
+            var instance = await _fixture.Connection.ExecuteReaderFirstAsync<Employee>(_mockConfig, x => x.Id == 12);
             instance.VersionNo.Is(1L);
             _output.WriteLine(employee.GetDebugString());
         }
@@ -71,7 +71,7 @@ namespace EasySqlParser.Dapper.Tests.Oracle
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
             var affected = _fixture.Connection.Execute(parameter);
             affected.Is(1);
-            var instance = _fixture.Connection.ExecuteReaderSingle<Characters>(_mockConfig, x => x.Name == "Roy Cambell");
+            var instance = _fixture.Connection.ExecuteReaderFirst<Characters>(_mockConfig, x => x.Name == "Roy Cambell");
             instance.VersionNo.Is(1L);
             _output.WriteLine(characters.GetDebugString());
         }
@@ -87,7 +87,7 @@ namespace EasySqlParser.Dapper.Tests.Oracle
             var parameter = new QueryBuilderParameter(characters, SqlKind.Insert, _mockConfig);
             var affected = await _fixture.Connection.ExecuteAsync(parameter);
             affected.Is(1);
-            var instance = await _fixture.Connection.ExecuteReaderSingleAsync<Characters>(_mockConfig, x => x.Name == "Naomi Hunter");
+            var instance = await _fixture.Connection.ExecuteReaderFirstAsync<Characters>(_mockConfig, x => x.Name == "Naomi Hunter");
             instance.VersionNo.Is(1L);
             _output.WriteLine(characters.GetDebugString());
         }

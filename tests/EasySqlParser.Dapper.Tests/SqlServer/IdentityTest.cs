@@ -83,7 +83,7 @@ namespace EasySqlParser.Dapper.Tests.SqlServer
         [Fact]
         public void Test_update_default()
         {
-            var characters = _Fixture.Connection.ExecuteReaderSingle<Characters>(_mockConfig, x => x.Id == 1);
+            var characters = _Fixture.Connection.ExecuteReaderFirst<Characters>(_mockConfig, x => x.Id == 1);
             characters.Name = "John Doe";
             var parameter = new QueryBuilderParameter(characters, SqlKind.Update, _mockConfig);
             var affected = _Fixture.Connection.Execute(parameter);
