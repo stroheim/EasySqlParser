@@ -30,7 +30,7 @@ namespace EasySqlParser.SqlGenerator.Tests.SqlServer
         {
             var employee = new EmployeeWithDateAndUser();
 
-            _mockConfig.ExcludeNullBehavior = ExcludeNullBehavior.NullOrEmptyOrDefaultValue;
+            _mockConfig.ExcludeNullBehavior = ExcludeNullBehavior.All;
             var parameter = new QueryBuilderParameter(employee, SqlKind.Insert, _mockConfig, excludeNull: true);
             var builder = new QueryStringBuilder(ConfigContainer.DefaultConfig, _mockConfig.WriteIndented);
             // empty

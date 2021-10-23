@@ -366,37 +366,37 @@ namespace EasySqlParser.SqlGenerator
         {
             if (!parameter.ExcludeNull) return false;
 
-            switch (parameter.ExcludeNullBehavior)
+            var behavior = parameter.ExcludeNullBehavior;
+            if ((behavior & ExcludeNullBehavior.Null) == ExcludeNullBehavior.Null)
             {
-                case ExcludeNullBehavior.NullOnly:
-                    if (value == null)
+                if (value == null)
+                {
+                    return true;
+                }
+            }
+
+            if ((behavior & ExcludeNullBehavior.Empty) == ExcludeNullBehavior.Empty)
+            {
+                if (value is string stringValue)
+                {
+                    if (stringValue == "")
                     {
                         return true;
                     }
-                    break;
-                case ExcludeNullBehavior.NullOrEmptyOrDefaultValue:
-                    if (value == null)
-                    {
-                        return true;
-                    }
+                }
+            }
 
-                    if (value is string stringValue)
+            if ((behavior & ExcludeNullBehavior.NumericDefault) == ExcludeNullBehavior.NumericDefault)
+            {
+                if (value != null)
+                {
+                    var type = value.GetType();
+                    if (type.IsValueType)
                     {
-                        if (stringValue == "")
-                        {
-                            return true;
-                        }
-                    }else
-                    {
-                        var type = value.GetType();
-                        if (type.IsValueType)
-                        {
-                            var defaultValue = Activator.CreateInstance(type);
-                            return Equals(value, defaultValue);
-                        }
+                        var defaultValue = Activator.CreateInstance(type);
+                        return Equals(value, defaultValue);
                     }
-
-                    break;
+                }
             }
 
             return false;

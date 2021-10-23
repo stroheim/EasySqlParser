@@ -40,7 +40,7 @@ namespace EasySqlParser.SqlGenerator.Configurations
             CommandTimeout = options?.CommandTimeout ?? 30;
             WriteIndented = options?.WriteIndented ?? true;
             QueryBehavior = options?.QueryBehavior ?? QueryBehavior.None;
-            ExcludeNullBehavior = options?.ExcludeNullBehavior ?? ExcludeNullBehavior.NullOnly;
+            ExcludeNullBehavior = options?.ExcludeNullBehavior ?? ExcludeNullBehavior.Null;
             LoggerAction = loggerAction;
         }
 

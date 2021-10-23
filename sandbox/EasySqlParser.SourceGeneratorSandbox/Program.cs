@@ -60,8 +60,7 @@ namespace EasySqlParser.SourceGeneratorSandbox
                                                                                      QueryBehavior.AllColumns;
                                                                                  options.WriteIndented = true;
                                                                                  options.ExcludeNullBehavior =
-                                                                                     ExcludeNullBehavior
-                                                                                         .NullOrEmptyOrDefaultValue;
+                                                                                     ExcludeNullBehavior.All;
                                                                              });
                                    })
                 .ConfigureLogging((context, b) =>
